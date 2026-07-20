@@ -82,7 +82,7 @@ export function ImageUploader({
       {imagens.length > 0 && (
         <div className="mt-3 grid grid-cols-3 gap-3 sm:grid-cols-4">
           {imagens.map((img) => (
-            <div key={img.id} className="group relative aspect-square overflow-hidden rounded-xl border border-brand-100">
+            <div key={img.id} className="group relative aspect-square overflow-hidden rounded-xl border border-border">
               <img src={img.dataUrl} alt={img.nome} className="h-full w-full object-cover" />
               <button
                 type="button"

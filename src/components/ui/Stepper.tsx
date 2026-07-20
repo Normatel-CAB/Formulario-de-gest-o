@@ -37,8 +37,8 @@ export function Stepper({
                   className={cn(
                     'flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 text-sm font-semibold transition-colors duration-200',
                     done && 'border-brand-600 bg-brand-600 text-white',
-                    active && 'border-brand-600 bg-white text-brand-700 ring-4 ring-brand-100',
-                    !done && !active && 'border-brand-200 bg-white text-brand-300',
+                    active && 'border-brand-500 bg-surface text-brand-400 ring-4 ring-brand-500/20',
+                    !done && !active && 'border-border-light bg-surface text-ink-subtle',
                   )}
                 >
                   {done ? (
@@ -57,19 +57,19 @@ export function Stepper({
                   <span
                     className={cn(
                       'block text-sm font-medium',
-                      active || done ? 'text-brand-950' : 'text-brand-400',
+                      active || done ? 'text-ink' : 'text-ink-subtle',
                     )}
                   >
                     {step.label}
                   </span>
-                  {step.description && <span className="block text-xs text-brand-500">{step.description}</span>}
+                  {step.description && <span className="block text-xs text-ink-subtle">{step.description}</span>}
                 </span>
               </button>
               {index < steps.length - 1 && (
                 <span
                   className={cn(
                     'mx-2 h-0.5 flex-1 rounded-full transition-colors duration-300 sm:mx-3',
-                    done ? 'bg-brand-500' : 'bg-brand-100',
+                    done ? 'bg-brand-500' : 'bg-border-light',
                   )}
                 />
               )}

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useFormsStore } from '../store/formsStore'
+import { useAuthStore } from '../store/authStore'
 import type { FormularioAvaliacao, FormStatus } from '../lib/types'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card'
 import { StatusBadge } from '../components/ui/StatusBadge'
@@ -17,6 +18,7 @@ export function FormDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { obter, atualizarStatus, remover } = useFormsStore()
+  const usuario = useAuthStore((s) => s.usuario)
   const [formulario, setFormulario] = useState<FormularioAvaliacao | null>(null)
   const [confirmarExclusao, setConfirmarExclusao] = useState(false)
 
@@ -28,13 +30,19 @@ export function FormDetail() {
   if (!formulario) {
     return (
       <div className="animate-fade-in">
-        <p className="text-sm text-brand-500">Formulário não encontrado.</p>
-        <Link to="/historico" className="text-sm font-medium text-brand-600 underline">
+        <p className="text-sm text-ink-muted">Formulário não encontrado.</p>
+        <Link to="/historico" className="text-sm font-medium text-brand-400 underline">
           Voltar ao histórico
         </Link>
       </div>
     )
   }
+
+  const ehDono = formulario.criadoPorId === usuario?.id
+  const podeAlterarStatus = usuario?.papel === 'administrador'
+  const podeEditar = formulario.status === 'rascunho' && (usuario?.papel === 'administrador' || ehDono)
+  const podeExcluir = usuario?.papel === 'administrador' || (usuario?.papel === 'operador' && ehDono)
+  const somenteLeitura = usuario?.papel === 'visualizador'
 
   async function mudarStatus(status: FormStatus) {
     if (!formulario) return
@@ -55,45 +63,51 @@ export function FormDetail() {
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="text-xl font-bold text-brand-950">{formulario.infoGerais.localAtividade || 'Atividade sem nome'}</h2>
+            <h2 className="text-xl font-bold text-ink">{formulario.infoGerais.localAtividade || 'Atividade sem nome'}</h2>
             <StatusBadge status={formulario.status} />
           </div>
-          <p className="text-sm text-brand-700/70">
+          <p className="text-sm text-ink-muted">
             Nº {formulario.infoGerais.numeroSolicitacao || '—'} · Atualizado em {formatarDataHora(formulario.updatedAt)}
           </p>
         </div>
-        <div className="flex gap-2">
-          {formulario.status === 'rascunho' && (
-            <Link to={`/novo/${formulario.id}`}>
-              <Button variant="outline">Continuar edição</Button>
-            </Link>
-          )}
-          <Button variant="danger" onClick={() => setConfirmarExclusao(true)}>
-            Excluir
-          </Button>
-        </div>
+        {!somenteLeitura && (
+          <div className="flex gap-2">
+            {podeEditar && (
+              <Link to={`/novo/${formulario.id}`}>
+                <Button variant="outline">Continuar edição</Button>
+              </Link>
+            )}
+            {podeExcluir && (
+              <Button variant="danger" onClick={() => setConfirmarExclusao(true)}>
+                Excluir
+              </Button>
+            )}
+          </div>
+        )}
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Atualizar status</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-wrap gap-2">
-          {STATUS_TRANSICOES.map((s) => (
-            <Button
-              key={s}
-              size="sm"
-              variant={formulario.status === s ? 'primary' : 'outline'}
-              onClick={() => mudarStatus(s)}
-            >
-              {s === 'enviado' && 'Marcar Enviado'}
-              {s === 'em_analise' && 'Em Análise'}
-              {s === 'aprovado' && 'Aprovar'}
-              {s === 'reprovado' && 'Reprovar'}
-            </Button>
-          ))}
-        </CardContent>
-      </Card>
+      {podeAlterarStatus && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Atualizar status</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-wrap gap-2">
+            {STATUS_TRANSICOES.map((s) => (
+              <Button
+                key={s}
+                size="sm"
+                variant={formulario.status === s ? 'primary' : 'outline'}
+                onClick={() => mudarStatus(s)}
+              >
+                {s === 'enviado' && 'Marcar Enviado'}
+                {s === 'em_analise' && 'Em Análise'}
+                {s === 'aprovado' && 'Aprovar'}
+                {s === 'reprovado' && 'Reprovar'}
+              </Button>
+            ))}
+          </CardContent>
+        </Card>
+      )}
 
       <StepRevisao formulario={formulario} />
 
@@ -104,7 +118,7 @@ export function FormDetail() {
           </CardHeader>
           <CardContent className="grid grid-cols-3 gap-3 sm:grid-cols-4">
             {formulario.imagens.map((img) => (
-              <img key={img.id} src={img.dataUrl} alt={img.nome} className="aspect-square rounded-xl border border-brand-100 object-cover" />
+              <img key={img.id} src={img.dataUrl} alt={img.nome} className="aspect-square rounded-xl border border-border object-cover" />
             ))}
           </CardContent>
         </Card>
@@ -116,7 +130,7 @@ export function FormDetail() {
             <CardTitle>Assinatura</CardTitle>
           </CardHeader>
           <CardContent>
-            <img src={formulario.assinaturaDataUrl} alt="Assinatura digital" className="h-32 rounded-xl border border-brand-100 bg-white" />
+            <img src={formulario.assinaturaDataUrl} alt="Assinatura digital" className="h-32 rounded-xl border border-border bg-surface-2" />
           </CardContent>
         </Card>
       )}
@@ -127,13 +141,14 @@ export function FormDetail() {
             <CardTitle>Observações</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-brand-800">{formulario.observacoes}</p>
+            <p className="text-sm text-ink-muted">{formulario.observacoes}</p>
           </CardContent>
         </Card>
       )}
 
-      <p className="text-xs text-brand-400">
-        Criado em {formatarData(formulario.createdAt.slice(0, 10))} <Badge tone="outline">{formulario.id.slice(0, 8)}</Badge>
+      <p className="text-xs text-ink-subtle">
+        Criado em {formatarData(formulario.createdAt.slice(0, 10))}
+        {formulario.criadoPorNome && ` por ${formulario.criadoPorNome}`} <Badge tone="outline">{formulario.id.slice(0, 8)}</Badge>
       </p>
 
       <Dialog

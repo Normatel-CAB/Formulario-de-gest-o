@@ -1,8 +1,11 @@
-import { useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useSettingsStore } from '../../store/settingsStore'
+import { useAuthStore } from '../../store/authStore'
 import { useSyncState } from '../../hooks/useSyncState'
 import { cn } from '../../lib/cn'
 import { toast } from '../../store/toastStore'
+import { PAPEL_LABELS } from '../../lib/types'
 
 function fileToDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -13,10 +16,30 @@ function fileToDataUrl(file: File): Promise<string> {
   })
 }
 
+function iniciais(nome: string) {
+  const partes = nome.trim().split(/\s+/)
+  const primeiras = partes.slice(0, 2).map((p) => p[0]?.toUpperCase() ?? '')
+  return primeiras.join('') || 'U'
+}
+
 export function Header() {
   const { logoDataUrl, setLogo } = useSettingsStore()
   const sync = useSyncState()
+  const { usuario, sair } = useAuthStore()
+  const navigate = useNavigate()
   const inputRef = useRef<HTMLInputElement>(null)
+  const [menuAberto, setMenuAberto] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  const podeEditarLogo = usuario?.papel === 'administrador'
+
+  useEffect(() => {
+    function onClickFora(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuAberto(false)
+    }
+    document.addEventListener('mousedown', onClickFora)
+    return () => document.removeEventListener('mousedown', onClickFora)
+  }, [])
 
   async function handleLogo(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -26,34 +49,46 @@ export function Header() {
     toast({ variant: 'success', title: 'Logo atualizada com sucesso' })
   }
 
+  function sairDoSistema() {
+    sair()
+    setMenuAberto(false)
+    navigate('/login', { replace: true })
+    toast({ variant: 'success', title: 'Sessão encerrada' })
+  }
+
   return (
-    <header className="sticky top-0 z-40 border-b border-brand-100 bg-white/90 backdrop-blur">
+    <header className="sticky top-0 z-40 bg-gradient-to-r from-brand-800 via-brand-700 to-brand-600 shadow-lg shadow-black/30">
       <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3 sm:px-6">
         <button
           type="button"
-          onClick={() => inputRef.current?.click()}
-          className="group relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-brand-200 bg-brand-50"
-          title="Clique para alterar a logo da empresa"
-          aria-label="Inserir logo da empresa"
+          onClick={() => podeEditarLogo && inputRef.current?.click()}
+          className={cn(
+            'group relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-white/20 bg-white/10 backdrop-blur',
+            !podeEditarLogo && 'cursor-default',
+          )}
+          title={podeEditarLogo ? 'Clique para alterar a logo da empresa' : 'Logo da empresa'}
+          aria-label="Logo da empresa"
         >
           {logoDataUrl ? (
             <img src={logoDataUrl} alt="Logo da empresa" className="h-full w-full object-contain" />
           ) : (
-            <svg className="h-5 w-5 text-brand-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg className="h-5 w-5 text-white/80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M4 16.5V19a2 2 0 002 2h12a2 2 0 002-2v-2.5M7 9l5-5 5 5M12 4v13" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           )}
-          <span className="absolute inset-0 hidden items-center justify-center bg-brand-950/50 text-[9px] font-medium text-white group-hover:flex">
-            Alterar
-          </span>
+          {podeEditarLogo && (
+            <span className="absolute inset-0 hidden items-center justify-center bg-black/50 text-[9px] font-medium text-white group-hover:flex">
+              Alterar
+            </span>
+          )}
         </button>
-        <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={handleLogo} />
+        {podeEditarLogo && <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={handleLogo} />}
 
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[13px] font-semibold uppercase tracking-wide text-brand-600 sm:text-sm">
+          <p className="truncate text-[13px] font-semibold uppercase tracking-wide text-white/80 sm:text-sm">
             Sistema de Gestão Integrada
           </p>
-          <h1 className="truncate text-sm font-bold text-brand-950 sm:text-base">
+          <h1 className="truncate text-sm font-bold text-white sm:text-base">
             Formulário de Gestão · Ficha Técnica de Avaliação de Serviços
           </h1>
         </div>
@@ -62,18 +97,68 @@ export function Header() {
           <span
             className={cn(
               'flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium',
-              sync.online ? 'bg-brand-100 text-brand-700' : 'bg-amber-100 text-amber-700',
+              sync.online ? 'bg-white/15 text-white' : 'bg-amber-400/20 text-amber-200',
             )}
           >
-            <span className={cn('h-1.5 w-1.5 rounded-full', sync.online ? 'bg-brand-500' : 'bg-amber-500')} />
+            <span className={cn('h-1.5 w-1.5 rounded-full', sync.online ? 'bg-brand-300' : 'bg-amber-400')} />
             {sync.online ? 'Online' : 'Offline'}
           </span>
           {sync.pending > 0 && (
-            <span className="flex items-center gap-1.5 rounded-full bg-sky-100 px-2.5 py-1 text-xs font-medium text-sky-700">
+            <span className="flex items-center gap-1.5 rounded-full bg-sky-400/20 px-2.5 py-1 text-xs font-medium text-sky-100">
               {sync.syncing ? 'Sincronizando…' : `${sync.pending} pendente(s)`}
             </span>
           )}
         </div>
+
+        {usuario && (
+          <div className="relative" ref={menuRef}>
+            <button
+              type="button"
+              onClick={() => setMenuAberto((v) => !v)}
+              className="flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 py-1.5 pl-1.5 pr-3 transition-colors hover:bg-white/15"
+              aria-haspopup="menu"
+              aria-expanded={menuAberto}
+            >
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/20 text-sm font-semibold text-white">
+                {iniciais(usuario.nome)}
+              </span>
+              <span className="hidden text-left sm:block">
+                <span className="block text-sm font-medium leading-tight text-white">{usuario.nome}</span>
+                <span className="block text-xs leading-tight text-white/70">{PAPEL_LABELS[usuario.papel]}</span>
+              </span>
+              <svg className="h-4 w-4 text-white/70" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+
+            {menuAberto && (
+              <div
+                role="menu"
+                className="animate-scale-in absolute right-0 mt-2 w-52 origin-top-right rounded-xl border border-border bg-surface p-1.5 shadow-xl shadow-black/40"
+              >
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    navigate('/perfil')
+                    setMenuAberto(false)
+                  }}
+                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-ink transition-colors hover:bg-surface-3"
+                >
+                  Meu Perfil
+                </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={sairDoSistema}
+                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-rose-400 transition-colors hover:bg-rose-500/10"
+                >
+                  Sair
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </header>
   )

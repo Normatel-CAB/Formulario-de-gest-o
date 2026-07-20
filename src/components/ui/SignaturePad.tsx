@@ -25,7 +25,7 @@ export function SignaturePad({
     ctx.scale(ratio, ratio)
     ctx.lineCap = 'round'
     ctx.lineJoin = 'round'
-    ctx.strokeStyle = '#0f5132'
+    ctx.strokeStyle = '#f5f5f5'
     ctx.lineWidth = 2.2
     if (value) {
       const img = new Image()
@@ -75,7 +75,7 @@ export function SignaturePad({
 
   return (
     <div>
-      <div className="rounded-xl border border-dashed border-brand-300 bg-brand-50/40">
+      <div className="rounded-xl border border-dashed border-border-light bg-surface-2">
         <canvas
           ref={canvasRef}
           className="signature-canvas h-40 w-full cursor-crosshair rounded-xl"
@@ -88,7 +88,7 @@ export function SignaturePad({
         />
       </div>
       <div className="mt-2 flex items-center justify-between">
-        <p className="text-xs text-brand-500">Assine utilizando o dedo, caneta digital ou mouse.</p>
+        <p className="text-xs text-ink-subtle">Assine utilizando o dedo, caneta digital ou mouse.</p>
         <Button type="button" variant="ghost" size="sm" onClick={clear} disabled={!hasStroke}>
           Limpar
         </Button>
