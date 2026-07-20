@@ -1,0 +1,157 @@
+import { useEffect, useState } from 'react'
+import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useFormsStore } from '../store/formsStore'
+import type { FormularioAvaliacao, FormStatus } from '../lib/types'
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card'
+import { StatusBadge } from '../components/ui/StatusBadge'
+import { Button } from '../components/ui/Button'
+import { Badge } from '../components/ui/Badge'
+import { Dialog } from '../components/ui/Dialog'
+import { toast } from '../store/toastStore'
+import { formatarData, formatarDataHora } from '../lib/format'
+import { StepRevisao } from './NovoFormulario/StepRevisao'
+
+const STATUS_TRANSICOES: FormStatus[] = ['enviado', 'em_analise', 'aprovado', 'reprovado']
+
+export function FormDetail() {
+  const { id } = useParams()
+  const navigate = useNavigate()
+  const { obter, atualizarStatus, remover } = useFormsStore()
+  const [formulario, setFormulario] = useState<FormularioAvaliacao | null>(null)
+  const [confirmarExclusao, setConfirmarExclusao] = useState(false)
+
+  useEffect(() => {
+    if (!id) return
+    void obter(id).then((f) => setFormulario(f ?? null))
+  }, [id, obter])
+
+  if (!formulario) {
+    return (
+      <div className="animate-fade-in">
+        <p className="text-sm text-brand-500">Formulário não encontrado.</p>
+        <Link to="/historico" className="text-sm font-medium text-brand-600 underline">
+          Voltar ao histórico
+        </Link>
+      </div>
+    )
+  }
+
+  async function mudarStatus(status: FormStatus) {
+    if (!formulario) return
+    await atualizarStatus(formulario.id, status)
+    setFormulario({ ...formulario, status })
+    toast({ variant: 'success', title: 'Status atualizado' })
+  }
+
+  async function excluir() {
+    if (!formulario) return
+    await remover(formulario.id)
+    toast({ variant: 'success', title: 'Formulário excluído' })
+    navigate('/historico')
+  }
+
+  return (
+    <div className="animate-fade-in space-y-5">
+      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+        <div>
+          <div className="flex items-center gap-2">
+            <h2 className="text-xl font-bold text-brand-950">{formulario.infoGerais.localAtividade || 'Atividade sem nome'}</h2>
+            <StatusBadge status={formulario.status} />
+          </div>
+          <p className="text-sm text-brand-700/70">
+            Nº {formulario.infoGerais.numeroSolicitacao || '—'} · Atualizado em {formatarDataHora(formulario.updatedAt)}
+          </p>
+        </div>
+        <div className="flex gap-2">
+          {formulario.status === 'rascunho' && (
+            <Link to={`/novo/${formulario.id}`}>
+              <Button variant="outline">Continuar edição</Button>
+            </Link>
+          )}
+          <Button variant="danger" onClick={() => setConfirmarExclusao(true)}>
+            Excluir
+          </Button>
+        </div>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Atualizar status</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-wrap gap-2">
+          {STATUS_TRANSICOES.map((s) => (
+            <Button
+              key={s}
+              size="sm"
+              variant={formulario.status === s ? 'primary' : 'outline'}
+              onClick={() => mudarStatus(s)}
+            >
+              {s === 'enviado' && 'Marcar Enviado'}
+              {s === 'em_analise' && 'Em Análise'}
+              {s === 'aprovado' && 'Aprovar'}
+              {s === 'reprovado' && 'Reprovar'}
+            </Button>
+          ))}
+        </CardContent>
+      </Card>
+
+      <StepRevisao formulario={formulario} />
+
+      {formulario.imagens.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Imagens</CardTitle>
+          </CardHeader>
+          <CardContent className="grid grid-cols-3 gap-3 sm:grid-cols-4">
+            {formulario.imagens.map((img) => (
+              <img key={img.id} src={img.dataUrl} alt={img.nome} className="aspect-square rounded-xl border border-brand-100 object-cover" />
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {formulario.assinaturaDataUrl && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Assinatura</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <img src={formulario.assinaturaDataUrl} alt="Assinatura digital" className="h-32 rounded-xl border border-brand-100 bg-white" />
+          </CardContent>
+        </Card>
+      )}
+
+      {formulario.observacoes && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Observações</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-brand-800">{formulario.observacoes}</p>
+          </CardContent>
+        </Card>
+      )}
+
+      <p className="text-xs text-brand-400">
+        Criado em {formatarData(formulario.createdAt.slice(0, 10))} <Badge tone="outline">{formulario.id.slice(0, 8)}</Badge>
+      </p>
+
+      <Dialog
+        open={confirmarExclusao}
+        onClose={() => setConfirmarExclusao(false)}
+        title="Excluir formulário?"
+        description="Esta ação não pode ser desfeita. O formulário será removido permanentemente."
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setConfirmarExclusao(false)}>
+              Cancelar
+            </Button>
+            <Button variant="danger" onClick={excluir}>
+              Excluir
+            </Button>
+          </>
+        }
+      />
+    </div>
+  )
+}
