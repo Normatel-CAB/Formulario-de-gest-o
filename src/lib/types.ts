@@ -1,3 +1,31 @@
+export type Papel = 'administrador' | 'operador' | 'visualizador'
+
+export const PAPEL_LABELS: Record<Papel, string> = {
+  administrador: 'Administrador',
+  operador: 'Operador',
+  visualizador: 'Visualizador',
+}
+
+export type StatusUsuario = 'ativo' | 'inativo'
+
+export interface Usuario {
+  id: string
+  nome: string
+  email: string
+  cpf: string
+  matricula: string
+  cargo: string
+  papel: Papel
+  status: StatusUsuario
+  criadoEm: string
+  ultimoAcesso?: string
+}
+
+export interface Cargo {
+  id: string
+  nome: string
+}
+
 export type FormStatus = 'rascunho' | 'enviado' | 'em_analise' | 'aprovado' | 'reprovado'
 
 export const STATUS_LABELS: Record<FormStatus, string> = {
@@ -89,6 +117,8 @@ export interface FormularioAvaliacao {
   localizacao?: LocalizacaoGPS
   assinaturaDataUrl?: string
   syncPending?: boolean
+  criadoPorId?: string
+  criadoPorNome?: string
 }
 
 export interface DashboardIndicadores {

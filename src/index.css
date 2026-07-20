@@ -3,21 +3,28 @@
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
 
-  --color-brand-50: #eefbf3;
-  --color-brand-100: #d5f5e0;
-  --color-brand-200: #ade9c3;
-  --color-brand-300: #78d59d;
-  --color-brand-400: #46bb79;
-  --color-brand-500: #269e5d;
-  --color-brand-600: #167f4a;
-  --color-brand-700: #14653d;
-  --color-brand-800: #145033;
-  --color-brand-900: #0f5132;
-  --color-brand-950: #062615;
+  --color-brand-50: #e6f5ef;
+  --color-brand-100: #c3e8d9;
+  --color-brand-200: #93d6bc;
+  --color-brand-300: #5cc09b;
+  --color-brand-400: #2fa87e;
+  --color-brand-500: #14915f;
+  --color-brand-600: #0b6e4f;
+  --color-brand-700: #095c42;
+  --color-brand-800: #094a37;
+  --color-brand-900: #073a2c;
+  --color-brand-950: #04241b;
 
-  --color-surface: #ffffff;
-  --color-surface-subtle: #f5faf7;
-  --color-surface-muted: #eef5f1;
+  --color-bg: #0f0f0f;
+  --color-surface: #181818;
+  --color-surface-2: #1f1f1f;
+  --color-surface-3: #232323;
+  --color-border: #2a2a2a;
+  --color-border-light: #333333;
+
+  --color-ink: #f5f5f5;
+  --color-ink-muted: #a3a3a3;
+  --color-ink-subtle: #737373;
 
   --animate-fade-in: fade-in 0.35s ease-out;
   --animate-slide-up: slide-up 0.35s cubic-bezier(0.16, 1, 0.3, 1);
@@ -38,7 +45,7 @@
 }
 
 :root {
-  color-scheme: light;
+  color-scheme: dark;
 }
 
 * {
@@ -50,12 +57,12 @@ html, body, #root {
 }
 
 body {
-  @apply bg-surface-subtle text-brand-950 antialiased m-0;
+  @apply bg-bg text-ink antialiased m-0;
   font-feature-settings: "cv11", "ss01";
 }
 
 ::selection {
-  @apply bg-brand-300/50;
+  @apply bg-brand-500/40 text-white;
 }
 
 ::-webkit-scrollbar {
@@ -66,14 +73,14 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  @apply bg-brand-200 rounded-full;
+  @apply bg-surface-3 rounded-full;
 }
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-brand-300;
+  @apply bg-border-light;
 }
 
 :focus-visible {
-  @apply outline-2 outline-offset-2 outline-brand-500 rounded-md;
+  @apply outline-2 outline-offset-2 outline-brand-400 rounded-md;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -87,4 +94,11 @@ body {
 
 .signature-canvas {
   touch-action: none;
+}
+
+input[type='date']::-webkit-calendar-picker-indicator,
+input[type='time']::-webkit-calendar-picker-indicator {
+  filter: invert(1) brightness(1.6);
+  opacity: 0.8;
+  cursor: pointer;
 }

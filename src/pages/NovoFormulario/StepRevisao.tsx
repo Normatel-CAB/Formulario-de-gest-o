@@ -62,7 +62,7 @@ export function StepRevisao({ formulario }: { formulario: FormularioAvaliacao })
         </CardHeader>
         <CardContent className="space-y-3">
           {qtdDiasAtivos.length === 0 && agendamentosAtivos.length === 0 && descricoesAtivas.length === 0 ? (
-            <p className="text-sm text-brand-500">Nenhuma necessidade marcada como "Sim".</p>
+            <p className="text-sm text-ink-muted">Nenhuma necessidade marcada como "Sim".</p>
           ) : (
             <div className="flex flex-wrap gap-2">
               {qtdDiasAtivos.map(([key, label]) => (
@@ -87,7 +87,7 @@ export function StepRevisao({ formulario }: { formulario: FormularioAvaliacao })
         <CardHeader>
           <CardTitle>Anexos</CardTitle>
         </CardHeader>
-        <CardContent className="flex flex-wrap gap-3 text-sm text-brand-700">
+        <CardContent className="flex flex-wrap gap-3 text-sm text-ink-muted">
           <span>{formulario.imagens.length} imagem(ns)</span>
           <span>{formulario.localizacao ? 'Localização capturada' : 'Sem localização'}</span>
           <span>{formulario.assinaturaDataUrl ? 'Assinatura registrada' : 'Sem assinatura'}</span>
@@ -100,8 +100,8 @@ export function StepRevisao({ formulario }: { formulario: FormularioAvaliacao })
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <p className="text-xs font-medium uppercase tracking-wide text-brand-500">{label}</p>
-      <p className="text-sm font-medium text-brand-950">{value || '—'}</p>
+      <p className="text-xs font-medium uppercase tracking-wide text-ink-subtle">{label}</p>
+      <p className="text-sm font-medium text-ink">{value || '—'}</p>
     </div>
   )
 }

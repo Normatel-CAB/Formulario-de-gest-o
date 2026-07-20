@@ -60,13 +60,18 @@ export function LocationPicker({
 
       {value && (
         <div className="mt-3 space-y-2">
-          <p className="text-xs text-brand-600">
+          <p className="text-xs text-brand-400">
             Lat: {value.latitude.toFixed(6)} · Lng: {value.longitude.toFixed(6)}
             {value.precisao && ` · Precisão ±${Math.round(value.precisao)}m`}
           </p>
           {mapSrc && (
-            <div className="overflow-hidden rounded-xl border border-brand-100">
-              <iframe title="Mapa da localização" src={mapSrc} className="h-56 w-full" loading="lazy" />
+            <div className="overflow-hidden rounded-xl border border-border">
+              <iframe
+                title="Mapa da localização"
+                src={mapSrc}
+                className="h-56 w-full [filter:invert(0.92)_hue-rotate(180deg)_brightness(0.95)_contrast(0.9)]"
+                loading="lazy"
+              />
             </div>
           )}
         </div>

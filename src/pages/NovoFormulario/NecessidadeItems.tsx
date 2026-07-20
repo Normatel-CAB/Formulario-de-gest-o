@@ -14,7 +14,7 @@ function CondicionalWrapper({ show, children }: { show: boolean; children: React
           transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
           className="overflow-hidden"
         >
-          <div className="mt-3 rounded-xl bg-brand-50/60 p-3">{children}</div>
+          <div className="mt-3 rounded-xl bg-surface-2 p-3">{children}</div>
         </motion.div>
       )}
     </AnimatePresence>
@@ -33,7 +33,7 @@ export function QtdDiasField({
   fimDeSemana?: boolean
 }) {
   return (
-    <div className="border-b border-brand-50 py-2 last:border-none">
+    <div className="border-b border-border py-2 last:border-none">
       <SimNaoField label={label} checked={value.necessario} onChange={(necessario) => onChange({ ...value, necessario })} />
       <CondicionalWrapper show={value.necessario}>
         <div className="grid gap-3 sm:grid-cols-2">
@@ -69,7 +69,7 @@ export function AgendamentoField({
   onChange: (v: Agendamento) => void
 }) {
   return (
-    <div className="border-b border-brand-50 py-2 last:border-none">
+    <div className="border-b border-border py-2 last:border-none">
       <SimNaoField label={label} checked={value.necessario} onChange={(necessario) => onChange({ ...value, necessario })} />
       <CondicionalWrapper show={value.necessario}>
         <Input
@@ -95,7 +95,7 @@ export function DescricaoItemField({
   onChange: (v: DescricaoItem) => void
 }) {
   return (
-    <div className="border-b border-brand-50 py-2 last:border-none">
+    <div className="border-b border-border py-2 last:border-none">
       <SimNaoField label={label} checked={value.necessario} onChange={(necessario) => onChange({ ...value, necessario })} />
       <CondicionalWrapper show={value.necessario}>
         <Textarea

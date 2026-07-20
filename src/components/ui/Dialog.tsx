@@ -36,7 +36,7 @@ export function Dialog({ open, onClose, title, description, children, footer, si
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="absolute inset-0 bg-brand-950/40 backdrop-blur-[2px]"
+            className="absolute inset-0 bg-black/60 backdrop-blur-[2px]"
             onClick={onClose}
           />
           <motion.div
@@ -49,14 +49,14 @@ export function Dialog({ open, onClose, title, description, children, footer, si
             role="dialog"
             aria-modal="true"
             aria-labelledby={title ? 'dialog-title' : undefined}
-            className={`relative z-10 max-h-[85vh] w-full ${sizeClasses[size]} overflow-y-auto rounded-t-2xl bg-white p-6 shadow-2xl sm:rounded-2xl`}
+            className={`relative z-10 max-h-[85vh] w-full ${sizeClasses[size]} overflow-y-auto rounded-t-2xl border border-border bg-surface p-6 shadow-2xl shadow-black/50 sm:rounded-2xl`}
           >
             {title && (
-              <h2 id="dialog-title" className="text-lg font-semibold text-brand-950">
+              <h2 id="dialog-title" className="text-lg font-semibold text-ink">
                 {title}
               </h2>
             )}
-            {description && <p className="mt-1 text-sm text-brand-700/70">{description}</p>}
+            {description && <p className="mt-1 text-sm text-ink-muted">{description}</p>}
             <div className={title || description ? 'mt-4' : ''}>{children}</div>
             {footer && <div className="mt-6 flex justify-end gap-2">{footer}</div>}
           </motion.div>

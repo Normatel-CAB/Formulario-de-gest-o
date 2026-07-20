@@ -4,15 +4,18 @@ import { BrowserRouter } from 'react-router-dom'
 import './index.css'
 import App from './App.tsx'
 import { useSettingsStore } from './store/settingsStore'
+import { useAuthStore } from './store/authStore'
 import { iniciarSincronizacaoAutomatica } from './lib/sync'
 
 function Root() {
-  const init = useSettingsStore((s) => s.init)
+  const initSettings = useSettingsStore((s) => s.init)
+  const initAuth = useAuthStore((s) => s.inicializar)
 
   useEffect(() => {
-    void init()
+    void initSettings()
+    void initAuth()
     return iniciarSincronizacaoAutomatica()
-  }, [init])
+  }, [initSettings, initAuth])
 
   return (
     <BrowserRouter>

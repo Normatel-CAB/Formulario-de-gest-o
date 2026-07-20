@@ -3,11 +3,11 @@ import { STATUS_LABELS } from '../../lib/types'
 import { cn } from '../../lib/cn'
 
 const toneClasses: Record<FormStatus, string> = {
-  rascunho: 'bg-slate-100 text-slate-600',
-  enviado: 'bg-sky-100 text-sky-700',
-  em_analise: 'bg-amber-100 text-amber-700',
-  aprovado: 'bg-brand-100 text-brand-700',
-  reprovado: 'bg-rose-100 text-rose-700',
+  rascunho: 'bg-white/10 text-ink-muted',
+  enviado: 'bg-sky-500/15 text-sky-300',
+  em_analise: 'bg-amber-500/15 text-amber-300',
+  aprovado: 'bg-brand-500/15 text-brand-300',
+  reprovado: 'bg-rose-500/15 text-rose-300',
 }
 
 const dotClasses: Record<FormStatus, string> = {

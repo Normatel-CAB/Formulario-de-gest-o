@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { criarFormularioVazio } from '../../lib/factory'
 import type { FormularioAvaliacao, NecessidadesExecucao } from '../../lib/types'
 import { useFormsStore } from '../../store/formsStore'
+import { useAuthStore } from '../../store/authStore'
 import { Stepper } from '../../components/ui/Stepper'
 import { Button } from '../../components/ui/Button'
 import { toast } from '../../store/toastStore'
@@ -22,8 +23,13 @@ export function NovoFormulario() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { obter, salvarRascunho, enviar } = useFormsStore()
+  const usuario = useAuthStore((s) => s.usuario)
 
-  const [formulario, setFormulario] = useState<FormularioAvaliacao>(criarFormularioVazio)
+  const [formulario, setFormulario] = useState<FormularioAvaliacao>(() => {
+    const vazio = criarFormularioVazio()
+    if (usuario) return { ...vazio, criadoPorId: usuario.id, criadoPorNome: usuario.nome }
+    return vazio
+  })
   const [step, setStep] = useState(0)
   const [loaded, setLoaded] = useState(!id)
   const [enviando, setEnviando] = useState(false)
@@ -93,11 +99,11 @@ export function NovoFormulario() {
   return (
     <div className="animate-fade-in space-y-6">
       <div>
-        <h2 className="text-xl font-bold text-brand-950">Nova Ficha Técnica de Avaliação</h2>
-        <p className="text-sm text-brand-700/70">Preencha as etapas abaixo. Seu progresso é salvo automaticamente.</p>
+        <h2 className="text-xl font-bold text-ink">Nova Ficha Técnica de Avaliação</h2>
+        <p className="text-sm text-ink-muted">Preencha as etapas abaixo. Seu progresso é salvo automaticamente.</p>
       </div>
 
-      <div className="rounded-2xl border border-brand-100 bg-white p-4 sm:p-5">
+      <div className="rounded-2xl border border-border bg-surface p-4 sm:p-5">
         <Stepper steps={STEPS} current={step} onStepClick={setStep} />
       </div>
 
@@ -106,7 +112,7 @@ export function NovoFormulario() {
       {step === 2 && <StepApoioAnexos formulario={formulario} onPatch={patch} />}
       {step === 3 && <StepRevisao formulario={formulario} />}
 
-      <div className="sticky bottom-16 z-20 flex items-center justify-between gap-2 rounded-2xl border border-brand-100 bg-white/95 p-3 shadow-lg shadow-brand-950/5 backdrop-blur sm:bottom-0">
+      <div className="sticky bottom-16 z-20 flex items-center justify-between gap-2 rounded-2xl border border-border bg-surface/95 p-3 shadow-lg shadow-black/30 backdrop-blur sm:bottom-0">
         <Button variant="ghost" onClick={() => setStep((s) => Math.max(s - 1, 0))} disabled={step === 0}>
           Voltar
         </Button>

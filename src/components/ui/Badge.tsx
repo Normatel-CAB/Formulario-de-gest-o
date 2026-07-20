@@ -8,12 +8,12 @@ interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
 }
 
 const toneClasses: Record<BadgeTone, string> = {
-  brand: 'bg-brand-100 text-brand-700',
-  slate: 'bg-slate-100 text-slate-600',
-  sky: 'bg-sky-100 text-sky-700',
-  amber: 'bg-amber-100 text-amber-700',
-  rose: 'bg-rose-100 text-rose-700',
-  outline: 'border border-brand-200 text-brand-700 bg-transparent',
+  brand: 'bg-brand-500/15 text-brand-300',
+  slate: 'bg-white/10 text-ink-muted',
+  sky: 'bg-sky-500/15 text-sky-300',
+  amber: 'bg-amber-500/15 text-amber-300',
+  rose: 'bg-rose-500/15 text-rose-300',
+  outline: 'border border-border-light text-ink-muted bg-transparent',
 }
 
 export function Badge({ className, tone = 'brand', ...props }: BadgeProps) {

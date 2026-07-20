@@ -54,8 +54,8 @@ export function Dashboard() {
     <div className="animate-fade-in space-y-6">
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
         <div>
-          <h2 className="text-xl font-bold text-brand-950">Visão geral</h2>
-          <p className="text-sm text-brand-700/70">Acompanhe os indicadores das fichas técnicas de avaliação.</p>
+          <h2 className="text-xl font-bold text-ink">Visão geral</h2>
+          <p className="text-sm text-ink-muted">Acompanhe os indicadores das fichas técnicas de avaliação.</p>
         </div>
         <Link to="/novo">
           <Button>
@@ -73,8 +73,8 @@ export function Dashboard() {
           : indicadores.map((ind) => (
               <Card key={ind.key} className="animate-slide-up">
                 <CardContent className="p-4">
-                  <p className="text-xs font-medium uppercase tracking-wide text-brand-500">{ind.label}</p>
-                  <p className="mt-2 text-3xl font-bold text-brand-950">{stats[ind.key]}</p>
+                  <p className="text-xs font-medium uppercase tracking-wide text-ink-subtle">{ind.label}</p>
+                  <p className="mt-2 text-3xl font-bold text-ink">{stats[ind.key]}</p>
                 </CardContent>
               </Card>
             ))}
@@ -115,16 +115,16 @@ export function Dashboard() {
               <Link
                 key={f.id}
                 to={`/formulario/${f.id}`}
-                className="rounded-xl border border-brand-100 p-4 transition-colors duration-150 hover:border-brand-300 hover:bg-brand-50/50"
+                className="rounded-xl border border-border p-4 transition-colors duration-150 hover:border-brand-600/50 hover:bg-surface-2"
               >
                 <div className="flex items-start justify-between gap-2">
-                  <p className="text-sm font-semibold text-brand-950 line-clamp-1">
+                  <p className="text-sm font-semibold text-ink line-clamp-1">
                     {f.infoGerais.localAtividade || 'Atividade sem nome'}
                   </p>
                   <StatusBadge status={f.status} />
                 </div>
-                <p className="mt-1 text-xs text-brand-500">Responsável: {f.infoGerais.responsavel || '—'}</p>
-                <p className="mt-0.5 text-xs text-brand-400">{formatarDataHora(f.updatedAt)}</p>
+                <p className="mt-1 text-xs text-ink-muted">Responsável: {f.infoGerais.responsavel || '—'}</p>
+                <p className="mt-0.5 text-xs text-ink-subtle">{formatarDataHora(f.updatedAt)}</p>
               </Link>
             ))}
           </CardContent>
