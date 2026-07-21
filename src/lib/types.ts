@@ -6,6 +6,8 @@ export const PAPEL_LABELS: Record<Papel, string> = {
   visualizador: 'Visualizador',
 }
 
+export const PROJETOS_PADRAO = ['BASE UTE E TAPERA', 'ÁREAS EXTERNAS'] as const
+
 export type StatusUsuario = 'ativo' | 'inativo'
 
 export interface Usuario {
@@ -16,6 +18,7 @@ export interface Usuario {
   matricula: string
   cargo: string
   papel: Papel
+  projeto: string
   status: StatusUsuario
   criadoEm: string
   ultimoAcesso?: string
@@ -49,28 +52,6 @@ export interface Cargo {
   atualizadoEm: string
 }
 
-export type AcaoAuditoria =
-  | 'cargo_criado'
-  | 'cargo_editado'
-  | 'cargo_excluido'
-  | 'cargo_duplicado'
-  | 'cargo_status_alterado'
-  | 'funcao_criada'
-  | 'funcao_editada'
-  | 'funcao_excluida'
-  | 'permissoes_alteradas'
-
-export interface RegistroAuditoria {
-  id: string
-  acao: AcaoAuditoria
-  entidade: string
-  entidadeNome: string
-  detalhes: string
-  usuarioId: string
-  usuarioNome: string
-  criadoEm: string
-}
-
 export type FormStatus = 'rascunho' | 'enviado' | 'em_analise' | 'aprovado' | 'reprovado'
 
 export const STATUS_LABELS: Record<FormStatus, string> = {
@@ -100,6 +81,16 @@ export interface Agendamento {
   data?: string
 }
 
+export interface AgendamentoVisitaSMS {
+  necessario: boolean
+  data?: string
+  hora?: string
+  tecnicoId?: string
+  tecnicoNome?: string
+  tecnicoEmail?: string
+  observacoes?: string
+}
+
 export interface DescricaoItem {
   necessario: boolean
   descricao?: string
@@ -111,7 +102,7 @@ export interface NecessidadesExecucao {
   comunicacoesOperantes: QtdDias
   visitaTecnica: Agendamento
   montagemAndaime: Agendamento
-  visitaSMS: Agendamento
+  visitaSMS: AgendamentoVisitaSMS
   caminhaoMunck: Agendamento
   veiculo: Agendamento
   libra: Agendamento
@@ -154,6 +145,7 @@ export interface FormularioAvaliacao {
   createdAt: string
   updatedAt: string
   status: FormStatus
+  projeto: string
   infoGerais: InfoGerais
   necessidades: NecessidadesExecucao
   descricaoApoio: string
@@ -172,4 +164,32 @@ export interface DashboardIndicadores {
   emAnalise: number
   aprovados: number
   reprovados: number
+}
+
+export interface ModeloEmail {
+  id: string
+  nome: string
+  assunto: string
+  corpo: string
+  criadoEm: string
+}
+
+export interface AnexoEmail {
+  id: string
+  nome: string
+  dataUrl: string
+}
+
+export interface EmailEnviado {
+  id: string
+  destinatarios: string[]
+  cc: string[]
+  cco: string[]
+  assunto: string
+  corpo: string
+  anexos: { nome: string }[]
+  formularioId?: string
+  enviadoPorId: string
+  enviadoPorNome: string
+  criadoEm: string
 }

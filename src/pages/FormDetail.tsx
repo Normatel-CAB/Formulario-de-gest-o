@@ -10,6 +10,7 @@ import { Badge } from '../components/ui/Badge'
 import { Dialog } from '../components/ui/Dialog'
 import { toast } from '../store/toastStore'
 import { formatarData, formatarDataHora } from '../lib/format'
+import { gerarPdfFormulario, nomeArquivoPdf } from '../lib/pdf'
 import { StepRevisao } from './NovoFormulario/StepRevisao'
 
 const STATUS_TRANSICOES: FormStatus[] = ['enviado', 'em_analise', 'aprovado', 'reprovado']
@@ -27,7 +28,9 @@ export function FormDetail() {
     void obter(id).then((f) => setFormulario(f ?? null))
   }, [id, obter])
 
-  if (!formulario) {
+  const semAcesso = formulario && usuario?.papel !== 'administrador' && formulario.projeto !== usuario?.projeto
+
+  if (!formulario || semAcesso) {
     return (
       <div className="animate-fade-in">
         <p className="text-sm text-ink-muted">Formulário não encontrado.</p>
@@ -58,6 +61,18 @@ export function FormDetail() {
     navigate('/historico')
   }
 
+  function baixarPdf() {
+    if (!formulario) return
+    const blob = gerarPdfFormulario(formulario)
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = nomeArquivoPdf(formulario)
+    link.click()
+    URL.revokeObjectURL(url)
+    toast({ variant: 'success', title: 'PDF exportado com sucesso' })
+  }
+
   return (
     <div className="animate-fade-in space-y-5">
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
@@ -70,20 +85,24 @@ export function FormDetail() {
             Nº {formulario.infoGerais.numeroSolicitacao || '—'} · Atualizado em {formatarDataHora(formulario.updatedAt)}
           </p>
         </div>
-        {!somenteLeitura && (
-          <div className="flex gap-2">
-            {podeEditar && (
-              <Link to={`/novo/${formulario.id}`}>
-                <Button variant="outline">Continuar edição</Button>
-              </Link>
-            )}
-            {podeExcluir && (
-              <Button variant="danger" onClick={() => setConfirmarExclusao(true)}>
-                Excluir
-              </Button>
-            )}
-          </div>
-        )}
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={baixarPdf}>
+            Exportar PDF
+          </Button>
+          <Link to={`/emails?formularioId=${formulario.id}`}>
+            <Button variant="outline">Enviar por e-mail</Button>
+          </Link>
+          {!somenteLeitura && podeEditar && (
+            <Link to={`/novo/${formulario.id}`}>
+              <Button variant="outline">Continuar edição</Button>
+            </Link>
+          )}
+          {!somenteLeitura && podeExcluir && (
+            <Button variant="danger" onClick={() => setConfirmarExclusao(true)}>
+              Excluir
+            </Button>
+          )}
+        </div>
       </div>
 
       {podeAlterarStatus && (

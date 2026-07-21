@@ -1,45 +1,53 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useFormsStore } from '../../store/formsStore'
 import { useUsersStore } from '../../store/usersStore'
 import { useCargosStore } from '../../store/cargosStore'
-import { useAuditoriaStore } from '../../store/auditoriaStore'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
+import { Select } from '../../components/ui/Field'
 import { StatusBadge } from '../../components/ui/StatusBadge'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { RbacIcon } from '../../components/ui/RbacIcon'
 import { formatarDataHora } from '../../lib/format'
+import { PROJETOS_PADRAO } from '../../lib/types'
 
 export function Administracao() {
   const { formularios, loading, carregar, atualizarStatus } = useFormsStore()
   const { usuarios, carregar: carregarUsuarios } = useUsersStore()
   const { cargos, carregar: carregarCargos } = useCargosStore()
-  const { registros, carregar: carregarAuditoria } = useAuditoriaStore()
+  const [filtroProjeto, setFiltroProjeto] = useState('')
 
   useEffect(() => {
     void carregar()
     void carregarUsuarios()
     void carregarCargos()
-    void carregarAuditoria()
-  }, [carregar, carregarUsuarios, carregarCargos, carregarAuditoria])
+  }, [carregar, carregarUsuarios, carregarCargos])
 
-  const pendentes = useMemo(() => formularios.filter((f) => f.status === 'enviado' || f.status === 'em_analise'), [formularios])
+  const pendentes = useMemo(
+    () =>
+      formularios.filter(
+        (f) => (f.status === 'enviado' || f.status === 'em_analise') && (!filtroProjeto || f.projeto === filtroProjeto),
+      ),
+    [formularios, filtroProjeto],
+  )
 
   return (
     <div className="animate-fade-in space-y-5">
       <div>
         <h2 className="text-xl font-bold text-ink">Administração</h2>
-        <p className="text-sm text-ink-muted">Visão geral do sistema, aprovações pendentes e auditoria de permissões.</p>
+        <p className="text-sm text-ink-muted">Visão geral do sistema e aprovações pendentes.</p>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-3">
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-xs font-medium uppercase tracking-wide text-ink-subtle">Total de usuários</p>
-            <p className="mt-2 text-3xl font-bold text-ink">{usuarios.length}</p>
-          </CardContent>
-        </Card>
+        <Link to="/usuarios">
+          <Card className="h-full transition-colors hover:border-brand-600/50 hover:bg-surface-2">
+            <CardContent className="p-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-ink-subtle">Total de usuários</p>
+              <p className="mt-2 text-3xl font-bold text-ink">{usuarios.length}</p>
+            </CardContent>
+          </Card>
+        </Link>
         <Card>
           <CardContent className="p-4">
             <p className="text-xs font-medium uppercase tracking-wide text-ink-subtle">Aguardando aprovação</p>
@@ -60,16 +68,51 @@ export function Administracao() {
       </div>
 
       <Card>
+        <CardContent className="flex flex-wrap gap-2 p-4">
+          <Link to="/usuarios">
+            <Button variant="outline" size="sm">
+              Usuários
+            </Button>
+          </Link>
+          <Link to="/administracao/cargos">
+            <Button variant="outline" size="sm">
+              Cargos
+            </Button>
+          </Link>
+          <Link to="/administracao/permissoes">
+            <Button variant="outline" size="sm">
+              Permissões
+            </Button>
+          </Link>
+          <Link to="/configuracoes">
+            <Button variant="outline" size="sm">
+              Configurações
+            </Button>
+          </Link>
+        </CardContent>
+      </Card>
+
+      <Card>
         <CardHeader>
           <div>
             <CardTitle>Aprovações pendentes</CardTitle>
             <CardDescription>Formulários enviados ou em análise aguardando decisão.</CardDescription>
           </div>
-          <Link to="/historico">
-            <Button variant="ghost" size="sm">
-              Ver histórico completo
-            </Button>
-          </Link>
+          <div className="flex items-center gap-2">
+            <Select value={filtroProjeto} onChange={(e) => setFiltroProjeto(e.target.value)} aria-label="Filtrar por projeto" className="w-48">
+              <option value="">Todos os projetos</option>
+              {PROJETOS_PADRAO.map((p) => (
+                <option key={p} value={p}>
+                  {p}
+                </option>
+              ))}
+            </Select>
+            <Link to="/historico">
+              <Button variant="ghost" size="sm">
+                Ver histórico completo
+              </Button>
+            </Link>
+          </div>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -89,7 +132,7 @@ export function Administracao() {
                       <StatusBadge status={f.status} />
                     </div>
                     <p className="text-xs text-ink-muted">
-                      Nº {f.infoGerais.numeroSolicitacao || '—'} · {formatarDataHora(f.updatedAt)}
+                      Nº {f.infoGerais.numeroSolicitacao || '—'} · {f.projeto || '—'} · {formatarDataHora(f.updatedAt)}
                     </p>
                   </div>
                   <div className="flex shrink-0 gap-2">
@@ -102,41 +145,6 @@ export function Administracao() {
                     <Button size="sm" variant="danger" onClick={() => atualizarStatus(f.id, 'reprovado')}>
                       Reprovar
                     </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <div>
-            <CardTitle>Auditoria de permissões</CardTitle>
-            <CardDescription>Últimas alterações em cargos, funções e permissões.</CardDescription>
-          </div>
-          <Link to="/administracao/cargos">
-            <Button variant="ghost" size="sm">
-              Gerenciar cargos
-            </Button>
-          </Link>
-        </CardHeader>
-        <CardContent>
-          {registros.length === 0 ? (
-            <EmptyState title="Nenhum registro de auditoria" description="Alterações em cargos e permissões aparecerão aqui." />
-          ) : (
-            <div className="space-y-2">
-              {registros.slice(0, 8).map((r) => (
-                <div key={r.id} className="flex items-start gap-3 rounded-xl border border-border p-3">
-                  <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-500/15 text-brand-400">
-                    <RbacIcon nome="clipboard" className="h-3.5 w-3.5" />
-                  </span>
-                  <div className="min-w-0">
-                    <p className="text-sm text-ink">{r.detalhes}</p>
-                    <p className="text-xs text-ink-subtle">
-                      {r.usuarioNome} · {formatarDataHora(r.criadoEm)}
-                    </p>
                   </div>
                 </div>
               ))}

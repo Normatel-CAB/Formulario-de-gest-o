@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useCargosStore } from '../../store/cargosStore'
 import { useFuncoesStore } from '../../store/funcoesStore'
 import { useUsersStore } from '../../store/usersStore'
-import { useAuthStore } from '../../store/authStore'
 import { Card, CardContent } from '../../components/ui/Card'
 import { Input, Select, Textarea } from '../../components/ui/Field'
 import { Button } from '../../components/ui/Button'
@@ -14,7 +14,7 @@ import { Checkbox } from '../../components/ui/Checkbox'
 import { RbacIcon } from '../../components/ui/RbacIcon'
 import { toast } from '../../store/toastStore'
 import type { Cargo, Funcao, StatusRegistro } from '../../lib/types'
-import { CORES_CARGO, ICONES_DISPONIVEIS, MODULOS_PERMISSOES } from '../../lib/permissoes'
+import { CORES_CARGO, ICONES_DISPONIVEIS } from '../../lib/permissoes'
 import { cn } from '../../lib/cn'
 
 interface CargoFormState {
@@ -35,27 +35,10 @@ const CARGO_INICIAL: CargoFormState = {
   permissoes: [],
 }
 
-interface FuncaoFormState {
-  nome: string
-  categoria: string
-  descricao: string
-  icone: string
-  status: StatusRegistro
-}
-
-const FUNCAO_INICIAL: FuncaoFormState = {
-  nome: '',
-  categoria: MODULOS_PERMISSOES[0].categoria,
-  descricao: '',
-  icone: 'check-circle',
-  status: 'ativo',
-}
-
 export function Cargos() {
   const { cargos, loading, carregar, criar, atualizar, duplicar, alternarStatus, remover } = useCargosStore()
-  const { funcoes, carregar: carregarFuncoes, criar: criarFuncao, atualizar: atualizarFuncao, remover: removerFuncao } = useFuncoesStore()
+  const { funcoes, carregar: carregarFuncoes } = useFuncoesStore()
   const { usuarios, carregar: carregarUsuarios } = useUsersStore()
-  const usuarioLogado = useAuthStore((s) => s.usuario)
 
   const [busca, setBusca] = useState('')
   const [filtroStatus, setFiltroStatus] = useState<StatusRegistro | 'todos'>('todos')
@@ -67,25 +50,13 @@ export function Cargos() {
   const [salvandoCargo, setSalvandoCargo] = useState(false)
   const [excluindoCargo, setExcluindoCargo] = useState<Cargo | null>(null)
 
-  const [dialogFuncaoAberto, setDialogFuncaoAberto] = useState(false)
-  const [editandoFuncaoId, setEditandoFuncaoId] = useState<string | null>(null)
-  const [formFuncao, setFormFuncao] = useState<FuncaoFormState>(FUNCAO_INICIAL)
-  const [errosFuncao, setErrosFuncao] = useState<Record<string, string>>({})
-  const [salvandoFuncao, setSalvandoFuncao] = useState(false)
-  const [excluindoFuncao, setExcluindoFuncao] = useState<Funcao | null>(null)
-  const [gerenciarFuncoesAberto, setGerenciarFuncoesAberto] = useState(false)
-
   useEffect(() => {
     void carregar()
     void carregarFuncoes()
     void carregarUsuarios()
   }, [carregar, carregarFuncoes, carregarUsuarios])
 
-  const categorias = useMemo(() => {
-    const nomes = new Set<string>(MODULOS_PERMISSOES.map((m) => m.categoria))
-    funcoes.forEach((f) => nomes.add(f.categoria))
-    return Array.from(nomes)
-  }, [funcoes])
+  const categorias = useMemo(() => Array.from(new Set(funcoes.map((f) => f.categoria))), [funcoes])
 
   const funcoesPorCategoria = useMemo(() => {
     const mapa = new Map<string, Funcao[]>()
@@ -141,10 +112,10 @@ export function Cargos() {
     setSalvandoCargo(true)
     try {
       if (editandoCargoId) {
-        await atualizar(editandoCargoId, { ...formCargo }, usuarioLogado)
+        await atualizar(editandoCargoId, { ...formCargo })
         toast({ variant: 'success', title: 'Cargo atualizado' })
       } else {
-        await criar({ ...formCargo }, usuarioLogado)
+        await criar({ ...formCargo })
         toast({ variant: 'success', title: 'Cargo criado com sucesso' })
       }
       setDialogCargoAberto(false)
@@ -154,18 +125,18 @@ export function Cargos() {
   }
 
   async function duplicarCargo(c: Cargo) {
-    await duplicar(c.id, usuarioLogado)
+    await duplicar(c.id)
     toast({ variant: 'success', title: `Cargo "${c.nome}" duplicado` })
   }
 
   async function alternarStatusCargo(c: Cargo) {
-    await alternarStatus(c.id, c.status === 'ativo' ? 'inativo' : 'ativo', usuarioLogado)
+    await alternarStatus(c.id, c.status === 'ativo' ? 'inativo' : 'ativo')
   }
 
   async function confirmarExclusaoCargo() {
     if (!excluindoCargo) return
     const emUso = (usuariosPorCargo.get(excluindoCargo.nome) ?? 0) > 0
-    const resultado = await remover(excluindoCargo.id, usuarioLogado, emUso)
+    const resultado = await remover(excluindoCargo.id, emUso)
     if (resultado.ok) {
       toast({ variant: 'success', title: 'Cargo excluído' })
     } else {
@@ -191,70 +162,20 @@ export function Cargos() {
     }))
   }
 
-  function abrirCriacaoFuncao() {
-    setEditandoFuncaoId(null)
-    setFormFuncao(FUNCAO_INICIAL)
-    setErrosFuncao({})
-    setDialogFuncaoAberto(true)
-  }
-
-  function abrirEdicaoFuncao(f: Funcao) {
-    setEditandoFuncaoId(f.id)
-    setFormFuncao({ nome: f.nome, categoria: f.categoria, descricao: f.descricao, icone: f.icone, status: f.status })
-    setErrosFuncao({})
-    setDialogFuncaoAberto(true)
-  }
-
-  function validarFuncao() {
-    const erros: Record<string, string> = {}
-    if (!formFuncao.nome.trim()) erros.nome = 'Informe o nome da função.'
-    if (!formFuncao.categoria.trim()) erros.categoria = 'Informe a categoria.'
-    setErrosFuncao(erros)
-    return Object.keys(erros).length === 0
-  }
-
-  async function salvarFuncao() {
-    if (!validarFuncao()) return
-    setSalvandoFuncao(true)
-    try {
-      if (editandoFuncaoId) {
-        await atualizarFuncao(editandoFuncaoId, { ...formFuncao }, usuarioLogado)
-        toast({ variant: 'success', title: 'Função atualizada' })
-      } else {
-        await criarFuncao({ ...formFuncao }, usuarioLogado)
-        toast({ variant: 'success', title: 'Função criada com sucesso' })
-      }
-      setDialogFuncaoAberto(false)
-    } finally {
-      setSalvandoFuncao(false)
-    }
-  }
-
-  async function confirmarExclusaoFuncao() {
-    if (!excluindoFuncao) return
-    await removerFuncao(excluindoFuncao.id, usuarioLogado)
-    toast({ variant: 'success', title: 'Função excluída' })
-    setExcluindoFuncao(null)
-  }
-
   return (
     <div className="animate-fade-in space-y-5">
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
         <div>
-          <h2 className="text-xl font-bold text-ink">Cargos e Permissões</h2>
-          <p className="text-sm text-ink-muted">Gerencie cargos, funções e permissões de acesso por módulo.</p>
+          <h2 className="text-xl font-bold text-ink">Cargos</h2>
+          <p className="text-sm text-ink-muted">Gerencie cargos e vincule permissões de acesso por módulo.</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={() => setGerenciarFuncoesAberto(true)}>
-            <RbacIcon nome="clipboard" className="h-4 w-4" />
-            Gerenciar Funções
-          </Button>
-          <Button variant="secondary" onClick={abrirCriacaoFuncao}>
-            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M12 5v14M5 12h14" strokeLinecap="round" />
-            </svg>
-            Nova Função
-          </Button>
+          <Link to="/administracao/permissoes">
+            <Button variant="outline">
+              <RbacIcon nome="clipboard" className="h-4 w-4" />
+              Gerenciar Permissões
+            </Button>
+          </Link>
           <Button onClick={abrirCriacaoCargo}>
             <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M12 5v14M5 12h14" strokeLinecap="round" />
@@ -340,7 +261,6 @@ export function Cargos() {
         </div>
       )}
 
-      {/* Dialog: criar/editar cargo */}
       <Dialog
         open={dialogCargoAberto}
         onClose={() => setDialogCargoAberto(false)}
@@ -418,7 +338,12 @@ export function Cargos() {
           </div>
 
           <div>
-            <p className="mb-2 text-sm font-semibold text-ink">Permissões por módulo</p>
+            <div className="mb-2 flex items-center justify-between">
+              <p className="text-sm font-semibold text-ink">Permissões por módulo</p>
+              <Link to="/administracao/permissoes" className="text-xs font-medium text-brand-400 hover:text-brand-300">
+                Gerenciar permissões
+              </Link>
+            </div>
             <div className="space-y-3">
               {categorias.map((categoria) => {
                 const funcoesCategoria = funcoesPorCategoria.get(categoria) ?? []
@@ -459,138 +384,6 @@ export function Cargos() {
               Cancelar
             </Button>
             <Button variant="danger" onClick={confirmarExclusaoCargo}>
-              Excluir
-            </Button>
-          </>
-        }
-      />
-
-      {/* Dialog: gerenciar funções existentes */}
-      <Dialog
-        open={gerenciarFuncoesAberto}
-        onClose={() => setGerenciarFuncoesAberto(false)}
-        title="Funções cadastradas"
-        description="Funções do sistema não podem ser editadas ou excluídas."
-        size="lg"
-        footer={
-          <Button variant="ghost" onClick={() => setGerenciarFuncoesAberto(false)}>
-            Fechar
-          </Button>
-        }
-      >
-        <div className="max-h-[55vh] space-y-4 overflow-y-auto pr-1">
-          {categorias.map((categoria) => {
-            const lista = funcoes.filter((f) => f.categoria === categoria)
-            if (lista.length === 0) return null
-            return (
-              <div key={categoria}>
-                <p className="mb-2 text-sm font-semibold text-ink">{categoria}</p>
-                <div className="space-y-1.5">
-                  {lista.map((f) => (
-                    <div key={f.id} className="flex items-center justify-between gap-2 rounded-lg border border-border px-3 py-2">
-                      <div className="flex min-w-0 items-center gap-2">
-                        <RbacIcon nome={f.icone} className="h-4 w-4 shrink-0 text-ink-subtle" />
-                        <div className="min-w-0">
-                          <p className="truncate text-sm text-ink">{f.nome}</p>
-                          <p className="truncate text-xs text-ink-subtle">{f.descricao}</p>
-                        </div>
-                        {f.status === 'inativo' && <Badge tone="slate">Inativa</Badge>}
-                        {f.sistema && <Badge tone="outline">Sistema</Badge>}
-                      </div>
-                      {!f.sistema && (
-                        <div className="flex shrink-0 gap-1">
-                          <Button size="sm" variant="ghost" onClick={() => abrirEdicaoFuncao(f)}>
-                            Editar
-                          </Button>
-                          <Button size="sm" variant="ghost" className="text-rose-400 hover:bg-rose-500/10" onClick={() => setExcluindoFuncao(f)}>
-                            Excluir
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      </Dialog>
-
-      {/* Dialog: criar/editar função */}
-      <Dialog
-        open={dialogFuncaoAberto}
-        onClose={() => setDialogFuncaoAberto(false)}
-        title={editandoFuncaoId ? 'Editar função' : 'Nova função'}
-        footer={
-          <>
-            <Button variant="ghost" onClick={() => setDialogFuncaoAberto(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={salvarFuncao} loading={salvandoFuncao}>
-              Salvar Alterações
-            </Button>
-          </>
-        }
-      >
-        <div className="space-y-4">
-          <Input label="Nome" required value={formFuncao.nome} onChange={(e) => setFormFuncao({ ...formFuncao, nome: e.target.value })} error={errosFuncao.nome} />
-          <Input
-            label="Categoria"
-            required
-            list="categorias-funcao"
-            value={formFuncao.categoria}
-            onChange={(e) => setFormFuncao({ ...formFuncao, categoria: e.target.value })}
-            error={errosFuncao.categoria}
-          />
-          <datalist id="categorias-funcao">
-            {categorias.map((c) => (
-              <option key={c} value={c} />
-            ))}
-          </datalist>
-          <Textarea label="Descrição" value={formFuncao.descricao} onChange={(e) => setFormFuncao({ ...formFuncao, descricao: e.target.value })} />
-
-          <div>
-            <p className="mb-2 text-sm font-semibold text-ink">Ícone</p>
-            <div className="flex flex-wrap gap-2">
-              {ICONES_DISPONIVEIS.map((icone) => (
-                <button
-                  key={icone}
-                  type="button"
-                  onClick={() => setFormFuncao({ ...formFuncao, icone })}
-                  className={cn(
-                    'flex h-9 w-9 items-center justify-center rounded-lg border transition-colors',
-                    formFuncao.icone === icone ? 'border-brand-500 bg-brand-500/15 text-brand-300' : 'border-border-light text-ink-muted hover:bg-surface-3',
-                  )}
-                  aria-label={`Selecionar ícone ${icone}`}
-                >
-                  <RbacIcon nome={icone} className="h-4 w-4" />
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-semibold text-ink">Status</span>
-            <div className="flex items-center gap-2">
-              <span className={cn('text-xs font-semibold', formFuncao.status === 'ativo' ? 'text-ink-subtle' : 'text-ink')}>Inativa</span>
-              <Switch checked={formFuncao.status === 'ativo'} onChange={(v) => setFormFuncao({ ...formFuncao, status: v ? 'ativo' : 'inativo' })} />
-              <span className={cn('text-xs font-semibold', formFuncao.status === 'ativo' ? 'text-brand-400' : 'text-ink-subtle')}>Ativa</span>
-            </div>
-          </div>
-        </div>
-      </Dialog>
-
-      <Dialog
-        open={Boolean(excluindoFuncao)}
-        onClose={() => setExcluindoFuncao(null)}
-        title="Excluir função?"
-        description={`A função "${excluindoFuncao?.nome}" será removida de todos os cargos.`}
-        footer={
-          <>
-            <Button variant="ghost" onClick={() => setExcluindoFuncao(null)}>
-              Cancelar
-            </Button>
-            <Button variant="danger" onClick={confirmarExclusaoFuncao}>
               Excluir
             </Button>
           </>

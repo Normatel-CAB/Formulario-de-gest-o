@@ -7,7 +7,7 @@ export function criarNecessidadesVazias(): NecessidadesExecucao {
     comunicacoesOperantes: { necessario: false },
     visitaTecnica: { necessario: false },
     montagemAndaime: { necessario: false },
-    visitaSMS: { necessario: false },
+    visitaSMS: { necessario: false, tecnicoId: '', tecnicoNome: '', tecnicoEmail: '', hora: '', observacoes: '' },
     caminhaoMunck: { necessario: false },
     veiculo: { necessario: false },
     libra: { necessario: false },
@@ -29,6 +29,7 @@ export function criarFormularioVazio(): FormularioAvaliacao {
     createdAt: now,
     updatedAt: now,
     status: 'rascunho',
+    projeto: '',
     infoGerais: {
       responsavel: '',
       dataAvaliacao: new Date().toISOString().slice(0, 10),

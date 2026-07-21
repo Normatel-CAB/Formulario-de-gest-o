@@ -17,7 +17,10 @@ const MeuPerfil = lazy(() => import('./pages/MeuPerfil').then((m) => ({ default:
 const Administracao = lazy(() => import('./pages/Administracao').then((m) => ({ default: m.Administracao })))
 const Usuarios = lazy(() => import('./pages/Administracao/Usuarios').then((m) => ({ default: m.Usuarios })))
 const Cargos = lazy(() => import('./pages/Administracao/Cargos').then((m) => ({ default: m.Cargos })))
+const Permissoes = lazy(() => import('./pages/Administracao/Permissoes').then((m) => ({ default: m.Permissoes })))
 const Configuracoes = lazy(() => import('./pages/Configuracoes').then((m) => ({ default: m.Configuracoes })))
+const EnviarEmail = lazy(() => import('./pages/Email/EnviarEmail').then((m) => ({ default: m.EnviarEmail })))
+const ModelosEmail = lazy(() => import('./pages/Email/ModelosEmail').then((m) => ({ default: m.ModelosEmail })))
 
 export default function App() {
   const inicializado = useAuthStore((s) => s.inicializado)
@@ -82,10 +85,34 @@ export default function App() {
                       }
                     />
                     <Route
+                      path="/administracao/permissoes"
+                      element={
+                        <RequireRole roles={['administrador']}>
+                          <Permissoes />
+                        </RequireRole>
+                      }
+                    />
+                    <Route
                       path="/configuracoes"
                       element={
                         <RequireRole roles={['administrador']}>
                           <Configuracoes />
+                        </RequireRole>
+                      }
+                    />
+                    <Route
+                      path="/emails"
+                      element={
+                        <RequireRole roles={['administrador', 'operador']}>
+                          <EnviarEmail />
+                        </RequireRole>
+                      }
+                    />
+                    <Route
+                      path="/emails/modelos"
+                      element={
+                        <RequireRole roles={['administrador']}>
+                          <ModelosEmail />
                         </RequireRole>
                       }
                     />

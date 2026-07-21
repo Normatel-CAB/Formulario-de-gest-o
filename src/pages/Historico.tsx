@@ -10,7 +10,7 @@ import { SkeletonCard } from '../components/ui/Skeleton'
 import { Button } from '../components/ui/Button'
 import { Pagination } from '../components/ui/Pagination'
 import type { FormStatus } from '../lib/types'
-import { STATUS_LABELS } from '../lib/types'
+import { PROJETOS_PADRAO, STATUS_LABELS } from '../lib/types'
 import { formatarDataHora } from '../lib/format'
 
 const POR_PAGINA = 9
@@ -20,35 +20,43 @@ export function Historico() {
   const usuario = useAuthStore((s) => s.usuario)
   const [busca, setBusca] = useState('')
   const [status, setStatus] = useState<FormStatus | 'todos'>('todos')
+  const [filtroProjeto, setFiltroProjeto] = useState('')
   const [pagina, setPagina] = useState(1)
+
+  const ehAdministrador = usuario?.papel === 'administrador'
 
   useEffect(() => {
     void carregar()
   }, [carregar])
 
   const visiveis = useMemo(() => {
+    let lista = formularios
     if (usuario?.papel === 'operador') {
-      return formularios.filter((f) => f.criadoPorId === usuario.id)
+      lista = lista.filter((f) => f.criadoPorId === usuario.id)
     }
-    return formularios
-  }, [formularios, usuario])
+    if (!ehAdministrador && usuario) {
+      lista = lista.filter((f) => f.projeto === usuario.projeto)
+    }
+    return lista
+  }, [formularios, usuario, ehAdministrador])
 
   const filtrados = useMemo(() => {
     const termo = busca.trim().toLowerCase()
     return visiveis.filter((f) => {
       const matchStatus = status === 'todos' || f.status === status
+      const matchProjeto = !ehAdministrador || !filtroProjeto || f.projeto === filtroProjeto
       const matchBusca =
         !termo ||
         f.infoGerais.responsavel.toLowerCase().includes(termo) ||
         f.infoGerais.localAtividade.toLowerCase().includes(termo) ||
         f.infoGerais.numeroSolicitacao.toLowerCase().includes(termo)
-      return matchStatus && matchBusca
+      return matchStatus && matchProjeto && matchBusca
     })
-  }, [visiveis, busca, status])
+  }, [visiveis, busca, status, filtroProjeto, ehAdministrador])
 
   useEffect(() => {
     setPagina(1)
-  }, [busca, status])
+  }, [busca, status, filtroProjeto])
 
   const totalPaginas = Math.max(1, Math.ceil(filtrados.length / POR_PAGINA))
   const paginados = filtrados.slice((pagina - 1) * POR_PAGINA, pagina * POR_PAGINA)
@@ -65,7 +73,7 @@ export function Historico() {
       </div>
 
       <Card>
-        <CardContent className="grid gap-3 p-4 sm:grid-cols-[1fr_220px]">
+        <CardContent className={`grid gap-3 p-4 ${ehAdministrador ? 'sm:grid-cols-[1fr_180px_180px]' : 'sm:grid-cols-[1fr_220px]'}`}>
           <Input
             placeholder="Pesquisar por responsável, local ou nº da solicitação"
             value={busca}
@@ -80,6 +88,16 @@ export function Historico() {
               </option>
             ))}
           </Select>
+          {ehAdministrador && (
+            <Select value={filtroProjeto} onChange={(e) => setFiltroProjeto(e.target.value)} aria-label="Filtrar por projeto">
+              <option value="">Todos os projetos</option>
+              {PROJETOS_PADRAO.map((p) => (
+                <option key={p} value={p}>
+                  {p}
+                </option>
+              ))}
+            </Select>
+          )}
         </CardContent>
       </Card>
 
@@ -116,7 +134,10 @@ export function Historico() {
                 </div>
                 <p className="mt-2 text-xs text-ink-muted">Nº {f.infoGerais.numeroSolicitacao || '—'}</p>
                 <p className="text-xs text-ink-muted">Responsável: {f.infoGerais.responsavel || '—'}</p>
-                <p className="mt-2 text-xs text-ink-subtle">{formatarDataHora(f.updatedAt)}</p>
+                <p className="mt-2 text-xs text-ink-subtle">
+                  {f.projeto ? `${f.projeto} · ` : ''}
+                  {formatarDataHora(f.updatedAt)}
+                </p>
               </Link>
             ))}
           </div>

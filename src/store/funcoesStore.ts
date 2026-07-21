@@ -1,16 +1,15 @@
 import { create } from 'zustand'
-import type { Funcao, Usuario } from '../lib/types'
+import type { Funcao } from '../lib/types'
 import { listarFuncoesLocais, removerFuncaoLocal, salvarFuncaoLocal } from '../lib/db'
 import { identificadorFuncao, MODULOS_PERMISSOES } from '../lib/permissoes'
-import { registrarAuditoria } from '../lib/auditoria'
 
 interface FuncoesState {
   funcoes: Funcao[]
   loading: boolean
   carregar: () => Promise<void>
-  criar: (dados: Omit<Funcao, 'id' | 'identificador' | 'criadoEm' | 'sistema'>, usuario: Usuario | null) => Promise<void>
-  atualizar: (id: string, patch: Partial<Funcao>, usuario: Usuario | null) => Promise<void>
-  remover: (id: string, usuario: Usuario | null) => Promise<void>
+  criar: (dados: Omit<Funcao, 'id' | 'identificador' | 'criadoEm' | 'sistema'>) => Promise<void>
+  atualizar: (id: string, patch: Partial<Funcao>) => Promise<void>
+  remover: (id: string) => Promise<void>
 }
 
 let seedEmAndamento: Promise<Funcao[]> | null = null
@@ -61,45 +60,21 @@ export const useFuncoesStore = create<FuncoesState>((set, get) => ({
     const funcoes = await garantirFuncoesPadrao()
     set({ funcoes, loading: false })
   },
-  criar: async (dados, usuario) => {
+  criar: async (dados) => {
     const identificador = identificadorFuncao(dados.categoria, dados.nome)
     const funcao: Funcao = { ...dados, id: crypto.randomUUID(), identificador, criadoEm: new Date().toISOString() }
     await salvarFuncaoLocal(funcao)
     set({ funcoes: [...get().funcoes, funcao].sort((a, b) => a.categoria.localeCompare(b.categoria) || a.nome.localeCompare(b.nome)) })
-    await registrarAuditoria({
-      acao: 'funcao_criada',
-      entidade: 'funcao',
-      entidadeNome: funcao.nome,
-      detalhes: `Função "${funcao.nome}" criada na categoria "${funcao.categoria}".`,
-      usuario,
-    })
   },
-  atualizar: async (id, patch, usuario) => {
+  atualizar: async (id, patch) => {
     const atual = get().funcoes.find((f) => f.id === id)
     if (!atual) return
     const atualizada = { ...atual, ...patch }
     await salvarFuncaoLocal(atualizada)
     set({ funcoes: get().funcoes.map((f) => (f.id === id ? atualizada : f)) })
-    await registrarAuditoria({
-      acao: 'funcao_editada',
-      entidade: 'funcao',
-      entidadeNome: atualizada.nome,
-      detalhes: `Função "${atualizada.nome}" atualizada.`,
-      usuario,
-    })
   },
-  remover: async (id, usuario) => {
-    const atual = get().funcoes.find((f) => f.id === id)
+  remover: async (id) => {
     await removerFuncaoLocal(id)
     set({ funcoes: get().funcoes.filter((f) => f.id !== id) })
-    if (atual) {
-      await registrarAuditoria({
-        acao: 'funcao_excluida',
-        entidade: 'funcao',
-        entidadeNome: atual.nome,
-        detalhes: `Função "${atual.nome}" excluída.`,
-        usuario,
-      })
-    }
   },
 }))

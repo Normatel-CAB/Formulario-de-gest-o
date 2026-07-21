@@ -7,6 +7,7 @@ import { useAuthStore } from '../../store/authStore'
 import { useCargosStore } from '../../store/cargosStore'
 import { toast } from '../../store/toastStore'
 import { formatarCPF, validarCPF, validarEmail, validarSenhaForte } from '../../lib/validation'
+import { PROJETOS_PADRAO } from '../../lib/types'
 
 export function Cadastro() {
   const cadastrar = useAuthStore((s) => s.cadastrar)
@@ -18,6 +19,7 @@ export function Cadastro() {
   const [cpf, setCpf] = useState('')
   const [matricula, setMatricula] = useState('')
   const [cargo, setCargo] = useState('')
+  const [projeto, setProjeto] = useState('')
   const [senha, setSenha] = useState('')
   const [confirmarSenha, setConfirmarSenha] = useState('')
   const [erros, setErros] = useState<Record<string, string>>({})
@@ -35,6 +37,7 @@ export function Cadastro() {
     if (!validarCPF(cpf)) novosErros.cpf = 'Informe um CPF válido.'
     if (!matricula.trim()) novosErros.matricula = 'Informe a matrícula.'
     if (!cargo) novosErros.cargo = 'Selecione o cargo.'
+    if (!projeto) novosErros.projeto = 'Selecione o projeto.'
     if (!validarSenhaForte(senha)) novosErros.senha = 'A senha deve ter ao menos 6 caracteres.'
     if (confirmarSenha !== senha) novosErros.confirmarSenha = 'As senhas não coincidem.'
     setErros(novosErros)
@@ -47,7 +50,7 @@ export function Cadastro() {
     if (!validar()) return
     setCarregando(true)
     try {
-      await cadastrar({ nome, email, cpf, matricula, cargo, senha })
+      await cadastrar({ nome, email, cpf, matricula, cargo, projeto, senha })
       toast({ variant: 'success', title: 'Conta criada com sucesso' })
       navigate('/', { replace: true })
     } catch (err) {
@@ -98,6 +101,14 @@ export function Cadastro() {
                 {c.nome}
               </option>
             ))}
+        </Select>
+        <Select label="Projeto" required value={projeto} onChange={(e) => setProjeto(e.target.value)} error={erros.projeto}>
+          <option value="">Selecione um projeto</option>
+          {PROJETOS_PADRAO.map((p) => (
+            <option key={p} value={p}>
+              {p}
+            </option>
+          ))}
         </Select>
         <div className="grid gap-4 sm:grid-cols-2">
           <Input

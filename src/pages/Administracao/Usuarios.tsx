@@ -11,10 +11,10 @@ import { EmptyState } from '../../components/ui/EmptyState'
 import { Pagination } from '../../components/ui/Pagination'
 import { toast } from '../../store/toastStore'
 import type { Papel, Usuario } from '../../lib/types'
-import { PAPEL_LABELS } from '../../lib/types'
+import { PAPEL_LABELS, PROJETOS_PADRAO } from '../../lib/types'
 import { formatarDataHora } from '../../lib/format'
 import { formatarCPF, validarCPF, validarEmail, validarSenhaForte } from '../../lib/validation'
-import { AuthError } from '../../lib/auth'
+import { AuthError, resetarSenhaAdmin } from '../../lib/auth'
 
 const POR_PAGINA = 8
 
@@ -25,10 +25,20 @@ interface FormState {
   matricula: string
   cargo: string
   papel: Papel
+  projeto: string
   senha: string
 }
 
-const ESTADO_INICIAL: FormState = { nome: '', email: '', cpf: '', matricula: '', cargo: '', papel: 'operador', senha: '' }
+const ESTADO_INICIAL: FormState = {
+  nome: '',
+  email: '',
+  cpf: '',
+  matricula: '',
+  cargo: '',
+  papel: 'operador',
+  projeto: '',
+  senha: '',
+}
 
 export function Usuarios() {
   const { usuarios, loading, carregar, criar, atualizar, alternarStatus, remover } = useUsersStore()
@@ -37,6 +47,7 @@ export function Usuarios() {
 
   const [busca, setBusca] = useState('')
   const [filtroPapel, setFiltroPapel] = useState<Papel | 'todos'>('todos')
+  const [filtroProjeto, setFiltroProjeto] = useState('')
   const [pagina, setPagina] = useState(1)
 
   const [dialogAberto, setDialogAberto] = useState(false)
@@ -45,6 +56,11 @@ export function Usuarios() {
   const [erros, setErros] = useState<Record<string, string>>({})
   const [salvando, setSalvando] = useState(false)
   const [excluindo, setExcluindo] = useState<Usuario | null>(null)
+
+  const [resetandoUsuario, setResetandoUsuario] = useState<Usuario | null>(null)
+  const [novaSenhaReset, setNovaSenhaReset] = useState('')
+  const [erroReset, setErroReset] = useState('')
+  const [resetando, setResetando] = useState(false)
 
   useEffect(() => {
     void carregar()
@@ -56,11 +72,12 @@ export function Usuarios() {
     return usuarios.filter((u) => {
       const matchBusca = !termo || u.nome.toLowerCase().includes(termo) || u.email.toLowerCase().includes(termo)
       const matchPapel = filtroPapel === 'todos' || u.papel === filtroPapel
-      return matchBusca && matchPapel
+      const matchProjeto = !filtroProjeto || u.projeto === filtroProjeto
+      return matchBusca && matchPapel && matchProjeto
     })
-  }, [usuarios, busca, filtroPapel])
+  }, [usuarios, busca, filtroPapel, filtroProjeto])
 
-  useEffect(() => setPagina(1), [busca, filtroPapel])
+  useEffect(() => setPagina(1), [busca, filtroPapel, filtroProjeto])
 
   const totalPaginas = Math.max(1, Math.ceil(filtrados.length / POR_PAGINA))
   const paginados = filtrados.slice((pagina - 1) * POR_PAGINA, pagina * POR_PAGINA)
@@ -74,7 +91,16 @@ export function Usuarios() {
 
   function abrirEdicao(u: Usuario) {
     setEditandoId(u.id)
-    setForm({ nome: u.nome, email: u.email, cpf: u.cpf, matricula: u.matricula, cargo: u.cargo, papel: u.papel, senha: '' })
+    setForm({
+      nome: u.nome,
+      email: u.email,
+      cpf: u.cpf,
+      matricula: u.matricula,
+      cargo: u.cargo,
+      papel: u.papel,
+      projeto: u.projeto,
+      senha: '',
+    })
     setErros({})
     setDialogAberto(true)
   }
@@ -86,6 +112,7 @@ export function Usuarios() {
     if (!editandoId && !validarCPF(form.cpf)) novosErros.cpf = 'CPF inválido.'
     if (!form.matricula.trim()) novosErros.matricula = 'Informe a matrícula.'
     if (!form.cargo) novosErros.cargo = 'Selecione o cargo.'
+    if (!form.projeto) novosErros.projeto = 'Selecione o projeto.'
     if (!editandoId && !validarSenhaForte(form.senha)) novosErros.senha = 'Mínimo de 6 caracteres.'
     setErros(novosErros)
     return Object.keys(novosErros).length === 0
@@ -103,6 +130,7 @@ export function Usuarios() {
           matricula: form.matricula,
           cargo: form.cargo,
           papel: form.papel,
+          projeto: form.projeto,
         })
         toast({ variant: 'success', title: 'Usuário atualizado' })
       } else {
@@ -124,6 +152,28 @@ export function Usuarios() {
     setExcluindo(null)
   }
 
+  function abrirResetSenha(u: Usuario) {
+    setResetandoUsuario(u)
+    setNovaSenhaReset('')
+    setErroReset('')
+  }
+
+  async function confirmarResetSenha() {
+    if (!resetandoUsuario) return
+    if (!validarSenhaForte(novaSenhaReset)) {
+      setErroReset('A senha deve ter ao menos 6 caracteres.')
+      return
+    }
+    setResetando(true)
+    try {
+      await resetarSenhaAdmin(resetandoUsuario.id, novaSenhaReset)
+      toast({ variant: 'success', title: `Senha de ${resetandoUsuario.nome} redefinida` })
+      setResetandoUsuario(null)
+    } finally {
+      setResetando(false)
+    }
+  }
+
   return (
     <div className="animate-fade-in space-y-5">
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
@@ -140,13 +190,21 @@ export function Usuarios() {
       </div>
 
       <Card>
-        <CardContent className="grid gap-3 p-4 sm:grid-cols-[1fr_220px]">
+        <CardContent className="grid gap-3 p-4 sm:grid-cols-[1fr_180px_200px]">
           <Input placeholder="Pesquisar por nome ou e-mail" value={busca} onChange={(e) => setBusca(e.target.value)} aria-label="Pesquisar usuários" />
           <Select value={filtroPapel} onChange={(e) => setFiltroPapel(e.target.value as Papel | 'todos')} aria-label="Filtrar por cargo">
             <option value="todos">Todos os papéis</option>
             {(Object.keys(PAPEL_LABELS) as Papel[]).map((p) => (
               <option key={p} value={p}>
                 {PAPEL_LABELS[p]}
+              </option>
+            ))}
+          </Select>
+          <Select value={filtroProjeto} onChange={(e) => setFiltroProjeto(e.target.value)} aria-label="Filtrar por projeto">
+            <option value="">Todos os projetos</option>
+            {PROJETOS_PADRAO.map((p) => (
+              <option key={p} value={p}>
+                {p}
               </option>
             ))}
           </Select>
@@ -169,6 +227,7 @@ export function Usuarios() {
                   <th className="px-4 py-3 font-semibold">E-mail</th>
                   <th className="px-4 py-3 font-semibold">Cargo</th>
                   <th className="px-4 py-3 font-semibold">Papel</th>
+                  <th className="px-4 py-3 font-semibold">Projeto</th>
                   <th className="px-4 py-3 font-semibold">Status</th>
                   <th className="px-4 py-3 font-semibold">Último acesso</th>
                   <th className="px-4 py-3 font-semibold text-right">Ações</th>
@@ -186,6 +245,7 @@ export function Usuarios() {
                     <td className="px-4 py-3">
                       <Badge tone="brand">{PAPEL_LABELS[u.papel]}</Badge>
                     </td>
+                    <td className="px-4 py-3 text-ink-muted">{u.projeto || '—'}</td>
                     <td className="px-4 py-3">
                       <Badge tone={u.status === 'ativo' ? 'brand' : 'slate'}>{u.status === 'ativo' ? 'Ativo' : 'Inativo'}</Badge>
                     </td>
@@ -194,6 +254,9 @@ export function Usuarios() {
                       <div className="flex items-center justify-end gap-1">
                         <Button variant="ghost" size="sm" onClick={() => abrirEdicao(u)}>
                           Editar
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => abrirResetSenha(u)}>
+                          Resetar senha
                         </Button>
                         <Button
                           variant="ghost"
@@ -270,6 +333,14 @@ export function Usuarios() {
               </option>
             ))}
           </Select>
+          <Select label="Projeto" required value={form.projeto} onChange={(e) => setForm({ ...form, projeto: e.target.value })} error={erros.projeto}>
+            <option value="">Selecione</option>
+            {PROJETOS_PADRAO.map((p) => (
+              <option key={p} value={p}>
+                {p}
+              </option>
+            ))}
+          </Select>
           {!editandoId && (
             <Input
               label="Senha inicial"
@@ -301,6 +372,33 @@ export function Usuarios() {
           </>
         }
       />
+
+      <Dialog
+        open={Boolean(resetandoUsuario)}
+        onClose={() => setResetandoUsuario(null)}
+        title="Resetar senha"
+        description={`Defina uma nova senha para "${resetandoUsuario?.nome}".`}
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setResetandoUsuario(null)}>
+              Cancelar
+            </Button>
+            <Button onClick={confirmarResetSenha} loading={resetando}>
+              Redefinir senha
+            </Button>
+          </>
+        }
+      >
+        <Input
+          label="Nova senha"
+          type="password"
+          required
+          value={novaSenhaReset}
+          onChange={(e) => setNovaSenhaReset(e.target.value)}
+          error={erroReset}
+          placeholder="Mínimo 6 caracteres"
+        />
+      </Dialog>
     </div>
   )
 }
