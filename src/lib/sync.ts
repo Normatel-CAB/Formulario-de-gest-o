@@ -46,7 +46,7 @@ async function refreshPendingCount() {
 
 export async function enviarFormularioParaNuvem(formulario: FormularioAvaliacao) {
   if (!supabase || !isSupabaseConfigured) throw new Error('Supabase não configurado')
-  const { syncPending, ...payload } = formulario
+  const { syncPending: _syncPending, ...payload } = formulario
   const { error } = await supabase.from(FORMS_TABLE).upsert(payload, { onConflict: 'id' })
   if (error) throw error
 }

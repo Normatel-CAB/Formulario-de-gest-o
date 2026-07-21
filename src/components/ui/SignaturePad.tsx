@@ -32,6 +32,7 @@ export function SignaturePad({
       img.onload = () => ctx.drawImage(img, 0, 0, rect.width, rect.height)
       img.src = value
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   function getPos(e: React.PointerEvent<HTMLCanvasElement>) {

@@ -28,7 +28,12 @@ export function FormDetail() {
     void obter(id).then((f) => setFormulario(f ?? null))
   }, [id, obter])
 
-  const semAcesso = formulario && usuario?.papel !== 'administrador' && formulario.projeto !== usuario?.projeto
+  const semAcesso =
+    formulario &&
+    usuario?.papel !== 'administrador' &&
+    Boolean(formulario.projeto) &&
+    Boolean(usuario?.projeto) &&
+    formulario.projeto !== usuario?.projeto
 
   if (!formulario || semAcesso) {
     return (
