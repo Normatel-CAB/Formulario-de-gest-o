@@ -1,5 +1,5 @@
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb'
-import type { Cargo, FormularioAvaliacao, Usuario } from './types'
+import type { Cargo, FormularioAvaliacao, Funcao, RegistroAuditoria, Usuario } from './types'
 
 interface Credencial {
   usuarioId: string
@@ -44,13 +44,22 @@ interface GestaoDB extends DBSchema {
     key: string
     value: Cargo
   }
+  funcoes: {
+    key: string
+    value: Funcao
+  }
+  auditoria: {
+    key: string
+    value: RegistroAuditoria
+    indexes: { 'by-criadoEm': string }
+  }
 }
 
 let dbPromise: Promise<IDBPDatabase<GestaoDB>> | null = null
 
 function getDB() {
   if (!dbPromise) {
-    dbPromise = openDB<GestaoDB>('gestao-integrada', 2, {
+    dbPromise = openDB<GestaoDB>('gestao-integrada', 3, {
       upgrade(db, oldVersion) {
         if (oldVersion < 1) {
           const formularios = db.createObjectStore('formularios', { keyPath: 'id' })
@@ -65,6 +74,11 @@ function getDB() {
           db.createObjectStore('credenciais', { keyPath: 'usuarioId' })
           db.createObjectStore('recuperacaoSenha', { keyPath: 'email' })
           db.createObjectStore('cargos', { keyPath: 'id' })
+        }
+        if (oldVersion < 3) {
+          db.createObjectStore('funcoes', { keyPath: 'id' })
+          const auditoria = db.createObjectStore('auditoria', { keyPath: 'id' })
+          auditoria.createIndex('by-criadoEm', 'criadoEm')
         }
       },
     })
@@ -189,4 +203,31 @@ export async function salvarCargoLocal(cargo: Cargo) {
 export async function removerCargoLocal(id: string) {
   const db = await getDB()
   await db.delete('cargos', id)
+}
+
+export async function listarFuncoesLocais() {
+  const db = await getDB()
+  const all = await db.getAll('funcoes')
+  return all.sort((a, b) => a.categoria.localeCompare(b.categoria) || a.nome.localeCompare(b.nome))
+}
+
+export async function salvarFuncaoLocal(funcao: Funcao) {
+  const db = await getDB()
+  await db.put('funcoes', funcao)
+}
+
+export async function removerFuncaoLocal(id: string) {
+  const db = await getDB()
+  await db.delete('funcoes', id)
+}
+
+export async function registrarAuditoriaLocal(registro: RegistroAuditoria) {
+  const db = await getDB()
+  await db.put('auditoria', registro)
+}
+
+export async function listarAuditoriaLocal(limite = 50) {
+  const db = await getDB()
+  const all = await db.getAll('auditoria')
+  return all.sort((a, b) => b.criadoEm.localeCompare(a.criadoEm)).slice(0, limite)
 }

@@ -255,11 +255,13 @@ export function Usuarios() {
           <Input label="Matrícula" required value={form.matricula} onChange={(e) => setForm({ ...form, matricula: e.target.value })} error={erros.matricula} />
           <Select label="Cargo" required value={form.cargo} onChange={(e) => setForm({ ...form, cargo: e.target.value })} error={erros.cargo}>
             <option value="">Selecione</option>
-            {cargos.map((c) => (
-              <option key={c.id} value={c.nome}>
-                {c.nome}
-              </option>
-            ))}
+            {cargos
+              .filter((c) => c.status === 'ativo')
+              .map((c) => (
+                <option key={c.id} value={c.nome}>
+                  {c.nome}
+                </option>
+              ))}
           </Select>
           <Select label="Papel" required value={form.papel} onChange={(e) => setForm({ ...form, papel: e.target.value as Papel })}>
             {(Object.keys(PAPEL_LABELS) as Papel[]).map((p) => (
