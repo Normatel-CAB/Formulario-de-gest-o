@@ -89,9 +89,6 @@ export function FormDetail() {
           <Button variant="outline" onClick={baixarPdf}>
             Exportar PDF
           </Button>
-          <Link to={`/emails?formularioId=${formulario.id}`}>
-            <Button variant="outline">Enviar por e-mail</Button>
-          </Link>
           {!somenteLeitura && podeEditar && (
             <Link to={`/novo/${formulario.id}`}>
               <Button variant="outline">Continuar edição</Button>

@@ -2,23 +2,87 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useFormsStore } from '../store/formsStore'
 import { useAuthStore } from '../store/authStore'
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
 import { Select } from '../components/ui/Field'
 import { StatusBadge } from '../components/ui/StatusBadge'
 import { EmptyState } from '../components/ui/EmptyState'
 import { SkeletonCard } from '../components/ui/Skeleton'
-import { Timeline } from '../components/ui/Timeline'
 import { PROJETOS_PADRAO, STATUS_LABELS } from '../lib/types'
 import { formatarDataHora } from '../lib/format'
+import { cn } from '../lib/cn'
+
+function IconWrap({ tone, children }: { tone: 'brand' | 'sky' | 'amber' | 'rose'; children: React.ReactNode }) {
+  const toneClasses = {
+    brand: 'bg-brand-500/15 text-brand-400',
+    sky: 'bg-sky-500/15 text-sky-400',
+    amber: 'bg-amber-500/15 text-amber-400',
+    rose: 'bg-rose-500/15 text-rose-400',
+  } as const
+  return <div className={cn('flex h-11 w-11 items-center justify-center rounded-xl', toneClasses[tone])}>{children}</div>
+}
+
+function StackIcon() {
+  return (
+    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M12 3l8 4.5-8 4.5-8-4.5L12 3z" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M4 12l8 4.5 8-4.5M4 16.5L12 21l8-4.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+function ClockIcon() {
+  return (
+    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M12 7.5V12l3 2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+function SearchIcon() {
+  return (
+    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <circle cx="11" cy="11" r="6.5" />
+      <path d="M20 20l-4.3-4.3" strokeLinecap="round" />
+    </svg>
+  )
+}
+function CheckIcon() {
+  return (
+    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M4.5 12.5l5 5 10-11" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+function XIcon() {
+  return (
+    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M6 6l12 12M18 6L6 18" strokeLinecap="round" />
+    </svg>
+  )
+}
+function PlusIcon() {
+  return (
+    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+    </svg>
+  )
+}
 
 const indicadores = [
-  { key: 'total', label: 'Total de Formulários', tone: 'brand' },
-  { key: 'pendentes', label: 'Pendentes', tone: 'slate' },
-  { key: 'emAnalise', label: 'Em Análise', tone: 'amber' },
-  { key: 'aprovados', label: 'Aprovados', tone: 'brand' },
-  { key: 'reprovados', label: 'Reprovados', tone: 'rose' },
+  { key: 'total', label: 'Total de Formulários', tone: 'brand', icon: StackIcon },
+  { key: 'pendentes', label: 'Pendentes', tone: 'sky', icon: ClockIcon },
+  { key: 'emAnalise', label: 'Em Análise', tone: 'amber', icon: SearchIcon },
+  { key: 'aprovados', label: 'Aprovados', tone: 'brand', icon: CheckIcon },
+  { key: 'reprovados', label: 'Reprovados', tone: 'rose', icon: XIcon },
 ] as const
+
+const DIST_COLORS: Record<string, string> = {
+  aprovado: '#2fa87e',
+  em_analise: '#f59e0b',
+  enviado: '#38bdf8',
+  rascunho: '#a3a3a3',
+  reprovado: '#f43f5e',
+}
 
 export function Dashboard() {
   const { formularios, loading, carregar } = useFormsStore()
@@ -51,18 +115,30 @@ export function Dashboard() {
     }
   }, [escopo])
 
+  const distribuicao = useMemo(() => {
+    const porStatus: Record<string, number> = { aprovado: 0, em_analise: 0, enviado: 0, rascunho: 0, reprovado: 0 }
+    for (const f of escopo) porStatus[f.status] = (porStatus[f.status] ?? 0) + 1
+    const total = escopo.length || 1
+    let acumulado = 0
+    const fatias = Object.entries(porStatus)
+      .filter(([, qtd]) => qtd > 0)
+      .map(([status, qtd]) => {
+        const pct = (qtd / total) * 100
+        const fatia = { status, qtd, pct, de: acumulado, ate: acumulado + pct }
+        acumulado += pct
+        return fatia
+      })
+    const gradient = fatias.length
+      ? fatias.map((f) => `${DIST_COLORS[f.status]} ${f.de}% ${f.ate}%`).join(', ')
+      : 'var(--color-surface-3) 0% 100%'
+    return { fatias, gradient }
+  }, [escopo])
+
   const ultimosEnvios = useMemo(
     () =>
       [...escopo]
         .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
-        .slice(0, 6)
-        .map((f) => ({
-          id: f.id,
-          title: f.infoGerais.localAtividade || 'Atividade sem nome',
-          description: `${STATUS_LABELS[f.status]} · Nº ${f.infoGerais.numeroSolicitacao || '—'}`,
-          timestamp: formatarDataHora(f.updatedAt),
-          tone: f.status === 'aprovado' ? ('brand' as const) : f.status === 'reprovado' ? ('rose' as const) : f.status === 'em_analise' ? ('amber' as const) : ('slate' as const),
-        })),
+        .slice(0, 6),
     [escopo],
   )
 
@@ -70,7 +146,7 @@ export function Dashboard() {
     <div className="animate-fade-in space-y-6">
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
         <div>
-          <h2 className="text-xl font-bold text-ink">Visão geral</h2>
+          <h2 className="text-2xl font-bold tracking-tight text-ink">Visão geral</h2>
           <p className="text-sm text-ink-muted">Acompanhe os indicadores das fichas técnicas de avaliação.</p>
         </div>
         <div className="flex items-center gap-2">
@@ -85,10 +161,8 @@ export function Dashboard() {
             </Select>
           )}
           <Link to="/novo">
-            <Button>
-              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M12 5v14M5 12h14" strokeLinecap="round" />
-              </svg>
+            <Button size="lg" className="shadow-lg shadow-brand-900/40">
+              <PlusIcon />
               Novo Formulário
             </Button>
           </Link>
@@ -98,55 +172,134 @@ export function Dashboard() {
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         {loading
           ? Array.from({ length: 5 }).map((_, i) => <SkeletonCard key={i} />)
-          : indicadores.map((ind) => (
-              <Card key={ind.key} className="animate-slide-up">
-                <CardContent className="p-4">
-                  <p className="text-xs font-medium uppercase tracking-wide text-ink-subtle">{ind.label}</p>
-                  <p className="mt-2 text-3xl font-bold text-ink">{stats[ind.key]}</p>
-                </CardContent>
-              </Card>
-            ))}
+          : indicadores.map((ind) => {
+              const Icon = ind.icon
+              return (
+                <Card key={ind.key} className="animate-slide-up transition-shadow duration-200 hover:shadow-md hover:shadow-black/30">
+                  <CardContent className="flex items-start justify-between gap-2 p-4">
+                    <div>
+                      <p className="text-xs font-medium uppercase tracking-wide text-ink-subtle">{ind.label}</p>
+                      <p className="mt-2 text-3xl font-bold text-ink">{stats[ind.key]}</p>
+                    </div>
+                    <IconWrap tone={ind.tone}>
+                      <Icon />
+                    </IconWrap>
+                  </CardContent>
+                </Card>
+              )
+            })}
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Últimos envios</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="space-y-3">
-              <SkeletonCard />
+      <div className="grid gap-4 lg:grid-cols-3">
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <div>
+              <CardTitle>Últimos envios</CardTitle>
+              <CardDescription>Atualizações mais recentes dos formulários.</CardDescription>
             </div>
-          ) : ultimosEnvios.length === 0 ? (
-            <EmptyState
-              title="Nenhum formulário enviado ainda"
-              description="Crie seu primeiro formulário de avaliação de serviços para começar a acompanhar os indicadores."
-              action={
-                <Link to="/novo">
-                  <Button>Criar formulário</Button>
-                </Link>
-              }
-            />
-          ) : (
-            <Timeline items={ultimosEnvios} />
-          )}
-        </CardContent>
-      </Card>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <SkeletonCard />
+            ) : ultimosEnvios.length === 0 ? (
+              <EmptyState
+                title="Nenhum formulário enviado ainda"
+                description="Crie seu primeiro formulário de avaliação de serviços para começar a acompanhar os indicadores."
+                action={
+                  <Link to="/novo">
+                    <Button>Criar formulário</Button>
+                  </Link>
+                }
+              />
+            ) : (
+              <ul className="divide-y divide-border">
+                {ultimosEnvios.map((f) => (
+                  <li key={f.id}>
+                    <Link
+                      to={`/formulario/${f.id}`}
+                      className="flex items-center gap-3 rounded-lg px-2 py-3 transition-colors duration-150 hover:bg-surface-2"
+                    >
+                      <span
+                        className="h-2.5 w-2.5 shrink-0 rounded-full"
+                        style={{ backgroundColor: DIST_COLORS[f.status] }}
+                      />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium text-ink">{f.infoGerais.localAtividade || 'Atividade sem nome'}</p>
+                        <p className="truncate text-xs text-ink-subtle">Nº {f.infoGerais.numeroSolicitacao || '—'}</p>
+                      </div>
+                      <div className="flex shrink-0 flex-col items-end gap-1">
+                        <StatusBadge status={f.status} />
+                        <span className="text-[11px] text-ink-subtle">{formatarDataHora(f.updatedAt)}</span>
+                      </div>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Distribuição por status</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <SkeletonCard />
+            ) : (
+              <div className="flex flex-col items-center gap-5">
+                <div
+                  className="relative flex h-40 w-40 items-center justify-center rounded-full"
+                  style={{ background: `conic-gradient(${distribuicao.gradient})` }}
+                >
+                  <div className="flex h-28 w-28 flex-col items-center justify-center rounded-full bg-surface text-center">
+                    <span className="text-2xl font-bold text-ink">{escopo.length}</span>
+                    <span className="text-[11px] text-ink-subtle">formulários</span>
+                  </div>
+                </div>
+                <ul className="w-full space-y-2">
+                  {distribuicao.fatias.length === 0 ? (
+                    <p className="text-center text-sm text-ink-muted">Sem dados no momento.</p>
+                  ) : (
+                    distribuicao.fatias.map((f) => (
+                      <li key={f.status} className="flex items-center justify-between gap-2 text-sm">
+                        <span className="flex items-center gap-2 text-ink-muted">
+                          <span className="h-2 w-2 rounded-full" style={{ backgroundColor: DIST_COLORS[f.status] }} />
+                          {STATUS_LABELS[f.status as keyof typeof STATUS_LABELS]}
+                        </span>
+                        <span className="font-medium text-ink">{f.qtd}</span>
+                      </li>
+                    ))
+                  )}
+                </ul>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
       {!loading && escopo.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>Formulários recentes</CardTitle>
+            <div>
+              <CardTitle>Formulários recentes</CardTitle>
+              <CardDescription>Acesso rápido às últimas fichas técnicas.</CardDescription>
+            </div>
+            <Link to="/historico">
+              <Button variant="ghost" size="sm">
+                Ver todos
+              </Button>
+            </Link>
           </CardHeader>
           <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {escopo.slice(0, 6).map((f) => (
               <Link
                 key={f.id}
                 to={`/formulario/${f.id}`}
-                className="rounded-xl border border-border p-4 transition-colors duration-150 hover:border-brand-600/50 hover:bg-surface-2"
+                className="group rounded-xl border border-border p-4 transition-all duration-150 hover:-translate-y-0.5 hover:border-brand-600/50 hover:bg-surface-2 hover:shadow-md hover:shadow-black/20"
               >
                 <div className="flex items-start justify-between gap-2">
-                  <p className="text-sm font-semibold text-ink line-clamp-1">
+                  <p className="text-sm font-semibold text-ink line-clamp-1 group-hover:text-brand-300">
                     {f.infoGerais.localAtividade || 'Atividade sem nome'}
                   </p>
                   <StatusBadge status={f.status} />

@@ -1,13 +1,9 @@
 import { useEffect, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import type { Agendamento, AgendamentoVisitaSMS, DescricaoItem, FormularioAvaliacao, QtdDias } from '../../lib/types'
 import { SimNaoField } from '../../components/ui/Switch'
 import { Input, Select, Textarea } from '../../components/ui/Field'
-import { Button } from '../../components/ui/Button'
 import { useUsersStore } from '../../store/usersStore'
-import { useEmailDraftStore } from '../../store/emailDraftStore'
-import { formatarData } from '../../lib/format'
 
 function CondicionalWrapper({ show, children }: { show: boolean; children: React.ReactNode }) {
   return (
@@ -115,45 +111,15 @@ export function DescricaoItemField({
   )
 }
 
-function montarCorpoVisitaSMS(dados: {
-  projeto: string
-  local: string
-  data: string
-  hora: string
-  responsavel: string
-  observacoes: string
-}) {
-  return `Olá,
-
-Foi solicitada uma Visita SMS.
-
-Dados da solicitação:
-
-• Projeto: ${dados.projeto || '—'}
-• Instalação:
-• Local: ${dados.local || '—'}
-• Data: ${dados.data ? formatarData(dados.data) : '—'}
-• Horário: ${dados.hora || '—'}
-• Responsável: ${dados.responsavel || '—'}
-• Observações: ${dados.observacoes || '—'}
-
-Favor confirmar a disponibilidade.
-
-Atenciosamente.`
-}
-
 export function VisitaSMSField({
   value,
   onChange,
-  formulario,
 }: {
   value: AgendamentoVisitaSMS
   onChange: (v: AgendamentoVisitaSMS) => void
   formulario: FormularioAvaliacao
 }) {
   const { usuarios, carregar } = useUsersStore()
-  const definirRascunho = useEmailDraftStore((s) => s.definir)
-  const navigate = useNavigate()
 
   useEffect(() => {
     void carregar()
@@ -167,23 +133,6 @@ export function VisitaSMSField({
   function selecionarTecnico(tecnicoId: string) {
     const tecnico = tecnicos.find((t) => t.id === tecnicoId)
     onChange({ ...value, tecnicoId, tecnicoNome: tecnico?.nome, tecnicoEmail: tecnico?.email })
-  }
-
-  function gerarEmailSolicitacao() {
-    definirRascunho({
-      destinatarios: value.tecnicoEmail ? [value.tecnicoEmail] : [],
-      assunto: 'Solicitação de Agendamento de Visita SMS',
-      corpo: montarCorpoVisitaSMS({
-        projeto: formulario.projeto,
-        local: formulario.infoGerais.localAtividade,
-        data: value.data ?? '',
-        hora: value.hora ?? '',
-        responsavel: formulario.infoGerais.responsavel,
-        observacoes: value.observacoes ?? '',
-      }),
-      formularioId: formulario.id,
-    })
-    navigate(`/emails?formularioId=${formulario.id}`)
   }
 
   return (
@@ -213,11 +162,6 @@ export function VisitaSMSField({
             value={value.observacoes ?? ''}
             onChange={(e) => onChange({ ...value, observacoes: e.target.value })}
           />
-          {value.tecnicoId && (
-            <Button type="button" variant="outline" size="sm" onClick={gerarEmailSolicitacao}>
-              Gerar E-mail de Solicitação
-            </Button>
-          )}
         </div>
       </CondicionalWrapper>
     </div>

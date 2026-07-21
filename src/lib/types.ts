@@ -165,31 +165,3 @@ export interface DashboardIndicadores {
   aprovados: number
   reprovados: number
 }
-
-export interface ModeloEmail {
-  id: string
-  nome: string
-  assunto: string
-  corpo: string
-  criadoEm: string
-}
-
-export interface AnexoEmail {
-  id: string
-  nome: string
-  dataUrl: string
-}
-
-export interface EmailEnviado {
-  id: string
-  destinatarios: string[]
-  cc: string[]
-  cco: string[]
-  assunto: string
-  corpo: string
-  anexos: { nome: string }[]
-  formularioId?: string
-  enviadoPorId: string
-  enviadoPorNome: string
-  criadoEm: string
-}
