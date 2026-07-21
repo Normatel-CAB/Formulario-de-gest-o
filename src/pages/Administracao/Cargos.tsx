@@ -14,7 +14,7 @@ import { Checkbox } from '../../components/ui/Checkbox'
 import { RbacIcon } from '../../components/ui/RbacIcon'
 import { toast } from '../../store/toastStore'
 import type { Cargo, Funcao, StatusRegistro } from '../../lib/types'
-import { CORES_CARGO, ICONES_DISPONIVEIS, MODULOS_PERMISSOES } from '../../lib/permissoes'
+import { CORES_CARGO, ICONES_DISPONIVEIS, identificadorFuncao, MODULOS_PERMISSOES } from '../../lib/permissoes'
 import { cn } from '../../lib/cn'
 
 interface CargoFormState {
@@ -207,7 +207,7 @@ export function Cargos() {
 
   function validarFuncao() {
     const erros: Record<string, string> = {}
-    if (!formFuncao.nome.trim()) erros.nome = 'Informe o nome da função.'
+    if (!formFuncao.nome.trim()) erros.nome = 'Informe o nome da permissão.'
     if (!formFuncao.categoria.trim()) erros.categoria = 'Informe a categoria.'
     setErrosFuncao(erros)
     return Object.keys(erros).length === 0
@@ -219,10 +219,10 @@ export function Cargos() {
     try {
       if (editandoFuncaoId) {
         await atualizarFuncao(editandoFuncaoId, { ...formFuncao }, usuarioLogado)
-        toast({ variant: 'success', title: 'Função atualizada' })
+        toast({ variant: 'success', title: 'Permissão atualizada' })
       } else {
         await criarFuncao({ ...formFuncao }, usuarioLogado)
-        toast({ variant: 'success', title: 'Função criada com sucesso' })
+        toast({ variant: 'success', title: 'Permissão criada com sucesso' })
       }
       setDialogFuncaoAberto(false)
     } finally {
@@ -233,7 +233,7 @@ export function Cargos() {
   async function confirmarExclusaoFuncao() {
     if (!excluindoFuncao) return
     await removerFuncao(excluindoFuncao.id, usuarioLogado)
-    toast({ variant: 'success', title: 'Função excluída' })
+    toast({ variant: 'success', title: 'Permissão excluída' })
     setExcluindoFuncao(null)
   }
 
@@ -242,18 +242,18 @@ export function Cargos() {
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
         <div>
           <h2 className="text-xl font-bold text-ink">Cargos e Permissões</h2>
-          <p className="text-sm text-ink-muted">Gerencie cargos, funções e permissões de acesso por módulo.</p>
+          <p className="text-sm text-ink-muted">Gerencie cargos e permissões de acesso por módulo.</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" onClick={() => setGerenciarFuncoesAberto(true)}>
             <RbacIcon nome="clipboard" className="h-4 w-4" />
-            Gerenciar Funções
+            Gerenciar Permissões
           </Button>
           <Button variant="secondary" onClick={abrirCriacaoFuncao}>
             <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M12 5v14M5 12h14" strokeLinecap="round" />
             </svg>
-            Nova Função
+            Adicionar Permissão
           </Button>
           <Button onClick={abrirCriacaoCargo}>
             <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -469,8 +469,8 @@ export function Cargos() {
       <Dialog
         open={gerenciarFuncoesAberto}
         onClose={() => setGerenciarFuncoesAberto(false)}
-        title="Funções cadastradas"
-        description="Funções do sistema não podem ser editadas ou excluídas."
+        title="Permissões cadastradas"
+        description="Permissões do sistema não podem ser editadas ou excluídas."
         size="lg"
         footer={
           <Button variant="ghost" onClick={() => setGerenciarFuncoesAberto(false)}>
@@ -516,11 +516,11 @@ export function Cargos() {
         </div>
       </Dialog>
 
-      {/* Dialog: criar/editar função */}
+      {/* Dialog: criar/editar permissão */}
       <Dialog
         open={dialogFuncaoAberto}
         onClose={() => setDialogFuncaoAberto(false)}
-        title={editandoFuncaoId ? 'Editar função' : 'Nova função'}
+        title={editandoFuncaoId ? 'Editar permissão' : 'Nova permissão'}
         footer={
           <>
             <Button variant="ghost" onClick={() => setDialogFuncaoAberto(false)}>
@@ -547,6 +547,11 @@ export function Cargos() {
               <option key={c} value={c} />
             ))}
           </datalist>
+          {formFuncao.nome && formFuncao.categoria && (
+            <p className="-mt-2 text-xs text-ink-subtle">
+              Identificador: <span className="font-mono text-ink-muted">{identificadorFuncao(formFuncao.categoria, formFuncao.nome)}</span>
+            </p>
+          )}
           <Textarea label="Descrição" value={formFuncao.descricao} onChange={(e) => setFormFuncao({ ...formFuncao, descricao: e.target.value })} />
 
           <div>
@@ -583,8 +588,8 @@ export function Cargos() {
       <Dialog
         open={Boolean(excluindoFuncao)}
         onClose={() => setExcluindoFuncao(null)}
-        title="Excluir função?"
-        description={`A função "${excluindoFuncao?.nome}" será removida de todos os cargos.`}
+        title="Excluir permissão?"
+        description={`A permissão "${excluindoFuncao?.nome}" será removida de todos os cargos.`}
         footer={
           <>
             <Button variant="ghost" onClick={() => setExcluindoFuncao(null)}>

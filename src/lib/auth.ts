@@ -155,4 +155,10 @@ export async function alterarSenha(usuarioId: string, senhaAtual: string, novaSe
   await salvarCredencial({ usuarioId, hash, salt })
 }
 
+export async function resetarSenhaAdmin(usuarioId: string, novaSenha: string): Promise<void> {
+  const salt = await gerarSalt()
+  const hash = await hashSenha(novaSenha, salt)
+  await salvarCredencial({ usuarioId, hash, salt })
+}
+
 export { ADMIN_SEED_EMAIL, ADMIN_SEED_SENHA }

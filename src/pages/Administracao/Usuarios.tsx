@@ -14,7 +14,7 @@ import type { Papel, Usuario } from '../../lib/types'
 import { PAPEL_LABELS } from '../../lib/types'
 import { formatarDataHora } from '../../lib/format'
 import { formatarCPF, validarCPF, validarEmail, validarSenhaForte } from '../../lib/validation'
-import { AuthError } from '../../lib/auth'
+import { AuthError, resetarSenhaAdmin } from '../../lib/auth'
 
 const POR_PAGINA = 8
 
@@ -45,6 +45,11 @@ export function Usuarios() {
   const [erros, setErros] = useState<Record<string, string>>({})
   const [salvando, setSalvando] = useState(false)
   const [excluindo, setExcluindo] = useState<Usuario | null>(null)
+
+  const [resetandoUsuario, setResetandoUsuario] = useState<Usuario | null>(null)
+  const [novaSenhaReset, setNovaSenhaReset] = useState('')
+  const [erroReset, setErroReset] = useState('')
+  const [resetando, setResetando] = useState(false)
 
   useEffect(() => {
     void carregar()
@@ -124,6 +129,28 @@ export function Usuarios() {
     setExcluindo(null)
   }
 
+  function abrirResetSenha(u: Usuario) {
+    setResetandoUsuario(u)
+    setNovaSenhaReset('')
+    setErroReset('')
+  }
+
+  async function confirmarResetSenha() {
+    if (!resetandoUsuario) return
+    if (!validarSenhaForte(novaSenhaReset)) {
+      setErroReset('A senha deve ter ao menos 6 caracteres.')
+      return
+    }
+    setResetando(true)
+    try {
+      await resetarSenhaAdmin(resetandoUsuario.id, novaSenhaReset)
+      toast({ variant: 'success', title: `Senha de ${resetandoUsuario.nome} redefinida` })
+      setResetandoUsuario(null)
+    } finally {
+      setResetando(false)
+    }
+  }
+
   return (
     <div className="animate-fade-in space-y-5">
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
@@ -194,6 +221,9 @@ export function Usuarios() {
                       <div className="flex items-center justify-end gap-1">
                         <Button variant="ghost" size="sm" onClick={() => abrirEdicao(u)}>
                           Editar
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => abrirResetSenha(u)}>
+                          Resetar senha
                         </Button>
                         <Button
                           variant="ghost"
@@ -301,6 +331,33 @@ export function Usuarios() {
           </>
         }
       />
+
+      <Dialog
+        open={Boolean(resetandoUsuario)}
+        onClose={() => setResetandoUsuario(null)}
+        title="Resetar senha"
+        description={`Defina uma nova senha para "${resetandoUsuario?.nome}".`}
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setResetandoUsuario(null)}>
+              Cancelar
+            </Button>
+            <Button onClick={confirmarResetSenha} loading={resetando}>
+              Redefinir senha
+            </Button>
+          </>
+        }
+      >
+        <Input
+          label="Nova senha"
+          type="password"
+          required
+          value={novaSenhaReset}
+          onChange={(e) => setNovaSenhaReset(e.target.value)}
+          error={erroReset}
+          placeholder="Mínimo 6 caracteres"
+        />
+      </Dialog>
     </div>
   )
 }

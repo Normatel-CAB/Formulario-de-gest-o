@@ -7,13 +7,11 @@ export const MODULOS_PERMISSOES: ModuloPermissao[] = [
   { categoria: 'Dashboard', acoes: ['Visualizar'] },
   {
     categoria: 'Formulários',
-    acoes: ['Criar', 'Editar', 'Excluir', 'Aprovar', 'Rejeitar', 'Reabrir', 'Exportar', 'Importar', 'Baixar imagens', 'Enviar Outlook'],
+    acoes: ['Criar', 'Editar', 'Excluir', 'Aprovar', 'Reprovar', 'Reabrir', 'Exportar PDF', 'Baixar imagens', 'Enviar Outlook'],
   },
   { categoria: 'Histórico', acoes: ['Visualizar', 'Editar', 'Excluir', 'Exportar'] },
-  { categoria: 'Usuários', acoes: ['Criar', 'Editar', 'Excluir', 'Alterar senha', 'Ativar', 'Desativar'] },
-  { categoria: 'Cargos', acoes: ['Criar', 'Editar', 'Excluir', 'Duplicar', 'Gerenciar permissões'] },
-  { categoria: 'Administração', acoes: ['Configurações', 'Logs', 'Auditoria', 'Backup', 'Restaurar Backup'] },
-  { categoria: 'Sistema', acoes: ['Alterar aparência', 'Alterar logo', 'Alterar nome do sistema', 'Configurar e-mail', 'Configurar banco'] },
+  { categoria: 'Usuários', acoes: ['Criar', 'Editar', 'Excluir', 'Ativar', 'Desativar', 'Resetar senha'] },
+  { categoria: 'Administração', acoes: ['Gerenciar cargos', 'Gerenciar permissões', 'Configurações', 'Auditoria', 'Logs'] },
 ]
 
 export function slugificar(valor: string): string {

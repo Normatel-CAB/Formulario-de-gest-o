@@ -59,6 +59,14 @@ export type AcaoAuditoria =
   | 'funcao_editada'
   | 'funcao_excluida'
   | 'permissoes_alteradas'
+  | 'email_enviado'
+  | 'modelo_email_criado'
+  | 'modelo_email_editado'
+  | 'modelo_email_excluido'
+  | 'sms_solicitado'
+  | 'tecnico_criado'
+  | 'tecnico_editado'
+  | 'tecnico_excluido'
 
 export interface RegistroAuditoria {
   id: string
@@ -172,4 +180,63 @@ export interface DashboardIndicadores {
   emAnalise: number
   aprovados: number
   reprovados: number
+}
+
+export interface ModeloEmail {
+  id: string
+  nome: string
+  assunto: string
+  corpo: string
+  criadoEm: string
+}
+
+export interface AnexoEmail {
+  id: string
+  nome: string
+  dataUrl: string
+}
+
+export interface EmailEnviado {
+  id: string
+  destinatarios: string[]
+  cc: string[]
+  cco: string[]
+  assunto: string
+  corpo: string
+  anexos: { nome: string }[]
+  formularioId?: string
+  enviadoPorId: string
+  enviadoPorNome: string
+  criadoEm: string
+}
+
+export type StatusTecnico = StatusRegistro
+
+export interface Tecnico {
+  id: string
+  nome: string
+  empresa: string
+  email: string
+  telefone: string
+  cargo: string
+  regiao: string
+  status: StatusTecnico
+  observacoes: string
+  criadoEm: string
+}
+
+export interface SolicitacaoSMS {
+  id: string
+  tecnicoId: string
+  tecnicoNome: string
+  tecnicoEmail: string
+  dataDesejada: string
+  horaDesejada: string
+  local: string
+  instalacao: string
+  responsavel: string
+  observacoes: string
+  criadoPorId: string
+  criadoPorNome: string
+  criadoEm: string
 }

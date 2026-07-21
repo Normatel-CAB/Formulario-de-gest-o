@@ -64,11 +64,38 @@ function SettingsIcon({ className }: { className?: string }) {
     </svg>
   )
 }
+function MailIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <path d="M4 6.5l8 6 8-6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+function CalendarIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <rect x="3.5" y="4.5" width="17" height="16" rx="2" />
+      <path d="M3.5 9.5h17M8 3v3M16 3v3" strokeLinecap="round" />
+    </svg>
+  )
+}
+function HardHatIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M4 16a8 8 0 0116 0" strokeLinecap="round" />
+      <path d="M2.5 16h19M12 8V4" strokeLinecap="round" />
+    </svg>
+  )
+}
 
 const links: NavItem[] = [
   { to: '/', label: 'Dashboard', icon: DashboardIcon },
   { to: '/novo', label: 'Novo Formulário', icon: PlusIcon, roles: ['administrador', 'operador'] },
   { to: '/historico', label: 'Histórico', icon: HistoryIcon },
+  { to: '/emails', label: 'E-mails', icon: MailIcon, roles: ['administrador', 'operador'] },
+  { to: '/sms', label: 'Solicitação de SMS', icon: CalendarIcon, roles: ['administrador', 'operador'] },
+  { to: '/tecnicos', label: 'Técnicos', icon: HardHatIcon, roles: ['administrador'] },
   { to: '/administracao', label: 'Administração', icon: ShieldIcon, roles: ['administrador'] },
   { to: '/usuarios', label: 'Usuários', icon: UsersIcon, roles: ['administrador'] },
   { to: '/administracao/cargos', label: 'Cargos', icon: ShieldIcon, roles: ['administrador'] },

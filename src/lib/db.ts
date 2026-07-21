@@ -1,5 +1,15 @@
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb'
-import type { Cargo, FormularioAvaliacao, Funcao, RegistroAuditoria, Usuario } from './types'
+import type {
+  Cargo,
+  EmailEnviado,
+  FormularioAvaliacao,
+  Funcao,
+  ModeloEmail,
+  RegistroAuditoria,
+  SolicitacaoSMS,
+  Tecnico,
+  Usuario,
+} from './types'
 
 interface Credencial {
   usuarioId: string
@@ -53,13 +63,31 @@ interface GestaoDB extends DBSchema {
     value: RegistroAuditoria
     indexes: { 'by-criadoEm': string }
   }
+  modelosEmail: {
+    key: string
+    value: ModeloEmail
+  }
+  emailsEnviados: {
+    key: string
+    value: EmailEnviado
+    indexes: { 'by-criadoEm': string }
+  }
+  tecnicos: {
+    key: string
+    value: Tecnico
+  }
+  solicitacoesSMS: {
+    key: string
+    value: SolicitacaoSMS
+    indexes: { 'by-criadoEm': string }
+  }
 }
 
 let dbPromise: Promise<IDBPDatabase<GestaoDB>> | null = null
 
 function getDB() {
   if (!dbPromise) {
-    dbPromise = openDB<GestaoDB>('gestao-integrada', 3, {
+    dbPromise = openDB<GestaoDB>('gestao-integrada', 4, {
       upgrade(db, oldVersion) {
         if (oldVersion < 1) {
           const formularios = db.createObjectStore('formularios', { keyPath: 'id' })
@@ -79,6 +107,14 @@ function getDB() {
           db.createObjectStore('funcoes', { keyPath: 'id' })
           const auditoria = db.createObjectStore('auditoria', { keyPath: 'id' })
           auditoria.createIndex('by-criadoEm', 'criadoEm')
+        }
+        if (oldVersion < 4) {
+          db.createObjectStore('modelosEmail', { keyPath: 'id' })
+          const emailsEnviados = db.createObjectStore('emailsEnviados', { keyPath: 'id' })
+          emailsEnviados.createIndex('by-criadoEm', 'criadoEm')
+          db.createObjectStore('tecnicos', { keyPath: 'id' })
+          const solicitacoesSMS = db.createObjectStore('solicitacoesSMS', { keyPath: 'id' })
+          solicitacoesSMS.createIndex('by-criadoEm', 'criadoEm')
         }
       },
     })
@@ -230,4 +266,58 @@ export async function listarAuditoriaLocal(limite = 50) {
   const db = await getDB()
   const all = await db.getAll('auditoria')
   return all.sort((a, b) => b.criadoEm.localeCompare(a.criadoEm)).slice(0, limite)
+}
+
+export async function listarModelosEmailLocais() {
+  const db = await getDB()
+  const all = await db.getAll('modelosEmail')
+  return all.sort((a, b) => a.nome.localeCompare(b.nome))
+}
+
+export async function salvarModeloEmailLocal(modelo: ModeloEmail) {
+  const db = await getDB()
+  await db.put('modelosEmail', modelo)
+}
+
+export async function removerModeloEmailLocal(id: string) {
+  const db = await getDB()
+  await db.delete('modelosEmail', id)
+}
+
+export async function registrarEmailEnviadoLocal(email: EmailEnviado) {
+  const db = await getDB()
+  await db.put('emailsEnviados', email)
+}
+
+export async function listarEmailsEnviadosLocais(limite = 50) {
+  const db = await getDB()
+  const all = await db.getAll('emailsEnviados')
+  return all.sort((a, b) => b.criadoEm.localeCompare(a.criadoEm)).slice(0, limite)
+}
+
+export async function listarTecnicosLocais() {
+  const db = await getDB()
+  const all = await db.getAll('tecnicos')
+  return all.sort((a, b) => a.nome.localeCompare(b.nome))
+}
+
+export async function salvarTecnicoLocal(tecnico: Tecnico) {
+  const db = await getDB()
+  await db.put('tecnicos', tecnico)
+}
+
+export async function removerTecnicoLocal(id: string) {
+  const db = await getDB()
+  await db.delete('tecnicos', id)
+}
+
+export async function registrarSolicitacaoSMSLocal(solicitacao: SolicitacaoSMS) {
+  const db = await getDB()
+  await db.put('solicitacoesSMS', solicitacao)
+}
+
+export async function listarSolicitacoesSMSLocais() {
+  const db = await getDB()
+  const all = await db.getAll('solicitacoesSMS')
+  return all.sort((a, b) => b.criadoEm.localeCompare(a.criadoEm))
 }
