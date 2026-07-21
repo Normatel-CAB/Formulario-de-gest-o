@@ -19,8 +19,6 @@ const Usuarios = lazy(() => import('./pages/Administracao/Usuarios').then((m) =>
 const Cargos = lazy(() => import('./pages/Administracao/Cargos').then((m) => ({ default: m.Cargos })))
 const Permissoes = lazy(() => import('./pages/Administracao/Permissoes').then((m) => ({ default: m.Permissoes })))
 const Configuracoes = lazy(() => import('./pages/Configuracoes').then((m) => ({ default: m.Configuracoes })))
-const EnviarEmail = lazy(() => import('./pages/Email/EnviarEmail').then((m) => ({ default: m.EnviarEmail })))
-const ModelosEmail = lazy(() => import('./pages/Email/ModelosEmail').then((m) => ({ default: m.ModelosEmail })))
 
 export default function App() {
   const inicializado = useAuthStore((s) => s.inicializado)
@@ -97,22 +95,6 @@ export default function App() {
                       element={
                         <RequireRole roles={['administrador']}>
                           <Configuracoes />
-                        </RequireRole>
-                      }
-                    />
-                    <Route
-                      path="/emails"
-                      element={
-                        <RequireRole roles={['administrador', 'operador']}>
-                          <EnviarEmail />
-                        </RequireRole>
-                      }
-                    />
-                    <Route
-                      path="/emails/modelos"
-                      element={
-                        <RequireRole roles={['administrador']}>
-                          <ModelosEmail />
                         </RequireRole>
                       }
                     />

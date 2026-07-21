@@ -51,11 +51,11 @@ export function SettingsIcon({ className }: { className?: string }) {
     </svg>
   )
 }
-export function MailIcon({ className }: { className?: string }) {
+export function FormsIcon({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <rect x="3" y="5" width="18" height="14" rx="2" />
-      <path d="M4 6.5l8 6 8-6" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M7 3.5h7l4 4V19a1.5 1.5 0 01-1.5 1.5h-9A1.5 1.5 0 016 19V5A1.5 1.5 0 017 3.5z" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M14 3.5V8h4M9 12.5h6M9 16h6" strokeLinecap="round" />
     </svg>
   )
 }
@@ -72,6 +72,36 @@ export function CollapseIcon({ className }: { className?: string }) {
       <rect x="3.5" y="4" width="17" height="16" rx="2" />
       <path d="M9.5 4v16" strokeLinecap="round" />
       <path d="M6.5 10l-1.5 2 1.5 2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+export function MenuIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M4 6h16M4 12h16M4 18h16" strokeLinecap="round" />
+    </svg>
+  )
+}
+export function CloseIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M6 6l12 12M18 6L6 18" strokeLinecap="round" />
+    </svg>
+  )
+}
+export function LogoutIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M9 4H6a1.5 1.5 0 00-1.5 1.5v13A1.5 1.5 0 006 20h3" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M13 8l4 4-4 4M17 12H9" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+export function UserIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <circle cx="12" cy="8" r="3.5" />
+      <path d="M4.5 20c0-3.6 3.4-6.2 7.5-6.2s7.5 2.6 7.5 6.2" strokeLinecap="round" />
     </svg>
   )
 }
