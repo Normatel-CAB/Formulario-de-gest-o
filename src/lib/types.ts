@@ -21,9 +21,54 @@ export interface Usuario {
   ultimoAcesso?: string
 }
 
+export type StatusRegistro = 'ativo' | 'inativo'
+
+export interface Funcao {
+  id: string
+  nome: string
+  identificador: string
+  categoria: string
+  descricao: string
+  icone: string
+  status: StatusRegistro
+  sistema?: boolean
+  criadoEm: string
+}
+
 export interface Cargo {
   id: string
   nome: string
+  identificador: string
+  descricao: string
+  cor: string
+  icone: string
+  status: StatusRegistro
+  permissoes: string[]
+  sistema?: boolean
+  criadoEm: string
+  atualizadoEm: string
+}
+
+export type AcaoAuditoria =
+  | 'cargo_criado'
+  | 'cargo_editado'
+  | 'cargo_excluido'
+  | 'cargo_duplicado'
+  | 'cargo_status_alterado'
+  | 'funcao_criada'
+  | 'funcao_editada'
+  | 'funcao_excluida'
+  | 'permissoes_alteradas'
+
+export interface RegistroAuditoria {
+  id: string
+  acao: AcaoAuditoria
+  entidade: string
+  entidadeNome: string
+  detalhes: string
+  usuarioId: string
+  usuarioNome: string
+  criadoEm: string
 }
 
 export type FormStatus = 'rascunho' | 'enviado' | 'em_analise' | 'aprovado' | 'reprovado'

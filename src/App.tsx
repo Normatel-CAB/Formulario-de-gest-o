@@ -16,6 +16,7 @@ const FormDetail = lazy(() => import('./pages/FormDetail').then((m) => ({ defaul
 const MeuPerfil = lazy(() => import('./pages/MeuPerfil').then((m) => ({ default: m.MeuPerfil })))
 const Administracao = lazy(() => import('./pages/Administracao').then((m) => ({ default: m.Administracao })))
 const Usuarios = lazy(() => import('./pages/Administracao/Usuarios').then((m) => ({ default: m.Usuarios })))
+const Cargos = lazy(() => import('./pages/Administracao/Cargos').then((m) => ({ default: m.Cargos })))
 const Configuracoes = lazy(() => import('./pages/Configuracoes').then((m) => ({ default: m.Configuracoes })))
 
 export default function App() {
@@ -69,6 +70,14 @@ export default function App() {
                       element={
                         <RequireRole roles={['administrador']}>
                           <Usuarios />
+                        </RequireRole>
+                      }
+                    />
+                    <Route
+                      path="/administracao/cargos"
+                      element={
+                        <RequireRole roles={['administrador']}>
+                          <Cargos />
                         </RequireRole>
                       }
                     />

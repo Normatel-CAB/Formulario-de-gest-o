@@ -71,6 +71,7 @@ const links: NavItem[] = [
   { to: '/historico', label: 'Histórico', icon: HistoryIcon },
   { to: '/administracao', label: 'Administração', icon: ShieldIcon, roles: ['administrador'] },
   { to: '/usuarios', label: 'Usuários', icon: UsersIcon, roles: ['administrador'] },
+  { to: '/administracao/cargos', label: 'Cargos', icon: ShieldIcon, roles: ['administrador'] },
   { to: '/configuracoes', label: 'Configurações', icon: SettingsIcon, roles: ['administrador'] },
 ]
 

@@ -58,26 +58,24 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-40 bg-gradient-to-r from-brand-800 via-brand-700 to-brand-600 shadow-lg shadow-black/30">
-      <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3 sm:px-6">
+      <div className="mx-auto flex max-w-7xl items-center gap-4 pl-2 pr-4 py-2 sm:pl-3 sm:pr-6">
         <button
           type="button"
           onClick={() => podeEditarLogo && inputRef.current?.click()}
           className={cn(
-            'group relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-white/20 bg-white/10 backdrop-blur',
+            'group relative flex h-10 shrink-0 items-center sm:h-11',
             !podeEditarLogo && 'cursor-default',
           )}
           title={podeEditarLogo ? 'Clique para alterar a logo da empresa' : 'Logo da empresa'}
           aria-label="Logo da empresa"
         >
-          {logoDataUrl ? (
-            <img src={logoDataUrl} alt="Logo da empresa" className="h-full w-full object-contain" />
-          ) : (
-            <svg className="h-5 w-5 text-white/80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M4 16.5V19a2 2 0 002 2h12a2 2 0 002-2v-2.5M7 9l5-5 5 5M12 4v13" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          )}
+          <img
+            src={logoDataUrl || '/Normatel Engenharia_BRANCO.svg'}
+            alt="Logo da empresa"
+            className="h-full w-auto max-w-[10rem] object-contain object-left"
+          />
           {podeEditarLogo && (
-            <span className="absolute inset-0 hidden items-center justify-center bg-black/50 text-[9px] font-medium text-white group-hover:flex">
+            <span className="absolute inset-0 hidden items-center justify-center rounded-lg bg-black/50 text-[9px] font-medium text-white group-hover:flex">
               Alterar
             </span>
           )}

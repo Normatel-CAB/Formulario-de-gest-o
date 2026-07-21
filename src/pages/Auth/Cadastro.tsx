@@ -91,11 +91,13 @@ export function Cadastro() {
         </div>
         <Select label="Cargo" required value={cargo} onChange={(e) => setCargo(e.target.value)} error={erros.cargo}>
           <option value="">Selecione um cargo</option>
-          {cargos.map((c) => (
-            <option key={c.id} value={c.nome}>
-              {c.nome}
-            </option>
-          ))}
+          {cargos
+            .filter((c) => c.status === 'ativo')
+            .map((c) => (
+              <option key={c.id} value={c.nome}>
+                {c.nome}
+              </option>
+            ))}
         </Select>
         <div className="grid gap-4 sm:grid-cols-2">
           <Input
