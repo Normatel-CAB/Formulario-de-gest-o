@@ -1,8 +1,7 @@
 import { create } from 'zustand'
-import type { Cargo, StatusRegistro, Usuario } from '../lib/types'
+import type { Cargo, StatusRegistro } from '../lib/types'
 import { listarCargosLocais, removerCargoLocal, salvarCargoLocal } from '../lib/db'
 import { PERMISSOES_ADMINISTRADOR_PADRAO, PERMISSOES_OPERADOR_PADRAO, PERMISSOES_VISUALIZADOR_PADRAO, slugificar } from '../lib/permissoes'
-import { registrarAuditoria } from '../lib/auditoria'
 
 const CARGOS_PADRAO: Array<Omit<Cargo, 'id' | 'criadoEm' | 'atualizadoEm'>> = [
   {
@@ -35,17 +34,27 @@ const CARGOS_PADRAO: Array<Omit<Cargo, 'id' | 'criadoEm' | 'atualizadoEm'>> = [
     permissoes: PERMISSOES_VISUALIZADOR_PADRAO,
     sistema: true,
   },
+  {
+    nome: 'Técnico de Segurança',
+    identificador: 'tecnico-de-seguranca',
+    descricao: 'Realiza visitas SMS e acompanhamentos técnicos de segurança do trabalho.',
+    cor: '#d97706',
+    icone: 'wrench',
+    status: 'ativo',
+    permissoes: PERMISSOES_VISUALIZADOR_PADRAO,
+    sistema: false,
+  },
 ]
 
 interface CargosState {
   cargos: Cargo[]
   loading: boolean
   carregar: () => Promise<void>
-  criar: (dados: Omit<Cargo, 'id' | 'identificador' | 'criadoEm' | 'atualizadoEm' | 'sistema'>, usuario: Usuario | null) => Promise<Cargo>
-  atualizar: (id: string, patch: Partial<Cargo>, usuario: Usuario | null) => Promise<void>
-  duplicar: (id: string, usuario: Usuario | null) => Promise<void>
-  alternarStatus: (id: string, status: StatusRegistro, usuario: Usuario | null) => Promise<void>
-  remover: (id: string, usuario: Usuario | null, emUso: boolean) => Promise<{ ok: boolean; motivo?: string }>
+  criar: (dados: Omit<Cargo, 'id' | 'identificador' | 'criadoEm' | 'atualizadoEm' | 'sistema'>) => Promise<Cargo>
+  atualizar: (id: string, patch: Partial<Cargo>) => Promise<void>
+  duplicar: (id: string) => Promise<void>
+  alternarStatus: (id: string, status: StatusRegistro) => Promise<void>
+  remover: (id: string, emUso: boolean) => Promise<{ ok: boolean; motivo?: string }>
 }
 
 let seedEmAndamento: Promise<Cargo[]> | null = null
@@ -79,7 +88,7 @@ export const useCargosStore = create<CargosState>((set, get) => ({
     const cargos = await garantirCargosPadrao()
     set({ cargos, loading: false })
   },
-  criar: async (dados, usuario) => {
+  criar: async (dados) => {
     const agora = new Date().toISOString()
     const cargo: Cargo = {
       ...dados,
@@ -90,34 +99,16 @@ export const useCargosStore = create<CargosState>((set, get) => ({
     }
     await salvarCargoLocal(cargo)
     set({ cargos: [...get().cargos, cargo].sort((a, b) => a.nome.localeCompare(b.nome)) })
-    await registrarAuditoria({
-      acao: 'cargo_criado',
-      entidade: 'cargo',
-      entidadeNome: cargo.nome,
-      detalhes: `Cargo "${cargo.nome}" criado com ${cargo.permissoes.length} permissão(ões).`,
-      usuario,
-    })
     return cargo
   },
-  atualizar: async (id, patch, usuario) => {
+  atualizar: async (id, patch) => {
     const atual = get().cargos.find((c) => c.id === id)
     if (!atual) return
     const atualizado: Cargo = { ...atual, ...patch, atualizadoEm: new Date().toISOString() }
     await salvarCargoLocal(atualizado)
     set({ cargos: get().cargos.map((c) => (c.id === id ? atualizado : c)) })
-
-    const permissoesMudaram = patch.permissoes && patch.permissoes.join(',') !== atual.permissoes.join(',')
-    await registrarAuditoria({
-      acao: permissoesMudaram ? 'permissoes_alteradas' : 'cargo_editado',
-      entidade: 'cargo',
-      entidadeNome: atualizado.nome,
-      detalhes: permissoesMudaram
-        ? `Permissões do cargo "${atualizado.nome}" alteradas para ${atualizado.permissoes.length} permissão(ões).`
-        : `Cargo "${atualizado.nome}" atualizado.`,
-      usuario,
-    })
   },
-  duplicar: async (id, usuario) => {
+  duplicar: async (id) => {
     const original = get().cargos.find((c) => c.id === id)
     if (!original) return
     const agora = new Date().toISOString()
@@ -138,29 +129,15 @@ export const useCargosStore = create<CargosState>((set, get) => ({
     }
     await salvarCargoLocal(copia)
     set({ cargos: [...get().cargos, copia].sort((a, b) => a.nome.localeCompare(b.nome)) })
-    await registrarAuditoria({
-      acao: 'cargo_duplicado',
-      entidade: 'cargo',
-      entidadeNome: copia.nome,
-      detalhes: `Cargo "${original.nome}" duplicado como "${copia.nome}".`,
-      usuario,
-    })
   },
-  alternarStatus: async (id, status, usuario) => {
+  alternarStatus: async (id, status) => {
     const atual = get().cargos.find((c) => c.id === id)
     if (!atual) return
     const atualizado = { ...atual, status, atualizadoEm: new Date().toISOString() }
     await salvarCargoLocal(atualizado)
     set({ cargos: get().cargos.map((c) => (c.id === id ? atualizado : c)) })
-    await registrarAuditoria({
-      acao: 'cargo_status_alterado',
-      entidade: 'cargo',
-      entidadeNome: atualizado.nome,
-      detalhes: `Cargo "${atualizado.nome}" ${status === 'ativo' ? 'ativado' : 'inativado'}.`,
-      usuario,
-    })
   },
-  remover: async (id, usuario, emUso) => {
+  remover: async (id, emUso) => {
     const atual = get().cargos.find((c) => c.id === id)
     if (!atual) return { ok: false, motivo: 'Cargo não encontrado.' }
     if (atual.sistema) return { ok: false, motivo: 'Cargos padrão do sistema não podem ser excluídos.' }
@@ -168,13 +145,6 @@ export const useCargosStore = create<CargosState>((set, get) => ({
 
     await removerCargoLocal(id)
     set({ cargos: get().cargos.filter((c) => c.id !== id) })
-    await registrarAuditoria({
-      acao: 'cargo_excluido',
-      entidade: 'cargo',
-      entidadeNome: atual.nome,
-      detalhes: `Cargo "${atual.nome}" excluído.`,
-      usuario,
-    })
     return { ok: true }
   },
 }))

@@ -203,20 +203,17 @@ export function EnviarEmail() {
     setEnviando(true)
     try {
       const anexosFinais = await montarAnexosParaEnvio()
-      await enviar(
-        {
-          destinatarios: destinatariosFinais,
-          cc,
-          cco,
-          assunto,
-          corpo,
-          anexos: anexosFinais,
-          formularioId: formularioId ?? undefined,
-          enviadoPorId: usuarioLogado?.id ?? '',
-          enviadoPorNome: usuarioLogado?.nome ?? '',
-        },
-        usuarioLogado,
-      )
+      await enviar({
+        destinatarios: destinatariosFinais,
+        cc,
+        cco,
+        assunto,
+        corpo,
+        anexos: anexosFinais,
+        formularioId: formularioId ?? undefined,
+        enviadoPorId: usuarioLogado?.id ?? '',
+        enviadoPorNome: usuarioLogado?.nome ?? '',
+      })
       toast({ variant: 'success', title: 'E-mail enviado com sucesso' })
       setPreviaAberta(false)
       setSelecionados(new Set())

@@ -1,4 +1,5 @@
 import type { Papel, Usuario } from './types'
+import { PROJETOS_PADRAO } from './types'
 import {
   obterCodigoRecuperacao,
   obterCredencial,
@@ -44,6 +45,7 @@ export async function garantirAdministradorPadrao() {
     matricula: 'ADM-0001',
     cargo: 'Administrador do Sistema',
     papel: 'administrador',
+    projeto: PROJETOS_PADRAO[0],
     status: 'ativo',
     criadoEm: new Date().toISOString(),
   }
@@ -57,6 +59,7 @@ export interface DadosCadastro {
   cpf: string
   matricula: string
   cargo: string
+  projeto: string
   senha: string
 }
 
@@ -75,6 +78,7 @@ export async function cadastrarUsuario(dados: DadosCadastro, papel: Papel = 'ope
     matricula: dados.matricula,
     cargo: dados.cargo,
     papel,
+    projeto: dados.projeto,
     status: 'ativo',
     criadoEm: new Date().toISOString(),
   }

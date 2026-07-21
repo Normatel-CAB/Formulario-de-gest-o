@@ -6,6 +6,8 @@ export const PAPEL_LABELS: Record<Papel, string> = {
   visualizador: 'Visualizador',
 }
 
+export const PROJETOS_PADRAO = ['BASE UTE E TAPERA', 'ÁREAS EXTERNAS'] as const
+
 export type StatusUsuario = 'ativo' | 'inativo'
 
 export interface Usuario {
@@ -16,6 +18,7 @@ export interface Usuario {
   matricula: string
   cargo: string
   papel: Papel
+  projeto: string
   status: StatusUsuario
   criadoEm: string
   ultimoAcesso?: string
@@ -49,36 +52,6 @@ export interface Cargo {
   atualizadoEm: string
 }
 
-export type AcaoAuditoria =
-  | 'cargo_criado'
-  | 'cargo_editado'
-  | 'cargo_excluido'
-  | 'cargo_duplicado'
-  | 'cargo_status_alterado'
-  | 'funcao_criada'
-  | 'funcao_editada'
-  | 'funcao_excluida'
-  | 'permissoes_alteradas'
-  | 'email_enviado'
-  | 'modelo_email_criado'
-  | 'modelo_email_editado'
-  | 'modelo_email_excluido'
-  | 'sms_solicitado'
-  | 'tecnico_criado'
-  | 'tecnico_editado'
-  | 'tecnico_excluido'
-
-export interface RegistroAuditoria {
-  id: string
-  acao: AcaoAuditoria
-  entidade: string
-  entidadeNome: string
-  detalhes: string
-  usuarioId: string
-  usuarioNome: string
-  criadoEm: string
-}
-
 export type FormStatus = 'rascunho' | 'enviado' | 'em_analise' | 'aprovado' | 'reprovado'
 
 export const STATUS_LABELS: Record<FormStatus, string> = {
@@ -108,6 +81,16 @@ export interface Agendamento {
   data?: string
 }
 
+export interface AgendamentoVisitaSMS {
+  necessario: boolean
+  data?: string
+  hora?: string
+  tecnicoId?: string
+  tecnicoNome?: string
+  tecnicoEmail?: string
+  observacoes?: string
+}
+
 export interface DescricaoItem {
   necessario: boolean
   descricao?: string
@@ -119,7 +102,7 @@ export interface NecessidadesExecucao {
   comunicacoesOperantes: QtdDias
   visitaTecnica: Agendamento
   montagemAndaime: Agendamento
-  visitaSMS: Agendamento
+  visitaSMS: AgendamentoVisitaSMS
   caminhaoMunck: Agendamento
   veiculo: Agendamento
   libra: Agendamento
@@ -162,6 +145,7 @@ export interface FormularioAvaliacao {
   createdAt: string
   updatedAt: string
   status: FormStatus
+  projeto: string
   infoGerais: InfoGerais
   necessidades: NecessidadesExecucao
   descricaoApoio: string
@@ -207,36 +191,5 @@ export interface EmailEnviado {
   formularioId?: string
   enviadoPorId: string
   enviadoPorNome: string
-  criadoEm: string
-}
-
-export type StatusTecnico = StatusRegistro
-
-export interface Tecnico {
-  id: string
-  nome: string
-  empresa: string
-  email: string
-  telefone: string
-  cargo: string
-  regiao: string
-  status: StatusTecnico
-  observacoes: string
-  criadoEm: string
-}
-
-export interface SolicitacaoSMS {
-  id: string
-  tecnicoId: string
-  tecnicoNome: string
-  tecnicoEmail: string
-  dataDesejada: string
-  horaDesejada: string
-  local: string
-  instalacao: string
-  responsavel: string
-  observacoes: string
-  criadoPorId: string
-  criadoPorNome: string
   criadoEm: string
 }

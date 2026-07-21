@@ -1,7 +1,13 @@
+import { useEffect, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
-import type { Agendamento, DescricaoItem, QtdDias } from '../../lib/types'
+import type { Agendamento, AgendamentoVisitaSMS, DescricaoItem, FormularioAvaliacao, QtdDias } from '../../lib/types'
 import { SimNaoField } from '../../components/ui/Switch'
-import { Input, Textarea } from '../../components/ui/Field'
+import { Input, Select, Textarea } from '../../components/ui/Field'
+import { Button } from '../../components/ui/Button'
+import { useUsersStore } from '../../store/usersStore'
+import { useEmailDraftStore } from '../../store/emailDraftStore'
+import { formatarData } from '../../lib/format'
 
 function CondicionalWrapper({ show, children }: { show: boolean; children: React.ReactNode }) {
   return (
@@ -104,6 +110,115 @@ export function DescricaoItemField({
           value={value.descricao ?? ''}
           onChange={(e) => onChange({ ...value, descricao: e.target.value })}
         />
+      </CondicionalWrapper>
+    </div>
+  )
+}
+
+function montarCorpoVisitaSMS(dados: {
+  projeto: string
+  local: string
+  data: string
+  hora: string
+  responsavel: string
+  observacoes: string
+}) {
+  return `Olá,
+
+Foi solicitada uma Visita SMS.
+
+Dados da solicitação:
+
+• Projeto: ${dados.projeto || '—'}
+• Instalação:
+• Local: ${dados.local || '—'}
+• Data: ${dados.data ? formatarData(dados.data) : '—'}
+• Horário: ${dados.hora || '—'}
+• Responsável: ${dados.responsavel || '—'}
+• Observações: ${dados.observacoes || '—'}
+
+Favor confirmar a disponibilidade.
+
+Atenciosamente.`
+}
+
+export function VisitaSMSField({
+  value,
+  onChange,
+  formulario,
+}: {
+  value: AgendamentoVisitaSMS
+  onChange: (v: AgendamentoVisitaSMS) => void
+  formulario: FormularioAvaliacao
+}) {
+  const { usuarios, carregar } = useUsersStore()
+  const definirRascunho = useEmailDraftStore((s) => s.definir)
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    void carregar()
+  }, [carregar])
+
+  const tecnicos = useMemo(
+    () => usuarios.filter((u) => u.cargo === 'Técnico de Segurança' && u.status === 'ativo'),
+    [usuarios],
+  )
+
+  function selecionarTecnico(tecnicoId: string) {
+    const tecnico = tecnicos.find((t) => t.id === tecnicoId)
+    onChange({ ...value, tecnicoId, tecnicoNome: tecnico?.nome, tecnicoEmail: tecnico?.email })
+  }
+
+  function gerarEmailSolicitacao() {
+    definirRascunho({
+      destinatarios: value.tecnicoEmail ? [value.tecnicoEmail] : [],
+      assunto: 'Solicitação de Agendamento de Visita SMS',
+      corpo: montarCorpoVisitaSMS({
+        projeto: formulario.projeto,
+        local: formulario.infoGerais.localAtividade,
+        data: value.data ?? '',
+        hora: value.hora ?? '',
+        responsavel: formulario.infoGerais.responsavel,
+        observacoes: value.observacoes ?? '',
+      }),
+      formularioId: formulario.id,
+    })
+    navigate(`/emails?formularioId=${formulario.id}`)
+  }
+
+  return (
+    <div className="border-b border-border py-2 last:border-none">
+      <SimNaoField
+        label="Visita SMS Necessária"
+        checked={value.necessario}
+        onChange={(necessario) => onChange({ ...value, necessario })}
+      />
+      <CondicionalWrapper show={value.necessario}>
+        <div className="space-y-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-ink-subtle">Agendamento da Visita SMS</p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Input label="Data" type="date" value={value.data ?? ''} onChange={(e) => onChange({ ...value, data: e.target.value })} />
+            <Input label="Hora" type="time" value={value.hora ?? ''} onChange={(e) => onChange({ ...value, hora: e.target.value })} />
+          </div>
+          <Select label="Técnico de Segurança" value={value.tecnicoId ?? ''} onChange={(e) => selecionarTecnico(e.target.value)}>
+            <option value="">Selecione um técnico</option>
+            {tecnicos.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.nome}
+              </option>
+            ))}
+          </Select>
+          <Textarea
+            label="Observações"
+            value={value.observacoes ?? ''}
+            onChange={(e) => onChange({ ...value, observacoes: e.target.value })}
+          />
+          {value.tecnicoId && (
+            <Button type="button" variant="outline" size="sm" onClick={gerarEmailSolicitacao}>
+              Gerar E-mail de Solicitação
+            </Button>
+          )}
+        </div>
       </CondicionalWrapper>
     </div>
   )

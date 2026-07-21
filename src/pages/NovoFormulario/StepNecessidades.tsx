@@ -1,6 +1,6 @@
 import type { FormularioAvaliacao, NecessidadesExecucao } from '../../lib/types'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/Card'
-import { AgendamentoField, DescricaoItemField, QtdDiasField } from './NecessidadeItems'
+import { AgendamentoField, DescricaoItemField, QtdDiasField, VisitaSMSField } from './NecessidadeItems'
 
 export function StepNecessidades({
   formulario,
@@ -39,7 +39,7 @@ export function StepNecessidades({
         <CardContent>
           <AgendamentoField label="Visita Técnica" value={n.visitaTecnica} onChange={(v) => onChange({ visitaTecnica: v })} />
           <AgendamentoField label="Montagem de Andaime" value={n.montagemAndaime} onChange={(v) => onChange({ montagemAndaime: v })} />
-          <AgendamentoField label="Visita SMS" value={n.visitaSMS} onChange={(v) => onChange({ visitaSMS: v })} />
+          <VisitaSMSField value={n.visitaSMS} onChange={(v) => onChange({ visitaSMS: v })} formulario={formulario} />
           <AgendamentoField label="Caminhão Munck" value={n.caminhaoMunck} onChange={(v) => onChange({ caminhaoMunck: v })} />
           <AgendamentoField label="Veículo" value={n.veiculo} onChange={(v) => onChange({ veiculo: v })} />
           <AgendamentoField label="LIBRA" value={n.libra} onChange={(v) => onChange({ libra: v })} />

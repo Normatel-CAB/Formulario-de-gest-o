@@ -27,7 +27,7 @@ export function NovoFormulario() {
 
   const [formulario, setFormulario] = useState<FormularioAvaliacao>(() => {
     const vazio = criarFormularioVazio()
-    if (usuario) return { ...vazio, criadoPorId: usuario.id, criadoPorNome: usuario.nome }
+    if (usuario) return { ...vazio, projeto: usuario.projeto, criadoPorId: usuario.id, criadoPorNome: usuario.nome }
     return vazio
   })
   const [step, setStep] = useState(0)

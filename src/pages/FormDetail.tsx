@@ -28,7 +28,9 @@ export function FormDetail() {
     void obter(id).then((f) => setFormulario(f ?? null))
   }, [id, obter])
 
-  if (!formulario) {
+  const semAcesso = formulario && usuario?.papel !== 'administrador' && formulario.projeto !== usuario?.projeto
+
+  if (!formulario || semAcesso) {
     return (
       <div className="animate-fade-in">
         <p className="text-sm text-ink-muted">Formulário não encontrado.</p>

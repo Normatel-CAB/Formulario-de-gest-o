@@ -1,13 +1,15 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useFormsStore } from '../store/formsStore'
+import { useAuthStore } from '../store/authStore'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
+import { Select } from '../components/ui/Field'
 import { StatusBadge } from '../components/ui/StatusBadge'
 import { EmptyState } from '../components/ui/EmptyState'
 import { SkeletonCard } from '../components/ui/Skeleton'
 import { Timeline } from '../components/ui/Timeline'
-import { STATUS_LABELS } from '../lib/types'
+import { PROJETOS_PADRAO, STATUS_LABELS } from '../lib/types'
 import { formatarDataHora } from '../lib/format'
 
 const indicadores = [
@@ -20,24 +22,38 @@ const indicadores = [
 
 export function Dashboard() {
   const { formularios, loading, carregar } = useFormsStore()
+  const usuario = useAuthStore((s) => s.usuario)
+  const [filtroProjeto, setFiltroProjeto] = useState('')
+
+  const ehAdministrador = usuario?.papel === 'administrador'
 
   useEffect(() => {
     void carregar()
   }, [carregar])
 
+  const escopo = useMemo(() => {
+    let lista = formularios
+    if (!ehAdministrador && usuario) {
+      lista = lista.filter((f) => f.projeto === usuario.projeto)
+    } else if (ehAdministrador && filtroProjeto) {
+      lista = lista.filter((f) => f.projeto === filtroProjeto)
+    }
+    return lista
+  }, [formularios, usuario, ehAdministrador, filtroProjeto])
+
   const stats = useMemo(() => {
     return {
-      total: formularios.length,
-      pendentes: formularios.filter((f) => f.status === 'rascunho' || f.status === 'enviado').length,
-      emAnalise: formularios.filter((f) => f.status === 'em_analise').length,
-      aprovados: formularios.filter((f) => f.status === 'aprovado').length,
-      reprovados: formularios.filter((f) => f.status === 'reprovado').length,
+      total: escopo.length,
+      pendentes: escopo.filter((f) => f.status === 'rascunho' || f.status === 'enviado').length,
+      emAnalise: escopo.filter((f) => f.status === 'em_analise').length,
+      aprovados: escopo.filter((f) => f.status === 'aprovado').length,
+      reprovados: escopo.filter((f) => f.status === 'reprovado').length,
     }
-  }, [formularios])
+  }, [escopo])
 
   const ultimosEnvios = useMemo(
     () =>
-      [...formularios]
+      [...escopo]
         .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
         .slice(0, 6)
         .map((f) => ({
@@ -47,7 +63,7 @@ export function Dashboard() {
           timestamp: formatarDataHora(f.updatedAt),
           tone: f.status === 'aprovado' ? ('brand' as const) : f.status === 'reprovado' ? ('rose' as const) : f.status === 'em_analise' ? ('amber' as const) : ('slate' as const),
         })),
-    [formularios],
+    [escopo],
   )
 
   return (
@@ -57,14 +73,26 @@ export function Dashboard() {
           <h2 className="text-xl font-bold text-ink">Visão geral</h2>
           <p className="text-sm text-ink-muted">Acompanhe os indicadores das fichas técnicas de avaliação.</p>
         </div>
-        <Link to="/novo">
-          <Button>
-            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M12 5v14M5 12h14" strokeLinecap="round" />
-            </svg>
-            Novo Formulário
-          </Button>
-        </Link>
+        <div className="flex items-center gap-2">
+          {ehAdministrador && (
+            <Select value={filtroProjeto} onChange={(e) => setFiltroProjeto(e.target.value)} aria-label="Filtrar por projeto" className="w-48">
+              <option value="">Todos os projetos</option>
+              {PROJETOS_PADRAO.map((p) => (
+                <option key={p} value={p}>
+                  {p}
+                </option>
+              ))}
+            </Select>
+          )}
+          <Link to="/novo">
+            <Button>
+              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+              </svg>
+              Novo Formulário
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
@@ -105,13 +133,13 @@ export function Dashboard() {
         </CardContent>
       </Card>
 
-      {!loading && formularios.length > 0 && (
+      {!loading && escopo.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle>Formulários recentes</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {formularios.slice(0, 6).map((f) => (
+            {escopo.slice(0, 6).map((f) => (
               <Link
                 key={f.id}
                 to={`/formulario/${f.id}`}

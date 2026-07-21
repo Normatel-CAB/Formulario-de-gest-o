@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useEmailStore } from '../../store/emailStore'
-import { useAuthStore } from '../../store/authStore'
 import { Card, CardContent } from '../../components/ui/Card'
 import { Input, Textarea } from '../../components/ui/Field'
 import { Button } from '../../components/ui/Button'
@@ -20,7 +19,6 @@ const ESTADO_INICIAL: FormState = { nome: '', assunto: '', corpo: '' }
 
 export function ModelosEmail() {
   const { modelos, loading, carregarModelos, criarModelo, atualizarModelo, removerModelo } = useEmailStore()
-  const usuarioLogado = useAuthStore((s) => s.usuario)
 
   const [dialogAberto, setDialogAberto] = useState(false)
   const [editandoId, setEditandoId] = useState<string | null>(null)
@@ -60,10 +58,10 @@ export function ModelosEmail() {
     setSalvando(true)
     try {
       if (editandoId) {
-        await atualizarModelo(editandoId, { ...form }, usuarioLogado)
+        await atualizarModelo(editandoId, { ...form })
         toast({ variant: 'success', title: 'Modelo atualizado' })
       } else {
-        await criarModelo({ ...form }, usuarioLogado)
+        await criarModelo({ ...form })
         toast({ variant: 'success', title: 'Modelo criado com sucesso' })
       }
       setDialogAberto(false)
@@ -74,7 +72,7 @@ export function ModelosEmail() {
 
   async function confirmarExclusao() {
     if (!excluindo) return
-    await removerModelo(excluindo.id, usuarioLogado)
+    await removerModelo(excluindo.id)
     toast({ variant: 'success', title: 'Modelo excluído' })
     setExcluindo(null)
   }
