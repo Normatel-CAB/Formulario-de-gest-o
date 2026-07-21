@@ -33,7 +33,7 @@ export default defineConfig({
           },
         ],
       },
-      includeAssets: ['favicon.svg', 'apple-touch-icon.png', 'icons/*.png'],
+      includeAssets: ['Normatel Engenharia_BRANCO.svg', 'icons/*.png'],
       manifest: {
         name: 'Gestão Integrada - Ficha Técnica de Avaliação de Serviços',
         short_name: 'Gestão Integrada',

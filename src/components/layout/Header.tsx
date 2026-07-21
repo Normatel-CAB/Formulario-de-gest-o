@@ -69,13 +69,11 @@ export function Header() {
           title={podeEditarLogo ? 'Clique para alterar a logo da empresa' : 'Logo da empresa'}
           aria-label="Logo da empresa"
         >
-          {logoDataUrl ? (
-            <img src={logoDataUrl} alt="Logo da empresa" className="h-full w-auto max-w-[10rem] object-contain object-left" />
-          ) : (
-            <svg className="h-7 w-7 text-white/80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M4 16.5V19a2 2 0 002 2h12a2 2 0 002-2v-2.5M7 9l5-5 5 5M12 4v13" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          )}
+          <img
+            src={logoDataUrl || '/Normatel Engenharia_BRANCO.svg'}
+            alt="Logo da empresa"
+            className="h-full w-auto max-w-[10rem] object-contain object-left"
+          />
           {podeEditarLogo && (
             <span className="absolute inset-0 hidden items-center justify-center rounded-lg bg-black/50 text-[9px] font-medium text-white group-hover:flex">
               Alterar
