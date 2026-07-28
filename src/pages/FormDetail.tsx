@@ -66,9 +66,9 @@ export function FormDetail() {
     navigate('/historico')
   }
 
-  function baixarPdf() {
+  async function baixarPdf() {
     if (!formulario) return
-    const blob = gerarPdfFormulario(formulario)
+    const blob = await gerarPdfFormulario(formulario)
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
