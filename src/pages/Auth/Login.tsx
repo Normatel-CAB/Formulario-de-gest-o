@@ -9,6 +9,7 @@ import { ADMIN_SEED_EMAIL, ADMIN_SEED_SENHA } from '../../lib/auth'
 
 export function Login() {
   const entrar = useAuthStore((s) => s.entrar)
+  const entrarComMicrosoft = useAuthStore((s) => s.entrarComMicrosoft)
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -17,7 +18,19 @@ export function Login() {
   const [mostrarSenha, setMostrarSenha] = useState(false)
   const [lembrar, setLembrar] = useState(true)
   const [carregando, setCarregando] = useState(false)
+  const [carregandoMicrosoft, setCarregandoMicrosoft] = useState(false)
   const [erro, setErro] = useState('')
+
+  async function onMicrosoft() {
+    setErro('')
+    setCarregandoMicrosoft(true)
+    try {
+      await entrarComMicrosoft()
+    } catch (err) {
+      setErro(err instanceof Error ? err.message : 'Não foi possível entrar com a Microsoft.')
+      setCarregandoMicrosoft(false)
+    }
+  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -102,10 +115,39 @@ export function Login() {
           Entrar
         </Button>
 
+        <div className="flex items-center gap-3">
+          <span className="h-px flex-1 bg-border" />
+          <span className="text-xs text-ink-subtle">ou</span>
+          <span className="h-px flex-1 bg-border" />
+        </div>
+
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full"
+          size="lg"
+          loading={carregandoMicrosoft}
+          onClick={onMicrosoft}
+        >
+          <svg className="h-4 w-4" viewBox="0 0 23 23" aria-hidden="true">
+            <path fill="#f35325" d="M1 1h10v10H1z" />
+            <path fill="#81bc06" d="M12 1h10v10H12z" />
+            <path fill="#05a6f0" d="M1 12h10v10H1z" />
+            <path fill="#ffba08" d="M12 12h10v10H12z" />
+          </svg>
+          Entrar com Microsoft
+        </Button>
+
         <p className="text-center text-sm text-ink-muted">
           Não tem uma conta?{' '}
           <Link to="/cadastro" className="font-medium text-brand-400 hover:text-brand-300">
             Ir para cadastro
+          </Link>
+        </p>
+
+        <p className="text-center text-sm text-ink-muted">
+          <Link to="/formulario" className="font-medium text-brand-400 hover:text-brand-300">
+            Preencher formulário sem login
           </Link>
         </p>
 

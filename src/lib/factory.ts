@@ -19,6 +19,7 @@ export function criarNecessidadesVazias(): NecessidadesExecucao {
     materialEspecifico: { necessario: false },
     locacaoMaquinas: { necessario: false },
     apoioOutraEquipe: { necessario: false },
+    necessidadesAdicionais: '',
   }
 }
 
@@ -43,4 +44,17 @@ export function criarFormularioVazio(): FormularioAvaliacao {
     observacoes: '',
     imagens: [],
   }
+}
+
+export function formularioTemConteudo(f: FormularioAvaliacao): boolean {
+  const info = f.infoGerais
+  if (info.responsavel || info.tempoEstimadoExecucao || info.numeroSolicitacao || info.equipeNecessaria || info.localAtividade) return true
+  if (f.descricaoApoio.trim() || f.observacoes.trim()) return true
+  if (f.imagens.length > 0 || f.localizacao || f.assinaturaDataUrl) return true
+  const n = f.necessidades
+  if (n.necessidadesAdicionais?.trim()) return true
+  for (const valor of Object.values(n)) {
+    if (valor && typeof valor === 'object' && 'necessario' in valor && (valor as { necessario?: boolean }).necessario) return true
+  }
+  return false
 }

@@ -1,5 +1,6 @@
 import type { FormularioAvaliacao, NecessidadesExecucao } from '../../lib/types'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/Card'
+import { Textarea } from '../../components/ui/Field'
 import { AgendamentoField, DescricaoItemField, QtdDiasField, VisitaSMSField } from './NecessidadeItems'
 
 export function StepNecessidades({
@@ -78,6 +79,15 @@ export function StepNecessidades({
             value={n.apoioOutraEquipe}
             onChange={(v) => onChange({ apoioOutraEquipe: v })}
           />
+          <div className="pt-2">
+            <Textarea
+              label="Necessidades adicionais"
+              hint="Opcional. Descreva outras necessidades não listadas acima."
+              value={n.necessidadesAdicionais ?? ''}
+              onChange={(e) => onChange({ necessidadesAdicionais: e.target.value })}
+              placeholder="Descreva necessidades adicionais, se houver"
+            />
+          </div>
         </CardContent>
       </Card>
     </div>

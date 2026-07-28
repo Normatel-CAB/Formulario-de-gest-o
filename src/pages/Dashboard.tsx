@@ -142,6 +142,33 @@ export function Dashboard() {
     [escopo],
   )
 
+  const taxaAprovacao = useMemo(() => {
+    const avaliados = stats.aprovados + stats.reprovados
+    if (avaliados === 0) return 0
+    return Math.round((stats.aprovados / avaliados) * 100)
+  }, [stats])
+
+  const volumeMensal = useMemo(() => {
+    const meses: { chave: string; label: string; qtd: number }[] = []
+    const agora = new Date()
+    for (let i = 5; i >= 0; i -= 1) {
+      const d = new Date(agora.getFullYear(), agora.getMonth() - i, 1)
+      meses.push({
+        chave: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
+        label: d.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', ''),
+        qtd: 0,
+      })
+    }
+    const indice = new Map(meses.map((m) => [m.chave, m]))
+    for (const f of escopo) {
+      const chave = (f.createdAt ?? f.updatedAt).slice(0, 7)
+      const alvo = indice.get(chave)
+      if (alvo) alvo.qtd += 1
+    }
+    const max = Math.max(1, ...meses.map((m) => m.qtd))
+    return { meses, max }
+  }, [escopo])
+
   return (
     <div className="animate-fade-in space-y-6">
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
@@ -188,6 +215,72 @@ export function Dashboard() {
                 </Card>
               )
             })}
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-3">
+        <Card>
+          <CardHeader>
+            <CardTitle>Taxa de aprovação</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <SkeletonCard />
+            ) : (
+              <div className="flex flex-col gap-4">
+                <div className="flex items-end gap-2">
+                  <span className="text-4xl font-bold text-ink">{taxaAprovacao}%</span>
+                  <span className="mb-1 text-xs text-ink-subtle">dos avaliados</span>
+                </div>
+                <div className="h-2.5 w-full overflow-hidden rounded-full bg-surface-3">
+                  <div
+                    className="h-full rounded-full bg-brand-500 transition-[width] duration-500"
+                    style={{ width: `${taxaAprovacao}%` }}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div className="rounded-xl bg-surface-2 p-3">
+                    <p className="text-xs text-ink-subtle">Aprovados</p>
+                    <p className="text-lg font-semibold text-brand-400">{stats.aprovados}</p>
+                  </div>
+                  <div className="rounded-xl bg-surface-2 p-3">
+                    <p className="text-xs text-ink-subtle">Reprovados</p>
+                    <p className="text-lg font-semibold text-rose-400">{stats.reprovados}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <div>
+              <CardTitle>Volume por mês</CardTitle>
+              <CardDescription>Formulários criados nos últimos 6 meses.</CardDescription>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <SkeletonCard />
+            ) : (
+              <div className="flex h-44 items-end justify-between gap-2 sm:gap-4">
+                {volumeMensal.meses.map((m) => (
+                  <div key={m.chave} className="flex flex-1 flex-col items-center gap-2">
+                    <span className="text-xs font-medium text-ink">{m.qtd}</span>
+                    <div className="flex w-full flex-1 items-end">
+                      <div
+                        className="w-full rounded-t-lg bg-brand-500/80 transition-[height] duration-500 hover:bg-brand-500"
+                        style={{ height: `${Math.max(4, (m.qtd / volumeMensal.max) * 100)}%` }}
+                        title={`${m.qtd} formulário(s)`}
+                      />
+                    </div>
+                    <span className="text-[11px] capitalize text-ink-subtle">{m.label}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">

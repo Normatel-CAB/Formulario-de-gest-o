@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { criarFormularioVazio } from '../../lib/factory'
+import { criarFormularioVazio, formularioTemConteudo } from '../../lib/factory'
 import type { FormularioAvaliacao, NecessidadesExecucao } from '../../lib/types'
 import { useFormsStore } from '../../store/formsStore'
 import { useAuthStore } from '../../store/authStore'
@@ -46,6 +46,7 @@ export function NovoFormulario() {
   useEffect(() => {
     if (!loaded) return
     window.clearTimeout(autosaveTimer.current)
+    if (!formularioTemConteudo(formulario)) return
     autosaveTimer.current = window.setTimeout(() => {
       void salvarRascunho(formulario)
     }, 1200)
@@ -76,6 +77,10 @@ export function NovoFormulario() {
   }
 
   async function salvarRascunhoManual() {
+    if (!formularioTemConteudo(formulario)) {
+      toast({ variant: 'warning', title: 'Nada para salvar', description: 'Preencha ao menos um campo para salvar o rascunho.' })
+      return
+    }
     await salvarRascunho(formulario)
     toast({ variant: 'success', title: 'Rascunho salvo', description: 'Você pode continuar mais tarde.' })
   }
@@ -85,13 +90,23 @@ export function NovoFormulario() {
     try {
       await enviar(formulario)
       toast({ variant: 'success', title: 'Formulário enviado com sucesso' })
-      navigate('/historico')
+      finalizarEnvio()
     } catch {
       toast({ variant: 'error', title: 'Falha ao enviar', description: 'O formulário foi salvo e será sincronizado automaticamente.' })
-      navigate('/historico')
+      finalizarEnvio()
     } finally {
       setEnviando(false)
     }
+  }
+
+  function finalizarEnvio() {
+    if (usuario) {
+      navigate('/historico')
+      return
+    }
+    const vazio = criarFormularioVazio()
+    setFormulario(vazio)
+    setStep(0)
   }
 
   if (!loaded) return null

@@ -114,6 +114,7 @@ export interface NecessidadesExecucao {
   materialEspecifico: DescricaoItem
   locacaoMaquinas: DescricaoItem
   apoioOutraEquipe: DescricaoItem
+  necessidadesAdicionais?: string
 }
 
 export interface InfoGerais {

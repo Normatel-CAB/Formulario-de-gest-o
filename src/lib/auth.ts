@@ -1,5 +1,6 @@
 import type { Papel, Usuario } from './types'
 import { PROJETOS_PADRAO } from './types'
+import { supabase } from './supabase'
 import {
   obterCodigoRecuperacao,
   obterCredencial,
@@ -31,26 +32,33 @@ async function hashSenha(senha: string, salt: string) {
 
 export class AuthError extends Error {}
 
-export async function garantirAdministradorPadrao() {
-  const existentes = await listarUsuariosLocais()
-  if (existentes.length > 0) return
-  const id = crypto.randomUUID()
-  const salt = await gerarSalt()
-  const hash = await hashSenha(ADMIN_SEED_SENHA, salt)
-  const usuario: Usuario = {
-    id,
-    nome: 'Administrador',
-    email: ADMIN_SEED_EMAIL,
-    cpf: '',
-    matricula: 'ADM-0001',
-    cargo: 'Administrador do Sistema',
-    papel: 'administrador',
-    projeto: PROJETOS_PADRAO[0],
-    status: 'ativo',
-    criadoEm: new Date().toISOString(),
+let seedAdminEmAndamento: Promise<void> | null = null
+
+export function garantirAdministradorPadrao() {
+  if (!seedAdminEmAndamento) {
+    seedAdminEmAndamento = (async () => {
+      const existentes = await listarUsuariosLocais()
+      if (existentes.length > 0) return
+      const id = crypto.randomUUID()
+      const salt = await gerarSalt()
+      const hash = await hashSenha(ADMIN_SEED_SENHA, salt)
+      const usuario: Usuario = {
+        id,
+        nome: 'Administrador',
+        email: ADMIN_SEED_EMAIL,
+        cpf: '',
+        matricula: 'ADM-0001',
+        cargo: 'Administrador do Sistema',
+        papel: 'administrador',
+        projeto: PROJETOS_PADRAO[0],
+        status: 'ativo',
+        criadoEm: new Date().toISOString(),
+      }
+      await salvarUsuarioLocal(usuario)
+      await salvarCredencial({ usuarioId: id, hash, salt })
+    })()
   }
-  await salvarUsuarioLocal(usuario)
-  await salvarCredencial({ usuarioId: id, hash, salt })
+  return seedAdminEmAndamento
 }
 
 export interface DadosCadastro {
@@ -101,6 +109,48 @@ export async function autenticar(email: string, senha: string): Promise<Usuario>
   const atualizado: Usuario = { ...usuario, ultimoAcesso: new Date().toISOString() }
   await salvarUsuarioLocal(atualizado)
   return atualizado
+}
+
+export async function iniciarLoginMicrosoft(): Promise<void> {
+  if (!supabase) throw new AuthError('Login com Microsoft indisponível. Configuração de autenticação ausente.')
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: 'azure',
+    options: { redirectTo: window.location.origin, scopes: 'openid profile email' },
+  })
+  if (error) throw new AuthError(error.message)
+}
+
+export async function sincronizarSessaoMicrosoft(): Promise<Usuario | null> {
+  if (!supabase) return null
+  const { data } = await supabase.auth.getSession()
+  const conta = data.session?.user
+  const email = conta?.email?.toLowerCase()
+  if (!email) return null
+
+  const existente = await obterUsuarioPorEmail(email)
+  if (existente) {
+    if (existente.status === 'inativo') throw new AuthError('Este usuário está desativado. Contate o administrador.')
+    const atualizado: Usuario = { ...existente, ultimoAcesso: new Date().toISOString() }
+    await salvarUsuarioLocal(atualizado)
+    return atualizado
+  }
+
+  const meta = (conta?.user_metadata ?? {}) as Record<string, string>
+  const usuario: Usuario = {
+    id: crypto.randomUUID(),
+    nome: meta.name || meta.full_name || email.split('@')[0],
+    email,
+    cpf: '',
+    matricula: '',
+    cargo: 'Conta Microsoft',
+    papel: 'visualizador',
+    projeto: PROJETOS_PADRAO[0],
+    status: 'ativo',
+    criadoEm: new Date().toISOString(),
+    ultimoAcesso: new Date().toISOString(),
+  }
+  await salvarUsuarioLocal(usuario)
+  return usuario
 }
 
 export function iniciarSessao(usuarioId: string, lembrar = true) {
