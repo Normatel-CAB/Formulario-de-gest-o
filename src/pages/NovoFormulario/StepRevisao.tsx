@@ -80,6 +80,12 @@ export function StepRevisao({ formulario }: { formulario: FormularioAvaliacao })
               ))}
             </div>
           )}
+          {n.necessidadesAdicionais?.trim() && (
+            <div className="border-t border-border pt-3">
+              <p className="text-xs font-medium uppercase tracking-wide text-ink-subtle">Necessidades adicionais</p>
+              <p className="whitespace-pre-wrap text-sm text-ink">{n.necessidadesAdicionais}</p>
+            </div>
+          )}
         </CardContent>
       </Card>
 

@@ -1,10 +1,12 @@
 import { lazy, Suspense } from 'react'
-import { Route, Routes } from 'react-router-dom'
+import { Link, Route, Routes } from 'react-router-dom'
 import { AppShell } from './components/layout/AppShell'
 import { SkeletonCard } from './components/ui/Skeleton'
 import { Toaster } from './components/ui/Toaster'
+import { ErrorBoundary } from './components/ui/ErrorBoundary'
 import { RequireAuth, RequireRole } from './components/auth/RequireAuth'
 import { useAuthStore } from './store/authStore'
+import { useSettingsStore } from './store/settingsStore'
 
 const Login = lazy(() => import('./pages/Auth/Login').then((m) => ({ default: m.Login })))
 const Cadastro = lazy(() => import('./pages/Auth/Cadastro').then((m) => ({ default: m.Cadastro })))
@@ -20,6 +22,29 @@ const Cargos = lazy(() => import('./pages/Administracao/Cargos').then((m) => ({ 
 const Permissoes = lazy(() => import('./pages/Administracao/Permissoes').then((m) => ({ default: m.Permissoes })))
 const Configuracoes = lazy(() => import('./pages/Configuracoes').then((m) => ({ default: m.Configuracoes })))
 
+function PublicFormShell() {
+  const logoDataUrl = useSettingsStore((s) => s.logoDataUrl)
+  return (
+    <div className="min-h-screen bg-bg">
+      <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-surface/95 px-4 backdrop-blur sm:px-8">
+        <img src={logoDataUrl || '/Normatel Engenharia_BRANCO.svg'} alt="Logo da empresa" className="h-8 w-auto max-w-[9rem] object-contain object-left" />
+        <Link to="/login" className="text-sm font-medium text-brand-400 hover:text-brand-300">
+          Área restrita
+        </Link>
+      </header>
+      <main className="px-4 pb-16 pt-6 sm:px-8">
+        <div className="mx-auto max-w-3xl">
+          <Suspense fallback={<SkeletonCard />}>
+            <ErrorBoundary>
+              <NovoFormulario />
+            </ErrorBoundary>
+          </Suspense>
+        </div>
+      </main>
+    </div>
+  )
+}
+
 export default function App() {
   const inicializado = useAuthStore((s) => s.inicializado)
 
@@ -31,12 +56,14 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/cadastro" element={<Cadastro />} />
         <Route path="/esqueci-senha" element={<EsqueciSenha />} />
+        <Route path="/formulario" element={<PublicFormShell />} />
         <Route
           path="/*"
           element={
             <RequireAuth>
               <AppShell>
                 <Suspense fallback={<SkeletonCard />}>
+                  <ErrorBoundary>
                   <Routes>
                     <Route path="/" element={<Dashboard />} />
                     <Route
@@ -99,6 +126,7 @@ export default function App() {
                       }
                     />
                   </Routes>
+                  </ErrorBoundary>
                 </Suspense>
               </AppShell>
             </RequireAuth>
