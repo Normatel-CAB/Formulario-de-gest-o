@@ -79,7 +79,7 @@ export function Cargos() {
   const cargosFiltrados = useMemo(() => {
     const termo = busca.trim().toLowerCase()
     return cargos.filter((c) => {
-      const matchBusca = !termo || c.nome.toLowerCase().includes(termo) || c.descricao.toLowerCase().includes(termo)
+      const matchBusca = !termo || (c.nome ?? '').toLowerCase().includes(termo) || (c.descricao ?? '').toLowerCase().includes(termo)
       const matchStatus = filtroStatus === 'todos' || c.status === filtroStatus
       return matchBusca && matchStatus
     })
@@ -94,7 +94,7 @@ export function Cargos() {
 
   function abrirEdicaoCargo(c: Cargo) {
     setEditandoCargoId(c.id)
-    setFormCargo({ nome: c.nome, descricao: c.descricao, cor: c.cor, icone: c.icone, status: c.status, permissoes: [...c.permissoes] })
+    setFormCargo({ nome: c.nome, descricao: c.descricao ?? '', cor: c.cor, icone: c.icone, status: c.status, permissoes: [...(c.permissoes ?? [])] })
     setErrosCargo({})
     setDialogCargoAberto(true)
   }
@@ -217,7 +217,7 @@ export function Cargos() {
                       </span>
                       <div className="min-w-0">
                         <p className="truncate text-sm font-semibold text-ink">{c.nome}</p>
-                        <p className="text-xs text-ink-subtle">{c.permissoes.length} permissão(ões)</p>
+                        <p className="text-xs text-ink-subtle">{(c.permissoes ?? []).length} permissão(ões)</p>
                       </div>
                     </div>
                     <Badge tone={c.status === 'ativo' ? 'brand' : 'slate'}>{c.status === 'ativo' ? 'Ativo' : 'Inativo'}</Badge>

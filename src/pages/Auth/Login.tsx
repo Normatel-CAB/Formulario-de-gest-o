@@ -39,7 +39,7 @@ export function Login() {
     try {
       await entrar(email, senha, lembrar)
       toast({ variant: 'success', title: 'Login realizado com sucesso' })
-      const destino = (location.state as { from?: string } | null)?.from ?? '/'
+      const destino = (location.state as { from?: string } | null)?.from ?? '/dashboard'
       navigate(destino, { replace: true })
     } catch (err) {
       setErro(err instanceof Error ? err.message : 'Não foi possível entrar.')

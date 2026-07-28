@@ -28,8 +28,11 @@ function PublicFormShell() {
     <div className="min-h-screen bg-bg">
       <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-surface/95 px-4 backdrop-blur sm:px-8">
         <img src={logoDataUrl || '/Normatel Engenharia_BRANCO.svg'} alt="Logo da empresa" className="h-8 w-auto max-w-[9rem] object-contain object-left" />
-        <Link to="/login" className="text-sm font-medium text-brand-400 hover:text-brand-300">
-          Área restrita
+        <Link
+          to="/login"
+          className="rounded-xl bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-500"
+        >
+          Entrar
         </Link>
       </header>
       <main className="px-4 pb-16 pt-6 sm:px-8">
@@ -56,6 +59,7 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/cadastro" element={<Cadastro />} />
         <Route path="/esqueci-senha" element={<EsqueciSenha />} />
+        <Route path="/" element={<PublicFormShell />} />
         <Route path="/formulario" element={<PublicFormShell />} />
         <Route
           path="/*"
@@ -65,7 +69,7 @@ export default function App() {
                 <Suspense fallback={<SkeletonCard />}>
                   <ErrorBoundary>
                   <Routes>
-                    <Route path="/" element={<Dashboard />} />
+                    <Route path="/dashboard" element={<Dashboard />} />
                     <Route
                       path="/novo"
                       element={

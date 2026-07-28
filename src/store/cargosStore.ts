@@ -85,7 +85,7 @@ export const useCargosStore = create<CargosState>((set, get) => ({
   loading: false,
   carregar: async () => {
     set({ loading: true })
-    const cargos = await garantirCargosPadrao()
+    const cargos = (await garantirCargosPadrao()).map((c) => ({ ...c, permissoes: c.permissoes ?? [] }))
     set({ cargos, loading: false })
   },
   criar: async (dados) => {

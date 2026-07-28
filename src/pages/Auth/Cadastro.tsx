@@ -52,7 +52,7 @@ export function Cadastro() {
     try {
       await cadastrar({ nome, email, cpf, matricula, cargo, projeto, senha })
       toast({ variant: 'success', title: 'Conta criada com sucesso' })
-      navigate('/', { replace: true })
+      navigate('/dashboard', { replace: true })
     } catch (err) {
       setErroGeral(err instanceof Error ? err.message : 'Não foi possível criar a conta.')
     } finally {

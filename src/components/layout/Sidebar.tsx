@@ -39,7 +39,7 @@ interface NavGroup {
 }
 
 const NAV: NavGroup[] = [
-  { key: 'dashboard', to: '/', label: 'Dashboard', icon: DashboardIcon },
+  { key: 'dashboard', to: '/dashboard', label: 'Dashboard', icon: DashboardIcon },
   {
     key: 'formularios',
     label: 'Formulários',

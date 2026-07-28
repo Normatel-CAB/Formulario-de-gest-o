@@ -18,6 +18,6 @@ export function RequireRole({ roles, children }: { roles: Papel[]; children: Rea
 
   if (!inicializado) return null
   if (!usuario) return <Navigate to="/login" replace state={{ from: location.pathname }} />
-  if (!roles.includes(usuario.papel)) return <Navigate to="/" replace />
+  if (!roles.includes(usuario.papel)) return <Navigate to="/dashboard" replace />
   return <>{children}</>
 }
