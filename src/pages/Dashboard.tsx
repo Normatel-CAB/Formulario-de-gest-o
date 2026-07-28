@@ -98,7 +98,7 @@ export function Dashboard() {
   const escopo = useMemo(() => {
     let lista = formularios
     if (!ehAdministrador && usuario) {
-      lista = lista.filter((f) => f.projeto === usuario.projeto)
+      lista = lista.filter((f) => !f.projeto || !usuario.projeto || f.projeto === usuario.projeto)
     } else if (ehAdministrador && filtroProjeto) {
       lista = lista.filter((f) => f.projeto === filtroProjeto)
     }

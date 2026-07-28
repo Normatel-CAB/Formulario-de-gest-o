@@ -28,7 +28,12 @@ export function FormDetail() {
     void obter(id).then((f) => setFormulario(f ?? null))
   }, [id, obter])
 
-  const semAcesso = formulario && usuario?.papel !== 'administrador' && formulario.projeto !== usuario?.projeto
+  const semAcesso =
+    formulario &&
+    usuario?.papel !== 'administrador' &&
+    Boolean(formulario.projeto) &&
+    Boolean(usuario?.projeto) &&
+    formulario.projeto !== usuario?.projeto
 
   if (!formulario || semAcesso) {
     return (
@@ -61,9 +66,9 @@ export function FormDetail() {
     navigate('/historico')
   }
 
-  function baixarPdf() {
+  async function baixarPdf() {
     if (!formulario) return
-    const blob = gerarPdfFormulario(formulario)
+    const blob = await gerarPdfFormulario(formulario)
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url

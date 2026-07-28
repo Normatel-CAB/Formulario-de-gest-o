@@ -35,7 +35,7 @@ export function Historico() {
       lista = lista.filter((f) => f.criadoPorId === usuario.id)
     }
     if (!ehAdministrador && usuario) {
-      lista = lista.filter((f) => f.projeto === usuario.projeto)
+      lista = lista.filter((f) => !f.projeto || !usuario.projeto || f.projeto === usuario.projeto)
     }
     return lista
   }, [formularios, usuario, ehAdministrador])
