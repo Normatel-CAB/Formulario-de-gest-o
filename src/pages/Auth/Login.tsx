@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { AuthLayout } from './AuthLayout'
 import { Input } from '../../components/ui/Field'
 import { Button } from '../../components/ui/Button'
+import { GlowButton } from '../../components/ui/GlowButton'
 import { useAuthStore } from '../../store/authStore'
 import { toast } from '../../store/toastStore'
 import { ADMIN_SEED_EMAIL, ADMIN_SEED_SENHA } from '../../lib/auth'
@@ -39,7 +40,7 @@ export function Login() {
     try {
       await entrar(email, senha, lembrar)
       toast({ variant: 'success', title: 'Login realizado com sucesso' })
-      const destino = (location.state as { from?: string } | null)?.from ?? '/'
+      const destino = (location.state as { from?: string } | null)?.from ?? '/dashboard'
       navigate(destino, { replace: true })
     } catch (err) {
       setErro(err instanceof Error ? err.message : 'Não foi possível entrar.')
@@ -49,7 +50,40 @@ export function Login() {
   }
 
   return (
-    <AuthLayout title="Acessar o sistema" subtitle="Entre com suas credenciais para continuar">
+    <AuthLayout title="Área administrativa" subtitle="Entre com sua conta Microsoft da Normatel.">
+      {erro && (
+        <p
+          className="mb-5 rounded-md border border-viz-red/25 bg-viz-red/10 px-3 py-2 text-[12.5px] text-viz-red"
+          role="alert"
+        >
+          {erro}
+        </p>
+      )}
+
+      {/* O caminho principal é a conta corporativa; e-mail e senha ficam como
+          alternativa para quem ainda não tem conta Microsoft vinculada. */}
+      <GlowButton
+        type="button"
+        size="lg"
+        className="h-12 w-full"
+        onClick={onMicrosoft}
+        disabled={carregandoMicrosoft}
+      >
+        <svg className="h-4 w-4 shrink-0" viewBox="0 0 21 21" fill="none" aria-hidden="true">
+          <rect x="1" y="1" width="9" height="9" fill="#F25022" />
+          <rect x="11" y="1" width="9" height="9" fill="#7FBA00" />
+          <rect x="1" y="11" width="9" height="9" fill="#00A4EF" />
+          <rect x="11" y="11" width="9" height="9" fill="#FFB900" />
+        </svg>
+        {carregandoMicrosoft ? 'Redirecionando…' : 'Entrar com Microsoft'}
+      </GlowButton>
+
+      <div className="my-6 flex items-center gap-3">
+        <span className="h-px flex-1 bg-hairline" />
+        <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-txt-faint">ou</span>
+        <span className="h-px flex-1 bg-hairline" />
+      </div>
+
       <form onSubmit={onSubmit} className="space-y-4" noValidate>
         <Input
           label="E-mail"
@@ -74,15 +108,15 @@ export function Login() {
           <button
             type="button"
             onClick={() => setMostrarSenha((v) => !v)}
-            className="absolute right-3 top-[38px] text-ink-subtle transition-colors hover:text-ink"
+            className="absolute right-3 top-[31px] text-txt-faint transition-colors hover:text-txt"
             aria-label={mostrarSenha ? 'Ocultar senha' : 'Mostrar senha'}
           >
             {mostrarSenha ? (
-              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg className="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M3 3l18 18M10.6 10.6a2.5 2.5 0 003.5 3.5M6.5 6.7C4.4 8.1 2.9 10 2 12c1.6 3.6 5.4 7 10 7 1.6 0 3.1-.4 4.4-1.1M9.9 4.2A9.9 9.9 0 0112 4c4.6 0 8.4 3.4 10 7-.5 1.1-1.1 2.1-1.9 3" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             ) : (
-              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg className="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M2 12c1.6-3.6 5.4-7 10-7s8.4 3.4 10 7c-1.6 3.6-5.4 7-10 7s-8.4-3.4-10-7z" strokeLinecap="round" strokeLinejoin="round" />
                 <circle cx="12" cy="12" r="3" />
               </svg>
@@ -91,70 +125,36 @@ export function Login() {
         </div>
 
         <div className="flex items-center justify-between">
-          <label className="flex items-center gap-2 text-sm text-ink-muted">
+          <label className="flex items-center gap-2 text-[12px] text-txt-dim">
             <input
               type="checkbox"
               checked={lembrar}
               onChange={(e) => setLembrar(e.target.checked)}
-              className="h-4 w-4 rounded border-border-light bg-surface-2 accent-brand-600"
+              className="h-4 w-4 rounded border-hairline bg-surface-2 accent-brand"
             />
             Lembrar acesso
           </label>
-          <Link to="/esqueci-senha" className="text-sm font-medium text-brand-400 hover:text-brand-300">
+          <Link to="/esqueci-senha" className="text-[12px] font-medium text-brand-lite hover:underline">
             Esqueci minha senha
           </Link>
         </div>
 
-        {erro && (
-          <p className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-300" role="alert">
-            {erro}
-          </p>
-        )}
-
-        <Button type="submit" className="w-full" size="lg" loading={carregando}>
-          Entrar
+        <Button type="submit" variant="outline" className="w-full" size="lg" loading={carregando}>
+          Entrar com e-mail
         </Button>
+      </form>
 
-        <div className="flex items-center gap-3">
-          <span className="h-px flex-1 bg-border" />
-          <span className="text-xs text-ink-subtle">ou</span>
-          <span className="h-px flex-1 bg-border" />
-        </div>
-
-        <Button
-          type="button"
-          variant="outline"
-          className="w-full"
-          size="lg"
-          loading={carregandoMicrosoft}
-          onClick={onMicrosoft}
-        >
-          <svg className="h-4 w-4" viewBox="0 0 23 23" aria-hidden="true">
-            <path fill="#f35325" d="M1 1h10v10H1z" />
-            <path fill="#81bc06" d="M12 1h10v10H12z" />
-            <path fill="#05a6f0" d="M1 12h10v10H1z" />
-            <path fill="#ffba08" d="M12 12h10v10H12z" />
-          </svg>
-          Entrar com Microsoft
-        </Button>
-
-        <p className="text-center text-sm text-ink-muted">
+      <div className="mt-6 space-y-1.5 text-center">
+        <p className="text-[12px] text-txt-dim">
           Não tem uma conta?{' '}
-          <Link to="/cadastro" className="font-medium text-brand-400 hover:text-brand-300">
+          <Link to="/cadastro" className="font-medium text-brand-lite hover:underline">
             Ir para cadastro
           </Link>
         </p>
-
-        <p className="text-center text-sm text-ink-muted">
-          <Link to="/formulario" className="font-medium text-brand-400 hover:text-brand-300">
-            Preencher formulário sem login
-          </Link>
-        </p>
-
-        <p className="text-center text-xs text-ink-subtle">
+        <p className="text-[11px] text-txt-faint">
           Acesso administrador padrão: {ADMIN_SEED_EMAIL} / {ADMIN_SEED_SENHA}
         </p>
-      </form>
+      </div>
     </AuthLayout>
   )
 }

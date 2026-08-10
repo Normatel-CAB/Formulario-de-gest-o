@@ -36,7 +36,7 @@ export function Dialog({ open, onClose, title, description, children, footer, si
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="absolute inset-0 bg-black/60 backdrop-blur-[2px]"
+            className="absolute inset-0 bg-black/55 backdrop-blur-[3px]"
             onClick={onClose}
           />
           <motion.div
@@ -49,7 +49,7 @@ export function Dialog({ open, onClose, title, description, children, footer, si
             role="dialog"
             aria-modal="true"
             aria-labelledby={title ? 'dialog-title' : undefined}
-            className={`relative z-10 max-h-[85vh] w-full ${sizeClasses[size]} overflow-y-auto rounded-t-2xl border border-border bg-surface p-6 shadow-2xl shadow-black/50 sm:rounded-2xl`}
+            className={`relative z-10 max-h-[85vh] w-full ${sizeClasses[size]} overflow-y-auto glass rounded-t-[var(--radius)] p-6`}
           >
             {title && (
               <h2 id="dialog-title" className="text-lg font-semibold text-ink">

@@ -1,6 +1,13 @@
 import { useEffect, useMemo } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import type { Agendamento, AgendamentoVisitaSMS, DescricaoItem, FormularioAvaliacao, QtdDias } from '../../lib/types'
+import type {
+  Agendamento,
+  AgendamentoVisitaSMS,
+  DescricaoItem,
+  EquipamentoItem,
+  FormularioAvaliacao,
+  QtdDias,
+} from '../../lib/types'
 import { SimNaoField } from '../../components/ui/Switch'
 import { Input, Select, Textarea } from '../../components/ui/Field'
 import { useUsersStore } from '../../store/usersStore'
@@ -16,7 +23,7 @@ function CondicionalWrapper({ show, children }: { show: boolean; children: React
           transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
           className="overflow-hidden"
         >
-          <div className="mt-3 rounded-xl bg-surface-2 p-3">{children}</div>
+          <div className="mt-3 rounded-md border border-hairline bg-surface-2 p-3">{children}</div>
         </motion.div>
       )}
     </AnimatePresence>
@@ -35,7 +42,7 @@ export function QtdDiasField({
   fimDeSemana?: boolean
 }) {
   return (
-    <div className="border-b border-border py-2 last:border-none">
+    <div className="border-b border-hairline py-2 last:border-none">
       <SimNaoField label={label} checked={value.necessario} onChange={(necessario) => onChange({ ...value, necessario })} />
       <CondicionalWrapper show={value.necessario}>
         <div className="grid gap-3 sm:grid-cols-2">
@@ -61,6 +68,45 @@ export function QtdDiasField({
   )
 }
 
+/**
+ * Item do bloco de equipamentos. Ao marcar "Sim" pede quantos dias o
+ * equipamento fica em campo e a data em que precisa estar no local — as duas
+ * informações que a mobilização precisa para reservar máquina e operador.
+ */
+export function EquipamentoField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string
+  value: EquipamentoItem
+  onChange: (v: EquipamentoItem) => void
+}) {
+  return (
+    <div className="border-b border-hairline py-2 last:border-none">
+      <SimNaoField label={label} checked={value.necessario} onChange={(necessario) => onChange({ ...value, necessario })} />
+      <CondicionalWrapper show={value.necessario}>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Input
+            label="Quantidade de dias"
+            type="number"
+            min={1}
+            value={value.dias ?? ''}
+            onChange={(e) => onChange({ ...value, dias: e.target.value ? Number(e.target.value) : undefined })}
+            placeholder="Ex.: 2"
+          />
+          <Input
+            label="Data prevista"
+            type="date"
+            value={value.data ?? ''}
+            onChange={(e) => onChange({ ...value, data: e.target.value })}
+          />
+        </div>
+      </CondicionalWrapper>
+    </div>
+  )
+}
+
 export function AgendamentoField({
   label,
   value,
@@ -71,7 +117,7 @@ export function AgendamentoField({
   onChange: (v: Agendamento) => void
 }) {
   return (
-    <div className="border-b border-border py-2 last:border-none">
+    <div className="border-b border-hairline py-2 last:border-none">
       <SimNaoField label={label} checked={value.necessario} onChange={(necessario) => onChange({ ...value, necessario })} />
       <CondicionalWrapper show={value.necessario}>
         <Input
@@ -97,7 +143,7 @@ export function DescricaoItemField({
   onChange: (v: DescricaoItem) => void
 }) {
   return (
-    <div className="border-b border-border py-2 last:border-none">
+    <div className="border-b border-hairline py-2 last:border-none">
       <SimNaoField label={label} checked={value.necessario} onChange={(necessario) => onChange({ ...value, necessario })} />
       <CondicionalWrapper show={value.necessario}>
         <Textarea
@@ -136,7 +182,7 @@ export function VisitaSMSField({
   }
 
   return (
-    <div className="border-b border-border py-2 last:border-none">
+    <div className="border-b border-hairline py-2 last:border-none">
       <SimNaoField
         label="Visita SMS Necessária"
         checked={value.necessario}
@@ -144,7 +190,7 @@ export function VisitaSMSField({
       />
       <CondicionalWrapper show={value.necessario}>
         <div className="space-y-3">
-          <p className="text-xs font-semibold uppercase tracking-wide text-ink-subtle">Agendamento da Visita SMS</p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-txt-faint">Agendamento da Visita SMS</p>
           <div className="grid gap-3 sm:grid-cols-2">
             <Input label="Data" type="date" value={value.data ?? ''} onChange={(e) => onChange({ ...value, data: e.target.value })} />
             <Input label="Hora" type="time" value={value.hora ?? ''} onChange={(e) => onChange({ ...value, hora: e.target.value })} />

@@ -14,14 +14,17 @@ function FieldWrapper({ label, hint, error, required, children }: FieldWrapperPr
   return (
     <div className="flex flex-col gap-1.5">
       {label && (
-        <label htmlFor={id} className="text-sm font-semibold text-ink">
-          {label} {required && <span className="text-rose-400">*</span>}
+        <label
+          htmlFor={id}
+          className="text-[10px] font-bold uppercase tracking-[0.1em] text-txt-faint"
+        >
+          {label} {required && <span className="text-viz-red">*</span>}
         </label>
       )}
       {children(id)}
-      {hint && !error && <p className="text-xs text-ink-subtle">{hint}</p>}
+      {hint && !error && <p className="text-[11px] text-txt-faint">{hint}</p>}
       {error && (
-        <p className="text-xs font-medium text-rose-400" role="alert">
+        <p className="text-[11px] font-medium text-viz-red" role="alert">
           {error}
         </p>
       )}
@@ -29,8 +32,12 @@ function FieldWrapper({ label, hint, error, required, children }: FieldWrapperPr
   )
 }
 
+/** Mesma caixa de entrada do organograma (ui/input.tsx), um pouco mais alta
+    porque aqui o formulário é preenchido em campo, muitas vezes no celular. */
 const baseInputClasses =
-  'w-full rounded-xl border border-border-light bg-surface-2 px-4 py-3 text-sm text-ink placeholder:text-ink-subtle transition-colors duration-150 focus:border-brand-500 focus:ring-4 focus:ring-brand-500/20 disabled:bg-surface disabled:text-ink-subtle'
+  'w-full rounded-md border border-hairline bg-surface px-3 py-2.5 text-[12.5px] text-txt shadow-sm transition-all duration-200 placeholder:text-txt-faint focus-visible:border-hairline-hi focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-brand/10 disabled:cursor-not-allowed disabled:opacity-50'
+
+const errorClasses = 'border-viz-red/60 focus-visible:border-viz-red focus-visible:ring-viz-red/15'
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string
@@ -50,7 +57,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
           ref={ref}
           required={required}
           aria-invalid={Boolean(error)}
-          className={cn(baseInputClasses, error && 'border-rose-500 focus:border-rose-500 focus:ring-rose-500/20', className)}
+          className={cn(baseInputClasses, error && errorClasses, className)}
           {...props}
         />
       )}
@@ -76,7 +83,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function 
           ref={ref}
           required={required}
           aria-invalid={Boolean(error)}
-          className={cn(baseInputClasses, 'min-h-28 resize-y', error && 'border-rose-500 focus:border-rose-500 focus:ring-rose-500/20', className)}
+          className={cn(baseInputClasses, 'min-h-28 resize-y leading-relaxed', error && errorClasses, className)}
           {...props}
         />
       )}
@@ -90,6 +97,11 @@ interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
   error?: string
 }
 
+/* A seta é desenhada em SVG inline com a cor da marca, para o select não herdar
+   o widget nativo (que ignora o tema e fica branco no modo escuro). */
+const selectArrow =
+  'appearance-none bg-[url(\'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%234caf50" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>\')] bg-[right_0.65rem_center] bg-no-repeat pr-9'
+
 export const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select(
   { label, hint, error, required, className, children, ...props },
   ref,
@@ -102,7 +114,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select
           ref={ref}
           required={required}
           aria-invalid={Boolean(error)}
-          className={cn(baseInputClasses, 'appearance-none bg-[url(\'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%2334d399" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>\')] bg-[right_0.75rem_center] bg-no-repeat pr-9', className)}
+          className={cn(baseInputClasses, selectArrow, error && errorClasses, className)}
           {...props}
         >
           {children}

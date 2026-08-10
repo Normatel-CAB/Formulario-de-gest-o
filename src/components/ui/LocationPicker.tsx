@@ -60,7 +60,7 @@ export function LocationPicker({
 
       {value && (
         <div className="mt-3 space-y-2">
-          <p className="text-xs text-brand-400">
+          <p className="text-xs text-brand-lite">
             Lat: {value.latitude.toFixed(6)} · Lng: {value.longitude.toFixed(6)}
             {value.precisao && ` · Precisão ±${Math.round(value.precisao)}m`}
           </p>

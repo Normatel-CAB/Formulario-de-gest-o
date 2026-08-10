@@ -83,7 +83,7 @@ export function EsqueciSenha() {
       </div>
 
       {erro && (
-        <p className="mb-4 rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-300" role="alert">
+        <p className="mb-4 rounded-lg border border-viz-red/30 bg-viz-red/10 px-3 py-2 text-sm text-viz-red" role="alert">
           {erro}
         </p>
       )}
@@ -146,7 +146,7 @@ export function EsqueciSenha() {
       )}
 
       <p className="mt-5 text-center text-sm text-ink-muted">
-        <Link to="/login" className="font-medium text-brand-400 hover:text-brand-300">
+        <Link to="/login" className="font-medium text-brand-lite hover:text-brand-lite">
           Voltar para Login
         </Link>
       </p>

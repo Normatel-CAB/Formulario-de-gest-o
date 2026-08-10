@@ -52,7 +52,7 @@ export function Cadastro() {
     try {
       await cadastrar({ nome, email, cpf, matricula, cargo, projeto, senha })
       toast({ variant: 'success', title: 'Conta criada com sucesso' })
-      navigate('/', { replace: true })
+      navigate('/dashboard', { replace: true })
     } catch (err) {
       setErroGeral(err instanceof Error ? err.message : 'Não foi possível criar a conta.')
     } finally {
@@ -134,7 +134,7 @@ export function Cadastro() {
         </div>
 
         {erroGeral && (
-          <p className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-300" role="alert">
+          <p className="rounded-lg border border-viz-red/30 bg-viz-red/10 px-3 py-2 text-sm text-viz-red" role="alert">
             {erroGeral}
           </p>
         )}
@@ -145,7 +145,7 @@ export function Cadastro() {
 
         <p className="text-center text-sm text-ink-muted">
           Já possui uma conta?{' '}
-          <Link to="/login" className="font-medium text-brand-400 hover:text-brand-300">
+          <Link to="/login" className="font-medium text-brand-lite hover:text-brand-lite">
             Voltar para Login
           </Link>
         </p>

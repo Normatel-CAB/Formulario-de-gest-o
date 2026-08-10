@@ -24,7 +24,7 @@ export function Checkbox({
         <span
           className={cn(
             'flex h-[18px] w-[18px] items-center justify-center rounded-md border transition-colors duration-150',
-            checked ? 'border-brand-600 bg-brand-600' : 'border-border-light bg-surface-2',
+            checked ? 'border-transparent bg-gradient-to-br from-brand-lite to-brand' : 'border-border-light bg-surface-2',
           )}
         >
           {checked && (

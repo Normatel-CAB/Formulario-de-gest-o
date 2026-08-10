@@ -9,6 +9,7 @@ import {
 } from '../lib/db'
 import { enviarFormularioParaNuvem, sincronizarPendentes, baixarFormulariosDaNuvem } from '../lib/sync'
 import { isSupabaseConfigured } from '../lib/supabase'
+import { normalizarFormulario } from '../lib/factory'
 
 interface FormsState {
   formularios: FormularioAvaliacao[]
@@ -27,16 +28,17 @@ export const useFormsStore = create<FormsState>((set, get) => ({
   carregar: async () => {
     set({ loading: true })
     const locais = await listarFormulariosLocais()
-    set({ formularios: locais, loading: false })
+    set({ formularios: locais.map(normalizarFormulario), loading: false })
     if (isSupabaseConfigured && navigator.onLine) {
       const remotos = await baixarFormulariosDaNuvem()
-      set({ formularios: remotos })
+      set({ formularios: remotos.map(normalizarFormulario) })
     }
   },
   obter: async (id) => {
     const emMemoria = get().formularios.find((f) => f.id === id)
-    if (emMemoria) return emMemoria
-    return obterFormularioLocal(id)
+    if (emMemoria) return normalizarFormulario(emMemoria)
+    const local = await obterFormularioLocal(id)
+    return local ? normalizarFormulario(local) : undefined
   },
   salvarRascunho: async (formulario) => {
     const atualizado: FormularioAvaliacao = {

@@ -1,35 +1,171 @@
 @import "tailwindcss";
 
-@theme {
+/* Tema por classe no <html> (o padrão do Tailwind v4 é prefers-color-scheme).
+   O script inline do index.html decide antes do primeiro paint. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ============================================================================
+   NORMATEL — DESIGN SYSTEM
+   Mesmos tokens do app do organograma (organograma-macae-normatel). Paleta
+   derivada da identidade visual: #4CAF50 (verde Normatel) e #1A3A1A (verde
+   escuro institucional). O tema escuro é o padrão; o claro usa os mesmos nomes
+   de token, então nenhum componente precisa de código condicional.
+   ========================================================================= */
+
+:root {
+  color-scheme: light;
+
+  /* --- Marca --- */
+  --brand: #4caf50;
+  --brand-lite: #8bc34a;
+  --brand-glow: #6fe07a;
+  --brand-deep: #1a3a1a;
+
+  /* --- Cores de visualização de dados --- */
+  --viz-green: #4caf50;
+  --viz-lime: #8bc34a;
+  --viz-teal: #23c4a0;
+  --viz-amber: #f0b429;
+  --viz-red: #f2645f;
+
+  /* --- Superfícies e texto (tema claro) --- */
+  --bg-deep: #e9f0e9;
+  --bg: #f5f9f5;
+  --surface: rgba(255, 255, 255, 0.85);
+  --surface-2: rgba(26, 58, 26, 0.05);
+  --surface-solid: #ffffff;
+  /* Fundo dos cards. Um pouco mais encorpado que --surface porque não há
+     backdrop-filter para dar densidade (ver .glass). */
+  --surface-card: rgba(255, 255, 255, 0.9);
+  --hairline: rgba(26, 58, 26, 0.1);
+  --hairline-hi: rgba(76, 175, 80, 0.38);
+  --txt: #10210f;
+  --txt-dim: #5b7360;
+  --txt-faint: #8aa08e;
+  --grid: rgba(26, 58, 26, 0.05);
+  /* linhas acesas pelo holofote do cursor */
+  --grid-lit: rgba(76, 175, 80, 0.42);
+  --sidebar-bg: rgba(247, 251, 247, 0.92);
+  --shadow-card: 0 16px 40px -22px rgba(20, 50, 25, 0.45);
+  --halo-1: rgba(76, 175, 80, 0.2);
+  --halo-2: rgba(35, 196, 160, 0.12);
+  --halo-3: rgba(139, 195, 74, 0.14);
+
+  --radius: 0.875rem;
+}
+
+.dark {
+  color-scheme: dark;
+
+  --bg-deep: #050b06;
+  --bg: #0a150b;
+  --surface: rgba(255, 255, 255, 0.042);
+  --surface-2: rgba(255, 255, 255, 0.075);
+  --surface-solid: #101c12;
+  --surface-card: rgba(255, 255, 255, 0.055);
+  --hairline: rgba(255, 255, 255, 0.085);
+  --hairline-hi: rgba(139, 195, 74, 0.3);
+  --txt: #e8f2ea;
+  --txt-dim: #8fa894;
+  --txt-faint: #5e7563;
+  --grid: rgba(255, 255, 255, 0.045);
+  --grid-lit: rgba(139, 195, 74, 0.5);
+  --sidebar-bg: rgba(9, 22, 11, 0.88);
+  --shadow-card: 0 20px 50px -20px rgba(0, 0, 0, 0.85);
+  --halo-1: rgba(76, 175, 80, 0.22);
+  --halo-2: rgba(35, 196, 160, 0.14);
+  --halo-3: rgba(139, 195, 74, 0.1);
+}
+
+@theme inline {
   --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
 
-  --color-brand-50: #e6f5ef;
-  --color-brand-100: #c3e8d9;
-  --color-brand-200: #93d6bc;
-  --color-brand-300: #5cc09b;
-  --color-brand-400: #2fa87e;
-  --color-brand-500: #14915f;
-  --color-brand-600: #0b6e4f;
-  --color-brand-700: #095c42;
-  --color-brand-800: #094a37;
-  --color-brand-900: #073a2c;
-  --color-brand-950: #04241b;
+  /* ---- Tokens Normatel ---- */
+  --color-brand: var(--brand);
+  --color-brand-lite: var(--brand-lite);
+  --color-brand-glow: var(--brand-glow);
+  --color-brand-deep: var(--brand-deep);
 
-  --color-bg: #0f0f0f;
-  --color-surface: #181818;
-  --color-surface-2: #1f1f1f;
-  --color-surface-3: #232323;
-  --color-border: #2a2a2a;
-  --color-border-light: #333333;
+  --color-viz-green: var(--viz-green);
+  --color-viz-lime: var(--viz-lime);
+  --color-viz-teal: var(--viz-teal);
+  --color-viz-amber: var(--viz-amber);
+  --color-viz-red: var(--viz-red);
 
-  --color-ink: #f5f5f5;
-  --color-ink-muted: #a3a3a3;
-  --color-ink-subtle: #737373;
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-solid: var(--surface-solid);
+  --color-surface-card: var(--surface-card);
 
+  --color-hairline: var(--hairline);
+  --color-hairline-hi: var(--hairline-hi);
+
+  --color-txt: var(--txt);
+  --color-txt-dim: var(--txt-dim);
+  --color-txt-faint: var(--txt-faint);
+
+  --color-bg: var(--bg);
+  --color-bg-deep: var(--bg-deep);
+
+  /* ---- Apelidos de compatibilidade ----
+     As telas antigas foram escritas com ink/border/surface-3 e com a escala
+     brand-50..950. Mapeamos tudo para os tokens acima em vez de reescrever
+     4 mil linhas: qualquer tela herda a paleta do organograma na hora, e
+     `text-ink-muted` e `text-txt-dim` passam a ser a mesma cor. */
+  --color-ink: var(--txt);
+  --color-ink-muted: var(--txt-dim);
+  --color-ink-subtle: var(--txt-faint);
+  --color-border: var(--hairline);
+  --color-border-light: var(--hairline-hi);
+  --color-surface-3: var(--surface-2);
+
+  --color-brand-50: #eef8ef;
+  --color-brand-100: #d5edd6;
+  --color-brand-200: #aedfb1;
+  --color-brand-300: #8bc34a;
+  --color-brand-400: #6fe07a;
+  --color-brand-500: #4caf50;
+  --color-brand-600: #3d9142;
+  --color-brand-700: #327636;
+  --color-brand-800: #275c2b;
+  --color-brand-900: #1a3a1a;
+  --color-brand-950: #0e220f;
+
+  /* ---- Sombras, easing e animações ---- */
+  --shadow-brand-sm: 0 8px 20px -10px var(--brand);
+  --shadow-brand-md: 0 14px 30px -12px var(--brand);
+  --shadow-glass: var(--shadow-card);
+
+  --ease-smooth: cubic-bezier(0.22, 0.75, 0.28, 1);
+
+  --animate-shimmer: shimmer 3.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  --animate-brand-pulse: brand-pulse 2s ease-in-out infinite;
+  --animate-orb-drift: orb-drift 18s ease-in-out infinite alternate;
+  --animate-slow-spin: slow-spin 22s linear infinite;
+  --animate-sheen: sheen 5s cubic-bezier(0.4, 0, 0.2, 1) 1.2s infinite;
   --animate-fade-in: fade-in 0.35s ease-out;
-  --animate-slide-up: slide-up 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-  --animate-scale-in: scale-in 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-slide-up: slide-up 0.45s cubic-bezier(0.22, 0.75, 0.28, 1);
+  --animate-scale-in: scale-in 0.2s cubic-bezier(0.22, 0.75, 0.28, 1);
 
+  @keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    55%, 100% { transform: translateX(100%); }
+  }
+  @keyframes brand-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.45; transform: scale(0.75); }
+  }
+  @keyframes orb-drift {
+    from { transform: translate3d(0, 0, 0) scale(1); }
+    to { transform: translate3d(40px, 50px, 0) scale(1.12); }
+  }
+  @keyframes slow-spin {
+    to { transform: rotate(360deg); }
+  }
+  @keyframes sheen {
+    0%, 72% { transform: translateX(-120%); }
+    100% { transform: translateX(120%); }
+  }
   @keyframes fade-in {
     from { opacity: 0; }
     to { opacity: 1; }
@@ -44,61 +180,269 @@
   }
 }
 
-:root {
-  color-scheme: dark;
-}
-
-* {
-  -webkit-tap-highlight-color: transparent;
-}
-
-html, body, #root {
-  height: 100%;
-}
-
-body {
-  @apply bg-bg text-ink antialiased m-0;
-  font-feature-settings: "cv11", "ss01";
-}
-
-::selection {
-  @apply bg-brand-500/40 text-white;
-}
-
-::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  @apply bg-surface-3 rounded-full;
-}
-::-webkit-scrollbar-thumb:hover {
-  @apply bg-border-light;
-}
-
-:focus-visible {
-  @apply outline-2 outline-offset-2 outline-brand-400 rounded-md;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
+@layer base {
+  * {
+    -webkit-tap-highlight-color: transparent;
   }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    margin: 0;
+    background-color: var(--bg-deep);
+    color: var(--txt);
+    font-family: var(--font-sans);
+    font-feature-settings: "rlig" 1, "calt" 1;
+    -webkit-font-smoothing: antialiased;
+    transition: background-color 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+      color 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  ::selection {
+    background: rgba(76, 175, 80, 0.35);
+    color: #fff;
+  }
+
+  /* Barra de rolagem discreta, coerente com o tema */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--surface-2);
+    border-radius: 8px;
+    border: 3px solid transparent;
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--hairline-hi);
+    background-clip: content-box;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+    border-radius: 0.5rem;
+  }
+}
+
+@layer components {
+  /* ---------- Cartão de vidro ----------
+     PERFORMANCE: aqui NÃO entra backdrop-filter, de propósito.
+     Os cards ficam sobre um fundo estático (halos + grade), então não há nada
+     em movimento para desfocar — o efeito visual é imperceptível, mas o
+     navegador teria que reler e borrar o fundo de cada card a cada frame do
+     scroll. Com 8+ cards numa página isso trava a rolagem. O blur fica só na
+     sidebar e no header, onde o conteúdo realmente passa por baixo. */
+  .glass {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--radius);
+    background: var(--surface-card);
+    border: 1px solid var(--hairline);
+    box-shadow: var(--shadow-card);
+    transition: border-color 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+      transform 0.4s cubic-bezier(0.22, 0.75, 0.28, 1),
+      box-shadow 0.4s cubic-bezier(0.22, 0.75, 0.28, 1);
+  }
+  /* filete de luz no topo, como nos cards do organograma */
+  .glass::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 12%;
+    right: 12%;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(139, 195, 74, 0.55),
+      transparent
+    );
+    pointer-events: none;
+  }
+  .glass-hover:hover {
+    border-color: var(--hairline-hi);
+    transform: translateY(-3px);
+    box-shadow: 0 26px 55px -24px rgba(0, 0, 0, 0.55), 0 0 0 1px var(--hairline-hi);
+  }
+
+  /* ---------- Holofote da grade (segue o cursor) ----------
+     O quadrado inteiro só muda de `transform`, que o compositor resolve sem
+     repintar. O `background-position` desconta o deslocamento para as linhas
+     acesas caírem exatamente sobre as linhas apagadas do fundo. */
+  .grid-spotlight {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 0;
+    width: 460px;
+    height: 460px;
+    margin: -230px 0 0 -230px;
+    pointer-events: none;
+    opacity: var(--o, 0);
+    transform: translate3d(var(--x, -9999px), var(--y, -9999px), 0);
+    transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform;
+  }
+  .grid-spotlight-inner {
+    position: absolute;
+    inset: 0;
+    background-image: linear-gradient(var(--grid-lit) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-lit) 1px, transparent 1px);
+    background-size: 104px 104px;
+    background-position: var(--bgx, 0) var(--bgy, 0);
+    -webkit-mask-image: radial-gradient(circle at center, #000 0%, transparent 68%);
+    mask-image: radial-gradient(circle at center, #000 0%, transparent 68%);
+  }
+
+  /* ---------- Botão magnético com brilho ----------
+     Só transform e opacity mudam por frame; nada disso força layout. */
+  .glow-btn {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+    transform: translate3d(var(--dx, 0), var(--dy, 0), 0);
+    transition: transform 0.35s cubic-bezier(0.22, 0.75, 0.28, 1),
+      box-shadow 0.35s cubic-bezier(0.22, 0.75, 0.28, 1);
+  }
+  .glow-btn:hover {
+    /* o transform do magnetismo cancelaria um -translate-y de hover */
+    transform: translate3d(var(--dx, 0), var(--dy, 0), 0);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.14) inset,
+      0 10px 26px -10px var(--brand), 0 0 26px -4px var(--brand-glow);
+  }
+  .glow-btn-sheen {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: var(--glow, 0);
+    transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: radial-gradient(
+      130px circle at var(--gx, 50%) var(--gy, 50%),
+      rgba(255, 255, 255, 0.32),
+      transparent 65%
+    );
+  }
+
+  /* ---------- Suporte da logo ----------
+     As artes disponíveis em /public são todas em branco (vazado). No tema
+     escuro elas aparecem direto; no claro sumiriam, então ganham um plaquinha
+     verde-escura da própria identidade por baixo. */
+  .logo-plate {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 0.5rem;
+  }
+  :root:not(.dark) .logo-plate {
+    background: var(--brand-deep);
+    padding: 0.3rem 0.55rem;
+  }
+
+  /* ---------- Chip / pílula ---------- */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: 0.66rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    background: rgba(76, 175, 80, 0.13);
+    color: var(--brand-lite);
+    border: 1px solid rgba(76, 175, 80, 0.26);
+  }
+  .dark .chip {
+    color: var(--brand-lite);
+  }
+  :root:not(.dark) .chip {
+    color: #2f7d34;
+  }
+
+  /* ---------- Barra de proporção dentro da linha de tabela ---------- */
+  .row-bar {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 0;
+    border-radius: 0.75rem;
+    z-index: 0;
+    opacity: 0.55;
+    pointer-events: none;
+    transition: width 1.15s cubic-bezier(0.22, 0.75, 0.28, 1);
+  }
+  /* PERFORMANCE: o brilho passa UMA vez, junto com o crescimento da barra.
+     Em loop infinito, cada linha de tabela vira uma animação permanente. */
+  .row-bar::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 0.75rem;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.22),
+      transparent
+    );
+    transform: translateX(100%);
+    animation: shimmer 2s cubic-bezier(0.4, 0, 0.2, 1) 0.2s 1 both;
+  }
+}
+
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Área segura dos celulares com notch. O app roda em standalone com
+   viewport-fit=cover; sem isso o topo do conteúdo fica sob a barra de status.
+   No desktop o env() vale 0 e nada muda. */
+@utility safe-top {
+  padding-top: max(0.75rem, env(safe-area-inset-top));
+}
+@utility safe-bottom {
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
 }
 
 .signature-canvas {
   touch-action: none;
 }
 
-input[type='date']::-webkit-calendar-picker-indicator,
-input[type='time']::-webkit-calendar-picker-indicator {
+/* A lista aberta do <select> é desenhada pelo sistema operacional e ignora as
+   cores do tema — sem isto, no modo escuro as opções saem em texto claro sobre
+   fundo claro em várias combinações de navegador/SO. */
+select option {
+  background-color: var(--surface-solid);
+  color: var(--txt);
+}
+
+/* O ícone nativo do date/time é escuro; no tema escuro ele desaparece. */
+.dark input[type="date"]::-webkit-calendar-picker-indicator,
+.dark input[type="time"]::-webkit-calendar-picker-indicator {
   filter: invert(1) brightness(1.6);
+}
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
   opacity: 0.8;
   cursor: pointer;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

@@ -3,10 +3,10 @@ import { useToastStore, type ToastVariant } from '../../store/toastStore'
 import { cn } from '../../lib/cn'
 
 const variantStyles: Record<ToastVariant, string> = {
-  success: 'border-brand-500/30 bg-surface text-brand-300',
-  error: 'border-rose-500/30 bg-surface text-rose-300',
-  info: 'border-sky-500/30 bg-surface text-sky-300',
-  warning: 'border-amber-500/30 bg-surface text-amber-300',
+  success: 'border-brand/30 bg-surface-solid text-brand-lite',
+  error: 'border-viz-red/30 bg-surface-solid text-viz-red',
+  info: 'border-viz-teal/30 bg-surface-solid text-viz-teal',
+  warning: 'border-viz-amber/30 bg-surface-solid text-viz-amber',
 }
 
 const variantIcon: Record<ToastVariant, string> = {

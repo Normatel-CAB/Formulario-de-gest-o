@@ -1,13 +1,12 @@
 import { jsPDF } from 'jspdf'
 import type { FormularioAvaliacao, FormStatus } from './types'
-import { STATUS_LABELS } from './types'
+import { EQUIPAMENTO_CHAVES, EQUIPAMENTO_LABELS, STATUS_LABELS } from './types'
 import { formatarData, formatarDataHora } from './format'
 
 const AGENDAMENTO_LABELS: Record<string, string> = {
   visitaTecnica: 'Visita Técnica',
   montagemAndaime: 'Montagem de Andaime',
   visitaSMS: 'Visita SMS',
-  caminhaoMunck: 'Caminhão Munck',
   veiculo: 'Veículo',
   libra: 'LIBRA',
   ar2: 'AR2',
@@ -18,7 +17,6 @@ const AGENDAMENTO_LABELS: Record<string, string> = {
 }
 
 const QTD_DIAS_LABELS: Record<string, string> = {
-  pemt: 'PEMT',
   limpezaArea: 'Limpeza de Área',
   comunicacoesOperantes: 'Comunicações Operantes',
 }
@@ -228,12 +226,23 @@ export async function gerarPdfFormulario(formulario: FormularioAvaliacao): Promi
   y += 14
   drawTwoColumns('Responsável', formulario.infoGerais.responsavel || '—', 'Nº da Solicitação', formulario.infoGerais.numeroSolicitacao || '—')
   drawTwoColumns('Data da Avaliação', formulario.infoGerais.dataAvaliacao ? formatarData(formulario.infoGerais.dataAvaliacao) : '—', 'Tempo Estimado', formulario.infoGerais.tempoEstimadoExecucao || '—')
-  drawTwoColumns('Equipe Necessária', formulario.infoGerais.equipeNecessaria || '—', 'Local da Atividade', formulario.infoGerais.localAtividade || '—')
+  drawTwoColumns('Equipe Necessária', formulario.infoGerais.equipeNecessaria || '—', 'Lotação', formulario.infoGerais.lotacao || '—')
+  drawTwoColumns('Local da Atividade', formulario.infoGerais.localAtividade || '—', 'Status', STATUS_LABELS[formulario.status])
   drawTwoColumns('Projeto', formulario.projeto || '—', 'Atualizado em', formatarDataHora(formulario.updatedAt || formulario.createdAt || new Date().toISOString()))
 
   sectionHeader('Necessidades da Execução')
   const necessidades = formulario.necessidades as unknown as Record<string, { necessario: boolean; dias?: number; data?: string; descricao?: string }>
   const itens: string[] = []
+  // Equipamentos primeiro, na mesma ordem em que aparecem no formulário.
+  for (const chave of EQUIPAMENTO_CHAVES) {
+    const equipamento = formulario.necessidades.equipamentos?.[chave]
+    if (!equipamento?.necessario) continue
+    const detalhes = [
+      equipamento.dias ? `${equipamento.dias} dia(s)` : null,
+      equipamento.data ? formatarData(equipamento.data) : null,
+    ].filter(Boolean)
+    itens.push(`${EQUIPAMENTO_LABELS[chave]}${detalhes.length ? `: ${detalhes.join(' — ')}` : ''}`)
+  }
   for (const [chave, rotulo] of Object.entries(QTD_DIAS_LABELS)) {
     if (necessidades[chave]?.necessario) itens.push(`${rotulo}: ${necessidades[chave].dias ?? 0} dia(s)`)
   }

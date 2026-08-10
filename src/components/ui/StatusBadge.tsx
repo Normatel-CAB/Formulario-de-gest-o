@@ -3,19 +3,19 @@ import { STATUS_LABELS } from '../../lib/types'
 import { cn } from '../../lib/cn'
 
 const toneClasses: Record<FormStatus, string> = {
-  rascunho: 'bg-white/10 text-ink-muted',
-  enviado: 'bg-sky-500/15 text-sky-300',
-  em_analise: 'bg-amber-500/15 text-amber-300',
-  aprovado: 'bg-brand-500/15 text-brand-300',
-  reprovado: 'bg-rose-500/15 text-rose-300',
+  rascunho: 'border border-hairline bg-surface-2 text-txt-dim',
+  enviado: 'border border-viz-teal/25 bg-viz-teal/13 text-viz-teal',
+  em_analise: 'border border-viz-amber/25 bg-viz-amber/13 text-viz-amber',
+  aprovado: 'border border-brand/25 bg-brand/13 text-brand-lite',
+  reprovado: 'border border-viz-red/25 bg-viz-red/13 text-viz-red',
 }
 
 const dotClasses: Record<FormStatus, string> = {
-  rascunho: 'bg-slate-400',
-  enviado: 'bg-sky-500',
-  em_analise: 'bg-amber-500',
-  aprovado: 'bg-brand-500',
-  reprovado: 'bg-rose-500',
+  rascunho: 'bg-txt-faint',
+  enviado: 'bg-viz-teal',
+  em_analise: 'bg-viz-amber',
+  aprovado: 'bg-brand',
+  reprovado: 'bg-viz-red',
 }
 
 export function StatusBadge({ status, className }: { status: FormStatus; className?: string }) {

@@ -38,8 +38,8 @@ export function FormDetail() {
   if (!formulario || semAcesso) {
     return (
       <div className="animate-fade-in">
-        <p className="text-sm text-ink-muted">Formulário não encontrado.</p>
-        <Link to="/historico" className="text-sm font-medium text-brand-400 underline">
+        <p className="text-[13px] text-txt-dim">Formulário não encontrado.</p>
+        <Link to="/historico" className="text-sm font-medium text-brand-lite underline">
           Voltar ao histórico
         </Link>
       </div>
@@ -83,10 +83,10 @@ export function FormDetail() {
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="text-xl font-bold text-ink">{formulario.infoGerais.localAtividade || 'Atividade sem nome'}</h2>
+            <h2 className="text-[27px] font-bold tracking-[-0.025em] text-txt">{formulario.infoGerais.localAtividade || 'Atividade sem nome'}</h2>
             <StatusBadge status={formulario.status} />
           </div>
-          <p className="text-sm text-ink-muted">
+          <p className="text-[13px] text-txt-dim">
             Nº {formulario.infoGerais.numeroSolicitacao || '—'} · Atualizado em {formatarDataHora(formulario.updatedAt)}
           </p>
         </div>
@@ -151,7 +151,7 @@ export function FormDetail() {
             <CardTitle>Assinatura</CardTitle>
           </CardHeader>
           <CardContent>
-            <img src={formulario.assinaturaDataUrl} alt="Assinatura digital" className="h-32 rounded-xl border border-border bg-surface-2" />
+            <img src={formulario.assinaturaDataUrl} alt="Assinatura digital" className="h-32 rounded-xl border border-hairline bg-surface-2" />
           </CardContent>
         </Card>
       )}
@@ -162,7 +162,7 @@ export function FormDetail() {
             <CardTitle>Observações</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-ink-muted">{formulario.observacoes}</p>
+            <p className="text-[13px] text-txt-dim">{formulario.observacoes}</p>
           </CardContent>
         </Card>
       )}

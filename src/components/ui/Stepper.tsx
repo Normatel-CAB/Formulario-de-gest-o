@@ -27,18 +27,16 @@ export function Stepper({
                 type="button"
                 disabled={!clickable}
                 onClick={() => onStepClick?.(index)}
-                className={cn(
-                  'group flex items-center gap-2 text-left',
-                  clickable ? 'cursor-pointer' : 'cursor-default',
-                )}
+                className={cn('group flex items-center gap-2.5 text-left', clickable ? 'cursor-pointer' : 'cursor-default')}
                 aria-current={active ? 'step' : undefined}
               >
                 <span
                   className={cn(
-                    'flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 text-sm font-semibold transition-colors duration-200',
-                    done && 'border-brand-600 bg-brand-600 text-white',
-                    active && 'border-brand-500 bg-surface text-brand-400 ring-4 ring-brand-500/20',
-                    !done && !active && 'border-border-light bg-surface text-ink-subtle',
+                    'flex h-8 w-8 shrink-0 items-center justify-center rounded-md border text-[12px] font-bold transition-all duration-200 ease-smooth',
+                    done && 'border-transparent bg-gradient-to-br from-brand-lite to-brand text-white shadow-brand-sm',
+                    active &&
+                      'border-hairline-hi bg-surface text-brand-lite ring-[3px] ring-brand/15',
+                    !done && !active && 'border-hairline bg-surface-2 text-txt-faint',
                   )}
                 >
                   {done ? (
@@ -56,20 +54,24 @@ export function Stepper({
                 <span className="hidden sm:block">
                   <span
                     className={cn(
-                      'block text-sm font-medium',
-                      active || done ? 'text-ink' : 'text-ink-subtle',
+                      'block text-[12.5px] font-semibold tracking-[-0.005em]',
+                      active || done ? 'text-txt' : 'text-txt-faint',
                     )}
                   >
                     {step.label}
                   </span>
-                  {step.description && <span className="block text-xs text-ink-subtle">{step.description}</span>}
+                  {step.description && (
+                    <span className="block text-[10.5px] uppercase tracking-[0.08em] text-txt-faint">
+                      {step.description}
+                    </span>
+                  )}
                 </span>
               </button>
               {index < steps.length - 1 && (
                 <span
                   className={cn(
-                    'mx-2 h-0.5 flex-1 rounded-full transition-colors duration-300 sm:mx-3',
-                    done ? 'bg-brand-500' : 'bg-border-light',
+                    'mx-2 h-px flex-1 rounded-full transition-colors duration-300 sm:mx-3',
+                    done ? 'bg-brand/60' : 'bg-hairline',
                   )}
                 />
               )}

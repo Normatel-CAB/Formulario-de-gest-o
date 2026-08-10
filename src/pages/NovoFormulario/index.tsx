@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { criarFormularioVazio, formularioTemConteudo } from '../../lib/factory'
+import { criarFormularioVazio, formularioTemConteudo, normalizarFormulario } from '../../lib/factory'
 import type { FormularioAvaliacao, NecessidadesExecucao } from '../../lib/types'
 import { useFormsStore } from '../../store/formsStore'
 import { useAuthStore } from '../../store/authStore'
 import { Stepper } from '../../components/ui/Stepper'
+import { Reveal } from '../../components/ui/Reveal'
 import { Button } from '../../components/ui/Button'
 import { toast } from '../../store/toastStore'
 import { StepInfoGerais } from './StepInfoGerais'
@@ -38,7 +39,7 @@ export function NovoFormulario() {
   useEffect(() => {
     if (!id) return
     void obter(id).then((existente) => {
-      if (existente) setFormulario(existente)
+      if (existente) setFormulario(normalizarFormulario(existente))
       setLoaded(true)
     })
   }, [id, obter])
@@ -68,7 +69,15 @@ export function NovoFormulario() {
   function proximaEtapa() {
     if (step === 0) {
       const info = formulario.infoGerais
-      if (!info.responsavel || !info.dataAvaliacao || !info.tempoEstimadoExecucao || !info.numeroSolicitacao || !info.equipeNecessaria || !info.localAtividade) {
+      if (
+        !info.responsavel ||
+        !info.dataAvaliacao ||
+        !info.tempoEstimadoExecucao ||
+        !info.numeroSolicitacao ||
+        !info.equipeNecessaria ||
+        !info.lotacao ||
+        !info.localAtividade
+      ) {
         toast({ variant: 'warning', title: 'Preencha todos os campos obrigatórios', description: 'Complete as Informações Gerais para continuar.' })
         return
       }
@@ -112,22 +121,31 @@ export function NovoFormulario() {
   if (!loaded) return null
 
   return (
-    <div className="animate-fade-in space-y-6">
-      <div>
-        <h2 className="text-xl font-bold text-ink">Nova Ficha Técnica de Avaliação</h2>
-        <p className="text-sm text-ink-muted">Preencha as etapas abaixo. Seu progresso é salvo automaticamente.</p>
-      </div>
+    <div className="space-y-5">
+      <Reveal index={0}>
+        <div>
+          <span className="chip">Ficha Técnica de Avaliação</span>
+          <h2 className="mt-3 text-[27px] font-bold tracking-[-0.025em] text-txt">
+            Nova Ficha Técnica de Avaliação
+          </h2>
+          <p className="mt-1 text-[13px] text-txt-dim">
+            Preencha as etapas abaixo. Seu progresso é salvo automaticamente, mesmo sem internet.
+          </p>
+        </div>
+      </Reveal>
 
-      <div className="rounded-2xl border border-border bg-surface p-4 sm:p-5">
-        <Stepper steps={STEPS} current={step} onStepClick={setStep} />
-      </div>
+      <Reveal index={1}>
+        <div className="glass p-4 sm:p-5">
+          <Stepper steps={STEPS} current={step} onStepClick={setStep} />
+        </div>
+      </Reveal>
 
       {step === 0 && <StepInfoGerais formulario={formulario} onChange={patchInfo} />}
       {step === 1 && <StepNecessidades formulario={formulario} onChange={patchNecessidades} />}
       {step === 2 && <StepApoioAnexos formulario={formulario} onPatch={patch} />}
       {step === 3 && <StepRevisao formulario={formulario} />}
 
-      <div className="sticky bottom-16 z-20 flex items-center justify-between gap-2 rounded-2xl border border-border bg-surface/95 p-3 shadow-lg shadow-black/30 backdrop-blur sm:bottom-0">
+      <div className="glass safe-bottom sticky bottom-4 z-20 flex items-center justify-between gap-2 p-3 sm:bottom-4">
         <Button variant="ghost" onClick={() => setStep((s) => Math.max(s - 1, 0))} disabled={step === 0}>
           Voltar
         </Button>

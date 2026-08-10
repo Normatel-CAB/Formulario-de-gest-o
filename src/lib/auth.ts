@@ -111,13 +111,69 @@ export async function autenticar(email: string, senha: string): Promise<Usuario>
   return atualizado
 }
 
+/** Para onde a Microsoft devolve o navegador depois do consentimento.
+    Precisa estar na lista de "Redirect URLs" do Supabase (Authentication →
+    URL Configuration) e nas "Redirect URIs" do app no Azure. */
+export function urlRetornoMicrosoft() {
+  return `${window.location.origin}/dashboard`
+}
+
 export async function iniciarLoginMicrosoft(): Promise<void> {
-  if (!supabase) throw new AuthError('Login com Microsoft indisponível. Configuração de autenticação ausente.')
+  if (!supabase) {
+    throw new AuthError(
+      'Login com Microsoft indisponível: o arquivo .env com VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY não foi carregado.',
+    )
+  }
   const { error } = await supabase.auth.signInWithOAuth({
     provider: 'azure',
-    options: { redirectTo: window.location.origin, scopes: 'openid profile email' },
+    options: {
+      redirectTo: urlRetornoMicrosoft(),
+      // `offline_access` é o que garante o refresh token; sem ele a sessão
+      // morre em minutos e o usuário é jogado de volta para o login.
+      scopes: 'openid profile email offline_access',
+      queryParams: { prompt: 'select_account' },
+    },
   })
-  if (error) throw new AuthError(error.message)
+  if (error) throw new AuthError(traduzirErroOAuth(error.message))
+}
+
+/** Mensagens do provedor são em inglês e técnicas; aqui viram algo acionável. */
+function traduzirErroOAuth(mensagem: string) {
+  const m = mensagem.toLowerCase()
+  if (m.includes('provider is not enabled')) {
+    return 'O provedor Azure/Microsoft não está habilitado no Supabase. Ative-o em Authentication → Providers.'
+  }
+  if (m.includes('redirect') || m.includes('not allowed')) {
+    return 'Este endereço não está autorizado a receber o retorno do login. Cadastre-o em Authentication → URL Configuration no Supabase.'
+  }
+  return mensagem
+}
+
+/** Erro devolvido pelo provedor na própria URL de retorno (?error=…). */
+export function lerErroRetornoOAuth(): string | null {
+  const busca = new URLSearchParams(window.location.search)
+  const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''))
+  const erro = busca.get('error_description') || busca.get('error') || hash.get('error_description') || hash.get('error')
+  return erro ? traduzirErroOAuth(decodeURIComponent(erro.replace(/\+/g, ' '))) : null
+}
+
+/**
+ * Reage ao término do login Microsoft.
+ *
+ * Não basta chamar getSession() uma vez na inicialização: quando o navegador
+ * volta da Microsoft, o supabase-js ainda está trocando o código pela sessão.
+ * Quem esperava só pelo getSession via a tela de login de novo. Aqui ficamos
+ * ouvindo o SIGNED_IN e avisamos o app quando a sessão realmente existir.
+ */
+export function observarSessaoMicrosoft(ao: (usuario: Usuario | null) => void): () => void {
+  if (!supabase) return () => {}
+  const { data } = supabase.auth.onAuthStateChange((evento) => {
+    if (evento !== 'SIGNED_IN' && evento !== 'INITIAL_SESSION' && evento !== 'TOKEN_REFRESHED') return
+    void sincronizarSessaoMicrosoft()
+      .then(ao)
+      .catch(() => ao(null))
+  })
+  return () => data.subscription.unsubscribe()
 }
 
 export async function sincronizarSessaoMicrosoft(): Promise<Usuario | null> {
@@ -161,6 +217,9 @@ export function iniciarSessao(usuarioId: string, lembrar = true) {
 export function encerrarSessao() {
   localStorage.removeItem(SESSAO_STORAGE_KEY)
   sessionStorage.removeItem(SESSAO_STORAGE_KEY)
+  // Sem isso a sessão do Supabase sobrevive ao logout e o próximo carregamento
+  // reautentica o usuário sozinho pela conta Microsoft.
+  void supabase?.auth.signOut()
 }
 
 export async function obterUsuarioDaSessao(): Promise<Usuario | null> {

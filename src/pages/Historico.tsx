@@ -64,8 +64,8 @@ export function Historico() {
   return (
     <div className="animate-fade-in space-y-5">
       <div>
-        <h2 className="text-xl font-bold text-ink">Histórico de Formulários</h2>
-        <p className="text-sm text-ink-muted">
+        <h2 className="text-[27px] font-bold tracking-[-0.025em] text-txt">Histórico de Formulários</h2>
+        <p className="text-[13px] text-txt-dim">
           {usuario?.papel === 'operador'
             ? 'Pesquise e acompanhe o status dos formulários que você criou.'
             : 'Pesquise, filtre e acompanhe o status de todas as fichas técnicas.'}
@@ -124,7 +124,7 @@ export function Historico() {
               <Link
                 key={f.id}
                 to={`/formulario/${f.id}`}
-                className="animate-slide-up rounded-2xl border border-border bg-surface p-4 transition-all duration-150 hover:-translate-y-0.5 hover:border-brand-600/50 hover:shadow-md hover:shadow-black/30"
+                className="animate-slide-up glass p-4 transition-all duration-150 hover:-translate-y-0.5 hover:border-brand-600/50 hover:shadow-md hover:shadow-black/30"
               >
                 <div className="flex items-start justify-between gap-2">
                   <p className="text-sm font-semibold text-ink line-clamp-1">

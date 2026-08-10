@@ -37,8 +37,8 @@ export function Configuracoes() {
   return (
     <div className="animate-fade-in space-y-5">
       <div>
-        <h2 className="text-xl font-bold text-ink">Configurações</h2>
-        <p className="text-sm text-ink-muted">Personalize a identidade visual e veja o status da integração com o banco de dados.</p>
+        <h2 className="text-[27px] font-bold tracking-[-0.025em] text-txt">Configurações</h2>
+        <p className="text-[13px] text-txt-dim">Personalize a identidade visual e veja o status da integração com o banco de dados.</p>
       </div>
 
       <Card>
@@ -53,7 +53,7 @@ export function Configuracoes() {
             <button
               type="button"
               onClick={() => inputRef.current?.click()}
-              className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl border border-border-light bg-surface-2"
+              className="flex h-16 w-16 items-center justify-center overflow-hidden glass-2"
             >
               {logoDataUrl ? (
                 <img src={logoDataUrl} alt="Logo da empresa" className="h-full w-full object-contain" />
@@ -83,9 +83,9 @@ export function Configuracoes() {
           <CardTitle>Integração com o banco de dados</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-ink-muted">
+          <p className="text-[13px] text-txt-dim">
             Status do Supabase:{' '}
-            <span className={isSupabaseConfigured ? 'font-semibold text-brand-400' : 'font-semibold text-amber-400'}>
+            <span className={isSupabaseConfigured ? 'font-semibold text-brand-lite' : 'font-semibold text-amber-400'}>
               {isSupabaseConfigured ? 'Conectado' : 'Não configurado (modo offline local)'}
             </span>
           </p>

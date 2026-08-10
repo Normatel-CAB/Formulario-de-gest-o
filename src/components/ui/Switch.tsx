@@ -20,13 +20,15 @@ export function Switch({
       aria-label={label}
       onClick={() => onChange(!checked)}
       className={cn(
-        'relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors duration-200 ease-out',
-        checked ? 'bg-brand-600' : 'bg-surface-3 border border-border-light',
+        'relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-all duration-200 ease-smooth',
+        checked
+          ? 'border-transparent bg-gradient-to-r from-brand-lite to-brand shadow-brand-sm'
+          : 'border-hairline bg-surface-2',
       )}
     >
       <span
         className={cn(
-          'inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-200 ease-out',
+          'inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform duration-200 ease-smooth',
           checked ? 'translate-x-6' : 'translate-x-1',
         )}
       />
@@ -47,14 +49,18 @@ export function SimNaoField({
 }) {
   return (
     <div className="flex items-center justify-between gap-4 py-1">
-      <div>
-        <p className="text-sm font-medium text-ink">{label}</p>
-        {description && <p className="text-xs text-ink-subtle">{description}</p>}
+      <div className="min-w-0">
+        <p className="text-[12.5px] font-medium text-txt">{label}</p>
+        {description && <p className="text-[11px] text-txt-faint">{description}</p>}
       </div>
-      <div className="flex items-center gap-2">
-        <span className={cn('text-xs font-semibold', checked ? 'text-ink-subtle' : 'text-ink')}>Não</span>
+      <div className="flex shrink-0 items-center gap-2">
+        <span className={cn('text-[10.5px] font-bold uppercase tracking-[0.08em]', checked ? 'text-txt-faint' : 'text-txt')}>
+          Não
+        </span>
         <Switch checked={checked} onChange={onChange} label={label} />
-        <span className={cn('text-xs font-semibold', checked ? 'text-brand-400' : 'text-ink-subtle')}>Sim</span>
+        <span className={cn('text-[10.5px] font-bold uppercase tracking-[0.08em]', checked ? 'text-brand-lite' : 'text-txt-faint')}>
+          Sim
+        </span>
       </div>
     </div>
   )

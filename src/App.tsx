@@ -1,12 +1,12 @@
 import { lazy, Suspense } from 'react'
-import { Link, Route, Routes } from 'react-router-dom'
+import { Route, Routes } from 'react-router-dom'
 import { AppShell } from './components/layout/AppShell'
+import { PublicFormShell } from './components/layout/PublicFormShell'
 import { SkeletonCard } from './components/ui/Skeleton'
 import { Toaster } from './components/ui/Toaster'
 import { ErrorBoundary } from './components/ui/ErrorBoundary'
 import { RequireAuth, RequireRole } from './components/auth/RequireAuth'
 import { useAuthStore } from './store/authStore'
-import { useSettingsStore } from './store/settingsStore'
 
 const Login = lazy(() => import('./pages/Auth/Login').then((m) => ({ default: m.Login })))
 const Cadastro = lazy(() => import('./pages/Auth/Cadastro').then((m) => ({ default: m.Cadastro })))
@@ -22,29 +22,6 @@ const Cargos = lazy(() => import('./pages/Administracao/Cargos').then((m) => ({ 
 const Permissoes = lazy(() => import('./pages/Administracao/Permissoes').then((m) => ({ default: m.Permissoes })))
 const Configuracoes = lazy(() => import('./pages/Configuracoes').then((m) => ({ default: m.Configuracoes })))
 
-function PublicFormShell() {
-  const logoDataUrl = useSettingsStore((s) => s.logoDataUrl)
-  return (
-    <div className="min-h-screen bg-bg">
-      <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-surface/95 px-4 backdrop-blur sm:px-8">
-        <img src={logoDataUrl || '/Normatel Engenharia_BRANCO.svg'} alt="Logo da empresa" className="h-8 w-auto max-w-[9rem] object-contain object-left" />
-        <Link to="/login" className="text-sm font-medium text-brand-400 hover:text-brand-300">
-          Área restrita
-        </Link>
-      </header>
-      <main className="px-4 pb-16 pt-6 sm:px-8">
-        <div className="mx-auto max-w-3xl">
-          <Suspense fallback={<SkeletonCard />}>
-            <ErrorBoundary>
-              <NovoFormulario />
-            </ErrorBoundary>
-          </Suspense>
-        </div>
-      </main>
-    </div>
-  )
-}
-
 export default function App() {
   const inicializado = useAuthStore((s) => s.inicializado)
 
@@ -53,10 +30,14 @@ export default function App() {
   return (
     <Suspense fallback={null}>
       <Routes>
+        {/* A raiz é a ficha técnica aberta: a maioria dos colaboradores não tem
+            e-mail corporativo, então o login não pode ser a porta de entrada.
+            O acesso administrativo fica no cabeçalho da própria ficha. */}
+        <Route path="/" element={<PublicFormShell />} />
+        <Route path="/formulario" element={<PublicFormShell />} />
         <Route path="/login" element={<Login />} />
         <Route path="/cadastro" element={<Cadastro />} />
         <Route path="/esqueci-senha" element={<EsqueciSenha />} />
-        <Route path="/formulario" element={<PublicFormShell />} />
         <Route
           path="/*"
           element={
@@ -64,68 +45,68 @@ export default function App() {
               <AppShell>
                 <Suspense fallback={<SkeletonCard />}>
                   <ErrorBoundary>
-                  <Routes>
-                    <Route path="/" element={<Dashboard />} />
-                    <Route
-                      path="/novo"
-                      element={
-                        <RequireRole roles={['administrador', 'operador']}>
-                          <NovoFormulario />
-                        </RequireRole>
-                      }
-                    />
-                    <Route
-                      path="/novo/:id"
-                      element={
-                        <RequireRole roles={['administrador', 'operador']}>
-                          <NovoFormulario />
-                        </RequireRole>
-                      }
-                    />
-                    <Route path="/historico" element={<Historico />} />
-                    <Route path="/formulario/:id" element={<FormDetail />} />
-                    <Route path="/perfil" element={<MeuPerfil />} />
-                    <Route
-                      path="/administracao"
-                      element={
-                        <RequireRole roles={['administrador']}>
-                          <Administracao />
-                        </RequireRole>
-                      }
-                    />
-                    <Route
-                      path="/usuarios"
-                      element={
-                        <RequireRole roles={['administrador']}>
-                          <Usuarios />
-                        </RequireRole>
-                      }
-                    />
-                    <Route
-                      path="/administracao/cargos"
-                      element={
-                        <RequireRole roles={['administrador']}>
-                          <Cargos />
-                        </RequireRole>
-                      }
-                    />
-                    <Route
-                      path="/administracao/permissoes"
-                      element={
-                        <RequireRole roles={['administrador']}>
-                          <Permissoes />
-                        </RequireRole>
-                      }
-                    />
-                    <Route
-                      path="/configuracoes"
-                      element={
-                        <RequireRole roles={['administrador']}>
-                          <Configuracoes />
-                        </RequireRole>
-                      }
-                    />
-                  </Routes>
+                    <Routes>
+                      <Route path="/dashboard" element={<Dashboard />} />
+                      <Route
+                        path="/novo"
+                        element={
+                          <RequireRole roles={['administrador', 'operador']}>
+                            <NovoFormulario />
+                          </RequireRole>
+                        }
+                      />
+                      <Route
+                        path="/novo/:id"
+                        element={
+                          <RequireRole roles={['administrador', 'operador']}>
+                            <NovoFormulario />
+                          </RequireRole>
+                        }
+                      />
+                      <Route path="/historico" element={<Historico />} />
+                      <Route path="/formulario/:id" element={<FormDetail />} />
+                      <Route path="/perfil" element={<MeuPerfil />} />
+                      <Route
+                        path="/administracao"
+                        element={
+                          <RequireRole roles={['administrador']}>
+                            <Administracao />
+                          </RequireRole>
+                        }
+                      />
+                      <Route
+                        path="/usuarios"
+                        element={
+                          <RequireRole roles={['administrador']}>
+                            <Usuarios />
+                          </RequireRole>
+                        }
+                      />
+                      <Route
+                        path="/administracao/cargos"
+                        element={
+                          <RequireRole roles={['administrador']}>
+                            <Cargos />
+                          </RequireRole>
+                        }
+                      />
+                      <Route
+                        path="/administracao/permissoes"
+                        element={
+                          <RequireRole roles={['administrador']}>
+                            <Permissoes />
+                          </RequireRole>
+                        }
+                      />
+                      <Route
+                        path="/configuracoes"
+                        element={
+                          <RequireRole roles={['administrador']}>
+                            <Configuracoes />
+                          </RequireRole>
+                        }
+                      />
+                    </Routes>
                   </ErrorBoundary>
                 </Suspense>
               </AppShell>

@@ -96,14 +96,40 @@ export interface DescricaoItem {
   descricao?: string
 }
 
+/** Equipamento pedido para a atividade: quantos dias e, se houver, a data em
+    que precisa estar no local. */
+export interface EquipamentoItem {
+  necessario: boolean
+  dias?: number
+  data?: string
+}
+
+export type EquipamentoChave =
+  | 'caminhaoCesto'
+  | 'caminhaoMunck'
+  | 'drone'
+  | 'pemt'
+  | 'retroescavadeira'
+
+export type Equipamentos = Record<EquipamentoChave, EquipamentoItem>
+
+export const EQUIPAMENTO_LABELS: Record<EquipamentoChave, string> = {
+  caminhaoCesto: 'Caminhão cesto',
+  caminhaoMunck: 'Caminhão munck',
+  drone: 'Drone',
+  pemt: 'PEMT',
+  retroescavadeira: 'Retroescavadeira',
+}
+
+export const EQUIPAMENTO_CHAVES = Object.keys(EQUIPAMENTO_LABELS) as EquipamentoChave[]
+
 export interface NecessidadesExecucao {
-  pemt: QtdDias
+  equipamentos: Equipamentos
   limpezaArea: QtdDias
   comunicacoesOperantes: QtdDias
   visitaTecnica: Agendamento
   montagemAndaime: Agendamento
   visitaSMS: AgendamentoVisitaSMS
-  caminhaoMunck: Agendamento
   veiculo: Agendamento
   libra: Agendamento
   ar2: Agendamento
@@ -115,7 +141,25 @@ export interface NecessidadesExecucao {
   locacaoMaquinas: DescricaoItem
   apoioOutraEquipe: DescricaoItem
   necessidadesAdicionais?: string
+
+  /** @deprecated Migrados para `equipamentos`. Só continuam declarados para as
+      fichas gravadas antes da mudança serem lidas sem erro (ver
+      `normalizarFormulario` em lib/factory.ts). */
+  pemt?: QtdDias
+  /** @deprecated Migrado para `equipamentos.caminhaoMunck`. */
+  caminhaoMunck?: Agendamento
 }
+
+export const LOTACOES = [
+  'Áreas Externas',
+  'UTE',
+  'Tapera',
+  'Cabiúnas',
+  'Barra do Furado',
+  'Severina',
+] as const
+
+export type Lotacao = (typeof LOTACOES)[number]
 
 export interface InfoGerais {
   responsavel: string
@@ -123,6 +167,8 @@ export interface InfoGerais {
   tempoEstimadoExecucao: string
   numeroSolicitacao: string
   equipeNecessaria: string
+  /** Base/unidade a que a atividade pertence (ver LOTACOES). */
+  lotacao: string
   localAtividade: string
 }
 

@@ -6,6 +6,7 @@ import App from './App.tsx'
 import { useSettingsStore } from './store/settingsStore'
 import { useAuthStore } from './store/authStore'
 import { iniciarSincronizacaoAutomatica } from './lib/sync'
+import { ThemeProvider } from './components/theme/ThemeProvider'
 
 function Root() {
   const initSettings = useSettingsStore((s) => s.init)
@@ -18,9 +19,11 @@ function Root() {
   }, [initSettings, initAuth])
 
   return (
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
+    <ThemeProvider>
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
+    </ThemeProvider>
   )
 }
 

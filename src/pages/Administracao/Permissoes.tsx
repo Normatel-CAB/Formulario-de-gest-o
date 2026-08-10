@@ -118,8 +118,8 @@ export function Permissoes() {
     <div className="animate-fade-in space-y-5">
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
         <div>
-          <h2 className="text-xl font-bold text-ink">Permissões</h2>
-          <p className="text-sm text-ink-muted">Gerencie as permissões disponíveis para vincular aos cargos.</p>
+          <h2 className="text-[27px] font-bold tracking-[-0.025em] text-txt">Permissões</h2>
+          <p className="text-[13px] text-txt-dim">Gerencie as permissões disponíveis para vincular aos cargos.</p>
         </div>
         <Button onClick={abrirCriacao}>
           <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -175,7 +175,7 @@ export function Permissoes() {
                           <Button size="sm" variant="ghost" onClick={() => abrirEdicao(f)}>
                             Editar
                           </Button>
-                          <Button size="sm" variant="ghost" className="text-rose-400 hover:bg-rose-500/10" onClick={() => setExcluindo(f)}>
+                          <Button size="sm" variant="ghost" className="text-viz-red hover:bg-viz-red/10" onClick={() => setExcluindo(f)}>
                             Excluir
                           </Button>
                         </div>
@@ -236,7 +236,7 @@ export function Permissoes() {
                   onClick={() => setForm({ ...form, icone })}
                   className={cn(
                     'flex h-9 w-9 items-center justify-center rounded-lg border transition-colors',
-                    form.icone === icone ? 'border-brand-500 bg-brand-500/15 text-brand-300' : 'border-border-light text-ink-muted hover:bg-surface-3',
+                    form.icone === icone ? 'border-brand-500 border border-brand/25 bg-brand/13 text-brand-lite' : 'border-border-light text-ink-muted hover:bg-surface-3',
                   )}
                   aria-label={`Selecionar ícone ${icone}`}
                 >
@@ -251,7 +251,7 @@ export function Permissoes() {
             <div className="flex items-center gap-2">
               <span className={cn('text-xs font-semibold', form.status === 'ativo' ? 'text-ink-subtle' : 'text-ink')}>Inativa</span>
               <Switch checked={form.status === 'ativo'} onChange={(v) => setForm({ ...form, status: v ? 'ativo' : 'inativo' })} />
-              <span className={cn('text-xs font-semibold', form.status === 'ativo' ? 'text-brand-400' : 'text-ink-subtle')}>Ativa</span>
+              <span className={cn('text-xs font-semibold', form.status === 'ativo' ? 'text-brand-lite' : 'text-ink-subtle')}>Ativa</span>
             </div>
           </div>
         </div>

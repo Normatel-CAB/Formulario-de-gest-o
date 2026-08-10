@@ -7,20 +7,21 @@ interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
   tone?: BadgeTone
 }
 
+/** Cores de dados do design system (viz-*) em vez das paletas soltas do Tailwind. */
 const toneClasses: Record<BadgeTone, string> = {
-  brand: 'bg-brand-500/15 text-brand-300',
-  slate: 'bg-white/10 text-ink-muted',
-  sky: 'bg-sky-500/15 text-sky-300',
-  amber: 'bg-amber-500/15 text-amber-300',
-  rose: 'bg-rose-500/15 text-rose-300',
-  outline: 'border border-border-light text-ink-muted bg-transparent',
+  brand: 'border border-brand/25 bg-brand/13 text-brand-lite',
+  slate: 'border border-hairline bg-surface-2 text-txt-dim',
+  sky: 'border border-viz-teal/25 bg-viz-teal/13 text-viz-teal',
+  amber: 'border border-viz-amber/25 bg-viz-amber/13 text-viz-amber',
+  rose: 'border border-viz-red/25 bg-viz-red/13 text-viz-red',
+  outline: 'border border-hairline bg-transparent text-txt-dim',
 }
 
 export function Badge({ className, tone = 'brand', ...props }: BadgeProps) {
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium leading-none',
+        'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold leading-none tracking-[0.01em]',
         toneClasses[tone],
         className,
       )}

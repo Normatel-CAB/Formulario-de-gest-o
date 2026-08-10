@@ -14,7 +14,7 @@ export function EmptyState({
   return (
     <div className="animate-fade-in flex flex-col items-center justify-center rounded-2xl border border-dashed border-border-light bg-surface/40 px-6 py-14 text-center">
       {icon && (
-        <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-500/15 text-brand-400">
+        <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand/15 text-brand-lite">
           {icon}
         </div>
       )}

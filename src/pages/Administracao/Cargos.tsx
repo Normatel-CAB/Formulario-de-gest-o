@@ -166,8 +166,8 @@ export function Cargos() {
     <div className="animate-fade-in space-y-5">
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
         <div>
-          <h2 className="text-xl font-bold text-ink">Cargos</h2>
-          <p className="text-sm text-ink-muted">Gerencie cargos e vincule permissões de acesso por módulo.</p>
+          <h2 className="text-[27px] font-bold tracking-[-0.025em] text-txt">Cargos</h2>
+          <p className="text-[13px] text-txt-dim">Gerencie cargos e vincule permissões de acesso por módulo.</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Link to="/administracao/permissoes">
@@ -246,7 +246,7 @@ export function Cargos() {
                     <Button
                       size="sm"
                       variant="ghost"
-                      className="text-rose-400 hover:bg-rose-500/10"
+                      className="text-viz-red hover:bg-viz-red/10"
                       onClick={() => setExcluindoCargo(c)}
                       disabled={c.sistema || qtdUsuarios > 0}
                       title={c.sistema ? 'Cargos do sistema não podem ser excluídos' : qtdUsuarios > 0 ? 'Cargo em uso não pode ser excluído' : undefined}
@@ -285,7 +285,7 @@ export function Cargos() {
               <div className="flex items-center gap-2">
                 <span className={cn('text-xs font-semibold', formCargo.status === 'ativo' ? 'text-ink-subtle' : 'text-ink')}>Inativo</span>
                 <Switch checked={formCargo.status === 'ativo'} onChange={(v) => setFormCargo({ ...formCargo, status: v ? 'ativo' : 'inativo' })} />
-                <span className={cn('text-xs font-semibold', formCargo.status === 'ativo' ? 'text-brand-400' : 'text-ink-subtle')}>Ativo</span>
+                <span className={cn('text-xs font-semibold', formCargo.status === 'ativo' ? 'text-brand-lite' : 'text-ink-subtle')}>Ativo</span>
               </div>
             </div>
           </div>
@@ -327,7 +327,7 @@ export function Cargos() {
                   onClick={() => setFormCargo({ ...formCargo, icone })}
                   className={cn(
                     'flex h-9 w-9 items-center justify-center rounded-lg border transition-colors',
-                    formCargo.icone === icone ? 'border-brand-500 bg-brand-500/15 text-brand-300' : 'border-border-light text-ink-muted hover:bg-surface-3',
+                    formCargo.icone === icone ? 'border-brand-500 border border-brand/25 bg-brand/13 text-brand-lite' : 'border-border-light text-ink-muted hover:bg-surface-3',
                   )}
                   aria-label={`Selecionar ícone ${icone}`}
                 >
@@ -340,7 +340,7 @@ export function Cargos() {
           <div>
             <div className="mb-2 flex items-center justify-between">
               <p className="text-sm font-semibold text-ink">Permissões por módulo</p>
-              <Link to="/administracao/permissoes" className="text-xs font-medium text-brand-400 hover:text-brand-300">
+              <Link to="/administracao/permissoes" className="text-xs font-medium text-brand-lite hover:text-brand-lite">
                 Gerenciar permissões
               </Link>
             </div>

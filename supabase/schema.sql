@@ -57,6 +57,14 @@ create policy "Permitir exclusão para usuários autenticados"
   to authenticated
   using (true);
 
+-- A ficha é preenchida sem login: a maioria dos colaboradores não tem e-mail
+-- corporativo. Por isso o papel anônimo pode INSERIR uma ficha, mas não pode
+-- ler, alterar nem excluir nada — quem consulta o histórico precisa entrar.
+create policy "Permitir envio anônimo da ficha"
+  on formularios_avaliacao for insert
+  to anon
+  with check (status in ('rascunho', 'enviado'));
+
 -- Storage: buckets para anexos e configurações (logo da empresa)
 insert into storage.buckets (id, name, public)
 values ('formularios-anexos', 'formularios-anexos', true)

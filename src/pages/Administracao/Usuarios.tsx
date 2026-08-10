@@ -178,8 +178,8 @@ export function Usuarios() {
     <div className="animate-fade-in space-y-5">
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
         <div>
-          <h2 className="text-xl font-bold text-ink">Usuários</h2>
-          <p className="text-sm text-ink-muted">Gerencie contas, cargos e permissões de acesso ao sistema.</p>
+          <h2 className="text-[27px] font-bold tracking-[-0.025em] text-txt">Usuários</h2>
+          <p className="text-[13px] text-txt-dim">Gerencie contas, cargos e permissões de acesso ao sistema.</p>
         </div>
         <Button onClick={abrirCriacao}>
           <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -269,7 +269,7 @@ export function Usuarios() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="text-rose-400 hover:bg-rose-500/10"
+                          className="text-viz-red hover:bg-viz-red/10"
                           onClick={() => setExcluindo(u)}
                           disabled={u.id === usuarioLogado?.id}
                         >

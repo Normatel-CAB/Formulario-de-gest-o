@@ -67,8 +67,8 @@ export function MeuPerfil() {
   return (
     <div className="animate-fade-in space-y-5">
       <div>
-        <h2 className="text-xl font-bold text-ink">Meu Perfil</h2>
-        <p className="text-sm text-ink-muted">Gerencie suas informações pessoais e credenciais de acesso.</p>
+        <h2 className="text-[27px] font-bold tracking-[-0.025em] text-txt">Meu Perfil</h2>
+        <p className="text-[13px] text-txt-dim">Gerencie suas informações pessoais e credenciais de acesso.</p>
       </div>
 
       <Card>
@@ -118,7 +118,7 @@ export function MeuPerfil() {
               onChange={(e) => setConfirmarSenha(e.target.value)}
             />
             {erroSenha && (
-              <p className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-300 sm:col-span-3" role="alert">
+              <p className="rounded-lg border border-viz-red/30 bg-viz-red/10 px-3 py-2 text-sm text-viz-red sm:col-span-3" role="alert">
                 {erroSenha}
               </p>
             )}

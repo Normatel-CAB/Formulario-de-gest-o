@@ -14,10 +14,10 @@ import { cn } from '../lib/cn'
 
 function IconWrap({ tone, children }: { tone: 'brand' | 'sky' | 'amber' | 'rose'; children: React.ReactNode }) {
   const toneClasses = {
-    brand: 'bg-brand-500/15 text-brand-400',
-    sky: 'bg-sky-500/15 text-sky-400',
-    amber: 'bg-amber-500/15 text-amber-400',
-    rose: 'bg-rose-500/15 text-rose-400',
+    brand: 'bg-brand/15 text-brand-lite',
+    sky: 'bg-viz-teal/15 text-sky-400',
+    amber: 'bg-viz-amber/15 text-amber-400',
+    rose: 'bg-viz-red/15 text-viz-red',
   } as const
   return <div className={cn('flex h-11 w-11 items-center justify-center rounded-xl', toneClasses[tone])}>{children}</div>
 }
@@ -174,7 +174,7 @@ export function Dashboard() {
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
         <div>
           <h2 className="text-2xl font-bold tracking-tight text-ink">Visão geral</h2>
-          <p className="text-sm text-ink-muted">Acompanhe os indicadores das fichas técnicas de avaliação.</p>
+          <p className="text-[13px] text-txt-dim">Acompanhe os indicadores das fichas técnicas de avaliação.</p>
         </div>
         <div className="flex items-center gap-2">
           {ehAdministrador && (
@@ -205,7 +205,7 @@ export function Dashboard() {
                 <Card key={ind.key} className="animate-slide-up transition-shadow duration-200 hover:shadow-md hover:shadow-black/30">
                   <CardContent className="flex items-start justify-between gap-2 p-4">
                     <div>
-                      <p className="text-xs font-medium uppercase tracking-wide text-ink-subtle">{ind.label}</p>
+                      <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-txt-faint">{ind.label}</p>
                       <p className="mt-2 text-3xl font-bold text-ink">{stats[ind.key]}</p>
                     </div>
                     <IconWrap tone={ind.tone}>
@@ -233,18 +233,18 @@ export function Dashboard() {
                 </div>
                 <div className="h-2.5 w-full overflow-hidden rounded-full bg-surface-3">
                   <div
-                    className="h-full rounded-full bg-brand-500 transition-[width] duration-500"
+                    className="h-full rounded-full bg-brand transition-[width] duration-500"
                     style={{ width: `${taxaAprovacao}%` }}
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-2 text-sm">
                   <div className="rounded-xl bg-surface-2 p-3">
                     <p className="text-xs text-ink-subtle">Aprovados</p>
-                    <p className="text-lg font-semibold text-brand-400">{stats.aprovados}</p>
+                    <p className="text-lg font-semibold text-brand-lite">{stats.aprovados}</p>
                   </div>
                   <div className="rounded-xl bg-surface-2 p-3">
                     <p className="text-xs text-ink-subtle">Reprovados</p>
-                    <p className="text-lg font-semibold text-rose-400">{stats.reprovados}</p>
+                    <p className="text-lg font-semibold text-viz-red">{stats.reprovados}</p>
                   </div>
                 </div>
               </div>
@@ -269,7 +269,7 @@ export function Dashboard() {
                     <span className="text-xs font-medium text-ink">{m.qtd}</span>
                     <div className="flex w-full flex-1 items-end">
                       <div
-                        className="w-full rounded-t-lg bg-brand-500/80 transition-[height] duration-500 hover:bg-brand-500"
+                        className="w-full rounded-t-lg bg-brand/80 transition-[height] duration-500 hover:bg-brand"
                         style={{ height: `${Math.max(4, (m.qtd / volumeMensal.max) * 100)}%` }}
                         title={`${m.qtd} formulário(s)`}
                       />
@@ -392,7 +392,7 @@ export function Dashboard() {
                 className="group rounded-xl border border-border p-4 transition-all duration-150 hover:-translate-y-0.5 hover:border-brand-600/50 hover:bg-surface-2 hover:shadow-md hover:shadow-black/20"
               >
                 <div className="flex items-start justify-between gap-2">
-                  <p className="text-sm font-semibold text-ink line-clamp-1 group-hover:text-brand-300">
+                  <p className="text-sm font-semibold text-ink line-clamp-1 group-hover:text-brand-lite">
                     {f.infoGerais.localAtividade || 'Atividade sem nome'}
                   </p>
                   <StatusBadge status={f.status} />

@@ -35,22 +35,22 @@ export function Administracao() {
   return (
     <div className="animate-fade-in space-y-5">
       <div>
-        <h2 className="text-xl font-bold text-ink">Administração</h2>
-        <p className="text-sm text-ink-muted">Visão geral do sistema e aprovações pendentes.</p>
+        <h2 className="text-[27px] font-bold tracking-[-0.025em] text-txt">Administração</h2>
+        <p className="text-[13px] text-txt-dim">Visão geral do sistema e aprovações pendentes.</p>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-3">
         <Link to="/usuarios">
           <Card className="h-full transition-colors hover:border-brand-600/50 hover:bg-surface-2">
             <CardContent className="p-4">
-              <p className="text-xs font-medium uppercase tracking-wide text-ink-subtle">Total de usuários</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-txt-faint">Total de usuários</p>
               <p className="mt-2 text-3xl font-bold text-ink">{usuarios.length}</p>
             </CardContent>
           </Card>
         </Link>
         <Card>
           <CardContent className="p-4">
-            <p className="text-xs font-medium uppercase tracking-wide text-ink-subtle">Aguardando aprovação</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-txt-faint">Aguardando aprovação</p>
             <p className="mt-2 text-3xl font-bold text-ink">{pendentes.length}</p>
           </CardContent>
         </Card>
@@ -58,10 +58,10 @@ export function Administracao() {
           <Card className="h-full transition-colors hover:border-brand-600/50 hover:bg-surface-2">
             <CardContent className="flex items-center justify-between p-4">
               <div>
-                <p className="text-xs font-medium uppercase tracking-wide text-ink-subtle">Cargos e permissões</p>
+                <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-txt-faint">Cargos e permissões</p>
                 <p className="mt-2 text-3xl font-bold text-ink">{cargos.length}</p>
               </div>
-              <RbacIcon nome="shield" className="h-8 w-8 text-brand-400" />
+              <RbacIcon nome="shield" className="h-8 w-8 text-brand-lite" />
             </CardContent>
           </Card>
         </Link>
@@ -116,7 +116,7 @@ export function Administracao() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <p className="text-sm text-ink-muted">Carregando…</p>
+            <p className="text-[13px] text-txt-dim">Carregando…</p>
           ) : pendentes.length === 0 ? (
             <EmptyState title="Nenhuma aprovação pendente" description="Todos os formulários enviados já foram avaliados." />
           ) : (
