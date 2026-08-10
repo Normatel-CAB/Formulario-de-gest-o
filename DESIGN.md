@@ -57,14 +57,37 @@ os nomes canônicos** (`txt`, `hairline`, `surface-2`).
 | Componente | Arquivo | Para quê |
 | --- | --- | --- |
 | `Card` | `ui/Card.tsx` | Cartão de vidro. `flat` remove o hover. |
-| `Button` | `ui/Button.tsx` | Variantes primary/outline/secondary/ghost/danger/link |
-| `GlowButton` | `ui/GlowButton.tsx` | Botão magnético com brilho (usado nos logins) |
+| `Button` | `ui/Button.tsx` | Variantes primary/outline/secondary/ghost/danger/link. `primary` já vem com o efeito magnético. |
 | `Reveal` | `ui/Reveal.tsx` | Entrada em cascata (`index` escalona) |
 | `Input`/`Select`/`Textarea` | `ui/Field.tsx` | Campos com rótulo em caixa alta |
 | `Stepper` | `ui/Stepper.tsx` | Etapas do formulário |
 | `AppBackground` | `layout/AppBackground.tsx` | Halos + grade + orbes + holofote |
 | `GridSpotlight` | `layout/GridSpotlight.tsx` | Grade que acende no cursor |
 | `ThemeProvider` / `ThemeToggle` | `theme/` | Tema claro/escuro |
+| `Logo` | `ui/Logo.tsx` | Marca (sempre use este, nunca o caminho do arquivo) |
+| `KpiCard` | `ui/KpiCard.tsx` | Indicador com contador + sparkline |
+| `AnimatedCounter` | `ui/AnimatedCounter.tsx` | Número que sobe |
+| `Sparkline` | `ui/Sparkline.tsx` | Mini-linha que se desenha |
+| `RowBar` | `ui/RowBar.tsx` | Barra de proporção ao fundo da linha |
+| `Table` e cia. | `ui/Table.tsx` | Linhas flutuantes, cabeçalho em caixa alta, rolagem própria |
+| `DonutChart` | `dashboard/DonutChart.tsx` | Rosca de participação em SVG puro |
+| `BarsChart` | `dashboard/BarsChart.tsx` | Barras horizontais em CSS |
+
+### Botão da marca
+
+Todo botão com o gradiente verde é `<Button>` na variante `primary` (a padrão), e
+o efeito magnético vem junto: ele desliza alguns pixels na direção do cursor, um
+halo radial segue o ponteiro por dentro e um anel acende no hover. A lógica está
+em `useMagneticGlow` (`hooks/useMagneticGlow.ts`) e o desenho em `.glow-btn`
+(`index.css`). Não existe um componente separado para isso — não use `<button>`
+cru com o gradiente, senão o efeito não aparece. Para desligar num caso
+específico: `<Button noGlow>`.
+
+**Armadilha:** o levantar do hover não pode ser `hover:-translate-y-*`. Utilitária
+e `.glow-btn` disputam a mesma propriedade `transform`, e a camada `utilities`
+vence a `components` — a utilitária apagaria o deslocamento magnético. Por isso o
+lift entra como `--lift` dentro do mesmo `translate3d`. Vale o mesmo para
+`hover:shadow-*` contra o anel de brilho.
 
 ## 4. Padrões de página
 
@@ -100,3 +123,21 @@ nova, respeite o mesmo contrato.
 
 Contraste: `txt-faint` é o limite inferior aceitável e só serve para rótulos
 auxiliares. Dado que a pessoa precisa ler nunca fica em `txt-faint`.
+
+## 7. Celular e tablet
+
+A ficha é preenchida em campo, quase sempre no celular. As regras globais estão
+no fim do `index.css` e não dependem de cada tela lembrar delas:
+
+- **16px nos campos abaixo de 768px.** O Safari do iPhone dá zoom em campo com
+  fonte menor que 16px e não volta ao normal depois.
+- **44px de altura mínima** em input/select/textarea sob `pointer: coarse`. Não
+  vale para todo `<button>` de propósito: as bolinhas do stepper e o interruptor
+  têm tamanho próprio e esticariam. Para esses, use `.tap-target`, que amplia só
+  a área clicável.
+- **Breakpoint da navegação é `lg` (1024px)**, não `sm`. No tablet em retrato uma
+  coluna fixa de 252px come a largura útil do formulário.
+- **Nada cria rolagem horizontal na página.** Tabelas rolam dentro do wrapper do
+  `<Table>` e escondem colunas de apoio com `hidden lg:table-cell`.
+- **Áreas seguras** (`.safe-top` / `.safe-bottom`) em tudo que encosta na borda:
+  header, sidebar, barra de ações da ficha, diálogo e avisos.

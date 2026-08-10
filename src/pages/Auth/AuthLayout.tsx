@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { useSettingsStore } from '../../store/settingsStore'
 import { ThemeToggle } from '../../components/theme/ThemeToggle'
+import { Logo } from '../../components/ui/Logo'
 import { useEntranceMotion } from '../../lib/motion'
 
 const destaques = [
@@ -16,7 +16,6 @@ const destaques = [
  * (sempre escura, independente do tema), à direita o formulário no tema atual.
  */
 export function AuthLayout({ children, title, subtitle }: { children: ReactNode; title: string; subtitle?: string }) {
-  const logoDataUrl = useSettingsStore((s) => s.logoDataUrl)
   const { reduce } = useEntranceMotion()
 
   const rise = (delay = 0) => ({
@@ -48,11 +47,11 @@ export function AuthLayout({ children, title, subtitle }: { children: ReactNode;
         />
 
         <motion.div className="relative z-10 flex flex-col items-center" {...rise()}>
-          <img
-            src={logoDataUrl || '/Normatel Engenharia_BRANCO.svg'}
-            alt="Normatel Engenharia"
-            className="mb-10 w-64 object-contain"
-          />
+          <Logo className="mb-8 w-32 drop-shadow-[0_12px_30px_rgba(0,0,0,0.45)]" />
+          <div className="mb-10 text-center">
+            <strong className="block text-[22px] font-bold tracking-[-0.02em] text-white">Normatel</strong>
+            <span className="block text-[11px] uppercase tracking-[0.22em] text-white/50">Engenharia</span>
+          </div>
           <p className="max-w-xs text-center text-[15px] font-light leading-relaxed text-white/70">
             Ficha Técnica de Avaliação de Serviços — avaliação, necessidades e evidências em um só
             lugar.
@@ -89,13 +88,7 @@ export function AuthLayout({ children, title, subtitle }: { children: ReactNode;
 
         <div className="relative z-10 w-full max-w-sm">
           <div className="mb-8 flex justify-center lg:hidden">
-            <span className="logo-plate">
-              <img
-                src={logoDataUrl || '/Normatel Engenharia_BRANCO.svg'}
-                alt="Normatel Engenharia"
-                className="w-44 object-contain"
-              />
-            </span>
+            <Logo className="h-14 w-14" withWordmark />
           </div>
 
           <motion.div className="glass p-6 sm:p-7" {...rise(0.1)}>

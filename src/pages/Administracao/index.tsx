@@ -8,9 +8,11 @@ import { Button } from '../../components/ui/Button'
 import { Select } from '../../components/ui/Field'
 import { StatusBadge } from '../../components/ui/StatusBadge'
 import { EmptyState } from '../../components/ui/EmptyState'
-import { RbacIcon } from '../../components/ui/RbacIcon'
+import { KpiCard } from '../../components/ui/KpiCard'
+import { Reveal } from '../../components/ui/Reveal'
 import { formatarDataHora } from '../../lib/format'
 import { PROJETOS_PADRAO } from '../../lib/types'
+import { VIZ } from '../../lib/chartTheme'
 
 export function Administracao() {
   const { formularios, loading, carregar, atualizarStatus } = useFormsStore()
@@ -33,39 +35,24 @@ export function Administracao() {
   )
 
   return (
-    <div className="animate-fade-in space-y-5">
-      <div>
-        <h2 className="text-[27px] font-bold tracking-[-0.025em] text-txt">Administração</h2>
-        <p className="text-[13px] text-txt-dim">Visão geral do sistema e aprovações pendentes.</p>
-      </div>
+    <div className="space-y-5">
+      <Reveal index={0}>
+        <div>
+          <span className="chip">Área administrativa</span>
+          <h1 className="mt-2 text-[22px] font-bold tracking-[-0.025em] sm:text-[27px]">Administração</h1>
+          <p className="mt-1 text-[13px] text-txt-dim">Visão geral do sistema e aprovações pendentes.</p>
+        </div>
+      </Reveal>
 
-      <div className="grid gap-3 sm:grid-cols-3">
-        <Link to="/usuarios">
-          <Card className="h-full transition-colors hover:border-brand-600/50 hover:bg-surface-2">
-            <CardContent className="p-4">
-              <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-txt-faint">Total de usuários</p>
-              <p className="mt-2 text-3xl font-bold text-ink">{usuarios.length}</p>
-            </CardContent>
-          </Card>
+      <section className="grid gap-3 sm:grid-cols-3 sm:gap-4">
+        <Link to="/usuarios" className="min-w-0">
+          <KpiCard index={1} label="Total de usuários" value={usuarios.length} hint="contas cadastradas" icon="stack" color={VIZ.teal} />
         </Link>
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-txt-faint">Aguardando aprovação</p>
-            <p className="mt-2 text-3xl font-bold text-ink">{pendentes.length}</p>
-          </CardContent>
-        </Card>
-        <Link to="/administracao/cargos">
-          <Card className="h-full transition-colors hover:border-brand-600/50 hover:bg-surface-2">
-            <CardContent className="flex items-center justify-between p-4">
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-txt-faint">Cargos e permissões</p>
-                <p className="mt-2 text-3xl font-bold text-ink">{cargos.length}</p>
-              </div>
-              <RbacIcon nome="shield" className="h-8 w-8 text-brand-lite" />
-            </CardContent>
-          </Card>
+        <KpiCard index={2} label="Aguardando aprovação" value={pendentes.length} hint="enviadas ou em análise" icon="clock" color={VIZ.amber} />
+        <Link to="/administracao/cargos" className="min-w-0">
+          <KpiCard index={3} label="Cargos e permissões" value={cargos.length} hint="perfis configurados" icon="check" color={VIZ.green} />
         </Link>
-      </div>
+      </section>
 
       <Card>
         <CardContent className="flex flex-wrap gap-2 p-4">
@@ -98,8 +85,8 @@ export function Administracao() {
             <CardTitle>Aprovações pendentes</CardTitle>
             <CardDescription>Formulários enviados ou em análise aguardando decisão.</CardDescription>
           </div>
-          <div className="flex items-center gap-2">
-            <Select value={filtroProjeto} onChange={(e) => setFiltroProjeto(e.target.value)} aria-label="Filtrar por projeto" className="w-48">
+          <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+            <Select value={filtroProjeto} onChange={(e) => setFiltroProjeto(e.target.value)} aria-label="Filtrar por projeto" className="min-w-0 flex-1 sm:w-48 sm:flex-none">
               <option value="">Todos os projetos</option>
               {PROJETOS_PADRAO.map((p) => (
                 <option key={p} value={p}>
@@ -124,20 +111,23 @@ export function Administracao() {
               {pendentes.slice(0, 8).map((f) => (
                 <div
                   key={f.id}
-                  className="flex flex-col gap-2 rounded-xl border border-border p-3 transition-colors hover:bg-surface-2 sm:flex-row sm:items-center sm:justify-between"
+                  className="flex flex-col gap-3 rounded-md border border-hairline bg-surface-2 p-3 transition-colors hover:bg-surface sm:flex-row sm:items-center sm:justify-between"
                 >
                   <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="truncate text-sm font-semibold text-ink">{f.infoGerais.localAtividade || 'Atividade sem nome'}</p>
+                    <div className="flex min-w-0 items-center gap-2">
+                      <p className="truncate text-[12.5px] font-semibold">{f.infoGerais.localAtividade || 'Atividade sem nome'}</p>
                       <StatusBadge status={f.status} />
                     </div>
-                    <p className="text-xs text-ink-muted">
-                      Nº {f.infoGerais.numeroSolicitacao || '—'} · {f.projeto || '—'} · {formatarDataHora(f.updatedAt)}
+                    <p className="mt-0.5 text-[11px] text-txt-faint">
+                      Nº {f.infoGerais.numeroSolicitacao || '—'} · {f.infoGerais.lotacao || f.projeto || '—'} ·{' '}
+                      {formatarDataHora(f.updatedAt)}
                     </p>
                   </div>
-                  <div className="flex shrink-0 gap-2">
+                  {/* No celular os três botões viram uma grade de largura total:
+                      lado a lado eles ficariam menores que a área de toque. */}
+                  <div className="grid shrink-0 grid-cols-3 gap-2 sm:flex">
                     <Button size="sm" variant="outline" onClick={() => atualizarStatus(f.id, 'em_analise')}>
-                      Em Análise
+                      Análise
                     </Button>
                     <Button size="sm" onClick={() => atualizarStatus(f.id, 'aprovado')}>
                       Aprovar

@@ -7,6 +7,7 @@ import { useSyncState } from '../../hooks/useSyncState'
 import { toast } from '../../store/toastStore'
 import { PAPEL_LABELS, type Papel } from '../../lib/types'
 import { ThemeToggle } from '../theme/ThemeToggle'
+import { Logo } from '../ui/Logo'
 import {
   ChevronIcon,
   CloseIcon,
@@ -83,7 +84,7 @@ function iniciais(nome: string) {
 export function Sidebar() {
   const usuario = useAuthStore((s) => s.usuario)
   const sair = useAuthStore((s) => s.sair)
-  const { logoDataUrl, setLogo } = useSettingsStore()
+  const setLogo = useSettingsStore((s) => s.setLogo)
   const sync = useSyncState()
   const location = useLocation()
   const navigate = useNavigate()
@@ -308,14 +309,10 @@ export function Sidebar() {
         <button
           type="button"
           onClick={() => podeEditarLogo && inputRef.current?.click()}
-          className={cn('logo-plate group relative h-9', !podeEditarLogo && 'cursor-default')}
+          className={cn('group relative flex items-center', !podeEditarLogo && 'cursor-default')}
           title={podeEditarLogo ? 'Clique para alterar a logo da empresa' : 'Logo da empresa'}
         >
-          <img
-            src={logoDataUrl || '/Normatel Engenharia_BRANCO.svg'}
-            alt="Logo da empresa"
-            className={cn('h-full w-auto object-contain object-left', compacta ? 'max-w-[2.25rem]' : 'max-w-[9.5rem]')}
-          />
+          <Logo className="h-9 w-9 shrink-0" withWordmark={!compacta} wordmarkClassName="text-left" />
           {podeEditarLogo && (
             <span className="absolute inset-0 hidden items-center justify-center rounded-lg bg-black/60 text-[8px] font-medium text-white group-hover:flex">
               Alterar
@@ -329,29 +326,29 @@ export function Sidebar() {
 
   return (
     <>
-      <div style={{ background: 'var(--sidebar-bg)' }} className="safe-top sticky top-0 z-30 flex h-14 shrink-0 items-center gap-3 border-b border-hairline px-4 backdrop-blur-xl sm:hidden">
+      <div style={{ background: 'var(--sidebar-bg)' }} className="safe-top sticky top-0 z-30 flex h-14 shrink-0 items-center gap-3 border-b border-hairline px-4 backdrop-blur-xl lg:hidden">
         <button
           type="button"
           onClick={() => setMobileOpen(true)}
-          className="flex h-9 w-9 items-center justify-center rounded-lg text-ink-muted transition-colors hover:bg-surface-2 hover:text-ink"
+          className="tap-target flex h-9 w-9 items-center justify-center rounded-md border border-hairline bg-surface text-txt-dim transition-colors hover:bg-surface-2 hover:text-txt"
           aria-label="Abrir menu"
         >
           <MenuIcon className="h-5 w-5" />
         </button>
-        <span className="logo-plate"><img src={logoDataUrl || '/Normatel Engenharia_BRANCO.svg'} alt="Logo da empresa" className="h-7 w-auto object-contain" /></span>
+        <Logo className="h-8 w-8" withWordmark />
         <ThemeToggle className="ml-auto" />
       </div>
 
       {mobileOpen && (
-        <div className="fixed inset-0 z-50 sm:hidden">
+        <div className="fixed inset-0 z-50 lg:hidden">
           <div className="absolute inset-0 bg-black/60 animate-fade-in" onClick={() => setMobileOpen(false)} />
           <aside className="safe-top safe-bottom animate-slide-up absolute inset-y-0 left-0 flex w-[268px] flex-col border-r border-hairline shadow-glass backdrop-blur-xl" style={{ background: 'var(--sidebar-bg)' }}>
             <div className="flex h-16 shrink-0 items-center justify-between border-b border-hairline px-4">
-              <span className="logo-plate"><img src={logoDataUrl || '/Normatel Engenharia_BRANCO.svg'} alt="Logo da empresa" className="h-9 max-w-[9rem] object-contain object-left" /></span>
+              <Logo className="h-9 w-9" withWordmark />
               <button
                 type="button"
                 onClick={() => setMobileOpen(false)}
-                className="flex h-8 w-8 items-center justify-center rounded-lg text-ink-muted hover:bg-surface-2 hover:text-ink"
+                className="tap-target flex h-9 w-9 items-center justify-center rounded-md border border-hairline text-txt-dim hover:bg-surface-2 hover:text-txt"
                 aria-label="Fechar menu"
               >
                 <CloseIcon className="h-4.5 w-4.5" />
@@ -367,7 +364,7 @@ export function Sidebar() {
 
       <aside
         className={cn(
-          'safe-top safe-bottom sticky top-0 z-40 hidden h-screen shrink-0 flex-col border-r border-hairline backdrop-blur-xl transition-[width] duration-300 ease-smooth sm:flex',
+          'safe-top safe-bottom sticky top-0 z-40 hidden h-screen shrink-0 flex-col border-r border-hairline backdrop-blur-xl transition-[width] duration-300 ease-smooth lg:flex',
           recolhida ? 'w-[4.5rem]' : 'w-64',
         )}
         style={{ background: 'var(--sidebar-bg)' }}

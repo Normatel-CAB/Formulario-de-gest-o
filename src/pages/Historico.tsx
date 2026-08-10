@@ -9,6 +9,7 @@ import { EmptyState } from '../components/ui/EmptyState'
 import { SkeletonCard } from '../components/ui/Skeleton'
 import { Button } from '../components/ui/Button'
 import { Pagination } from '../components/ui/Pagination'
+import { Reveal } from '../components/ui/Reveal'
 import type { FormStatus } from '../lib/types'
 import { PROJETOS_PADRAO, STATUS_LABELS } from '../lib/types'
 import { formatarDataHora } from '../lib/format'
@@ -62,10 +63,13 @@ export function Historico() {
   const paginados = filtrados.slice((pagina - 1) * POR_PAGINA, pagina * POR_PAGINA)
 
   return (
-    <div className="animate-fade-in space-y-5">
+    <div className="space-y-5">
       <div>
-        <h2 className="text-[27px] font-bold tracking-[-0.025em] text-txt">Histórico de Formulários</h2>
-        <p className="text-[13px] text-txt-dim">
+        <span className="chip">Fichas técnicas</span>
+        <h2 className="mt-2 text-[22px] font-bold tracking-[-0.025em] text-txt sm:text-[27px]">
+          Histórico de Formulários
+        </h2>
+        <p className="mt-1 text-[13px] text-txt-dim">
           {usuario?.papel === 'operador'
             ? 'Pesquise e acompanhe o status dos formulários que você criou.'
             : 'Pesquise, filtre e acompanhe o status de todas as fichas técnicas.'}
@@ -73,7 +77,7 @@ export function Historico() {
       </div>
 
       <Card>
-        <CardContent className={`grid gap-3 p-4 ${ehAdministrador ? 'sm:grid-cols-[1fr_180px_180px]' : 'sm:grid-cols-[1fr_220px]'}`}>
+        <CardContent className={`grid gap-3 p-4 ${ehAdministrador ? 'md:grid-cols-[1fr_180px_180px]' : 'md:grid-cols-[1fr_220px]'}`}>
           <Input
             placeholder="Pesquisar por responsável, local ou nº da solicitação"
             value={busca}
@@ -102,7 +106,7 @@ export function Historico() {
       </Card>
 
       {loading ? (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
             <SkeletonCard key={i} />
           ))}
@@ -119,26 +123,31 @@ export function Historico() {
         />
       ) : (
         <>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {paginados.map((f) => (
-              <Link
-                key={f.id}
-                to={`/formulario/${f.id}`}
-                className="animate-slide-up glass p-4 transition-all duration-150 hover:-translate-y-0.5 hover:border-brand-600/50 hover:shadow-md hover:shadow-black/30"
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <p className="text-sm font-semibold text-ink line-clamp-1">
-                    {f.infoGerais.localAtividade || 'Atividade sem nome'}
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {paginados.map((f, i) => (
+              <Reveal key={f.id} index={i} className="min-w-0">
+                <Link
+                  to={`/formulario/${f.id}`}
+                  className="glass glass-hover block h-full p-4"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="line-clamp-2 text-[12.5px] font-semibold">
+                      {f.infoGerais.localAtividade || 'Atividade sem nome'}
+                    </p>
+                    <StatusBadge status={f.status} className="shrink-0" />
+                  </div>
+                  <p className="mt-2 truncate text-[11.5px] text-txt-dim">
+                    Nº {f.infoGerais.numeroSolicitacao || '—'}
                   </p>
-                  <StatusBadge status={f.status} />
-                </div>
-                <p className="mt-2 text-xs text-ink-muted">Nº {f.infoGerais.numeroSolicitacao || '—'}</p>
-                <p className="text-xs text-ink-muted">Responsável: {f.infoGerais.responsavel || '—'}</p>
-                <p className="mt-2 text-xs text-ink-subtle">
-                  {f.projeto ? `${f.projeto} · ` : ''}
-                  {formatarDataHora(f.updatedAt)}
-                </p>
-              </Link>
+                  <p className="truncate text-[11.5px] text-txt-dim">
+                    Responsável: {f.infoGerais.responsavel || '—'}
+                  </p>
+                  <p className="mt-2 truncate text-[10.5px] text-txt-faint">
+                    {f.infoGerais.lotacao ? `${f.infoGerais.lotacao} · ` : ''}
+                    {formatarDataHora(f.updatedAt)}
+                  </p>
+                </Link>
+              </Reveal>
             ))}
           </div>
           <Pagination page={pagina} totalPages={totalPaginas} onChange={setPagina} />

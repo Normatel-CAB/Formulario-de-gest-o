@@ -1,32 +1,28 @@
-import { type ButtonHTMLAttributes, forwardRef, useEffect, useImperativeHandle, useRef } from 'react'
-import { cn } from '../../lib/cn'
-import { buttonClasses, type ButtonSize, type ButtonVariant } from './Button'
+import { useEffect, useRef } from 'react'
 
 /** Quanto o botão "persegue" o cursor, em px. Acima de ~8 vira caricatura. */
 const PULL = 6
 
-interface GlowButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: ButtonVariant
-  size?: ButtonSize
-}
-
 /**
- * Botão com atração magnética e brilho que segue o cursor (o mesmo do login do
- * organograma).
+ * Atração magnética + brilho que segue o cursor, para os botões da marca.
  *
- * Tudo via variáveis CSS atualizadas dentro de requestAnimationFrame: uma
- * escrita de estilo por frame e nenhum re-render do React. Em telas de toque e
- * com "reduzir movimento" ligado, vira um botão comum.
+ * Dois efeitos somados:
+ *  1. magnético — o botão desliza alguns pixels na direção do ponteiro e volta
+ *     ao lugar quando ele sai;
+ *  2. brilho — um halo radial acompanha a posição do mouse dentro do botão,
+ *     mais um anel externo que acende no hover (ver `.glow-btn` no index.css).
+ *
+ * Tudo por variáveis CSS escritas dentro de requestAnimationFrame: uma escrita
+ * de estilo por frame e nenhum re-render do React — com vários botões na tela
+ * isso é a diferença entre 60fps e engasgo. Em telas de toque e com "reduzir
+ * movimento" ligado o efeito não é registrado, e o botão fica comum.
  */
-export const GlowButton = forwardRef<HTMLButtonElement, GlowButtonProps>(function GlowButton(
-  { className, variant = 'primary', size = 'md', children, ...props },
-  forwardedRef,
-) {
-  const innerRef = useRef<HTMLButtonElement>(null)
-  useImperativeHandle(forwardedRef, () => innerRef.current as HTMLButtonElement)
+export function useMagneticGlow<T extends HTMLElement>(enabled = true) {
+  const ref = useRef<T>(null)
 
   useEffect(() => {
-    const el = innerRef.current
+    if (!enabled) return
+    const el = ref.current
     if (!el) return
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
     if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return
@@ -45,6 +41,12 @@ export const GlowButton = forwardRef<HTMLButtonElement, GlowButtonProps>(functio
       el.style.setProperty('--dy', `${dy}px`)
     }
 
+    const agendar = () => {
+      if (queued) return
+      queued = true
+      requestAnimationFrame(paint)
+    }
+
     const onMove = (e: MouseEvent) => {
       const r = el.getBoundingClientRect()
       mx = e.clientX - r.left
@@ -52,10 +54,7 @@ export const GlowButton = forwardRef<HTMLButtonElement, GlowButtonProps>(functio
       // -1..1 a partir do centro, limitado para o botão não fugir do lugar
       dx = ((mx - r.width / 2) / (r.width / 2)) * PULL
       dy = ((my - r.height / 2) / (r.height / 2)) * PULL
-      if (!queued) {
-        queued = true
-        requestAnimationFrame(paint)
-      }
+      agendar()
     }
 
     const onEnter = () => el.style.setProperty('--glow', '1')
@@ -63,10 +62,7 @@ export const GlowButton = forwardRef<HTMLButtonElement, GlowButtonProps>(functio
       el.style.setProperty('--glow', '0')
       dx = 0
       dy = 0
-      if (!queued) {
-        queued = true
-        requestAnimationFrame(paint)
-      }
+      agendar()
     }
 
     el.addEventListener('mousemove', onMove, { passive: true })
@@ -77,12 +73,7 @@ export const GlowButton = forwardRef<HTMLButtonElement, GlowButtonProps>(functio
       el.removeEventListener('mouseenter', onEnter)
       el.removeEventListener('mouseleave', onLeave)
     }
-  }, [])
+  }, [enabled])
 
-  return (
-    <button ref={innerRef} className={cn(buttonClasses(variant, size), 'glow-btn', className)} {...props}>
-      <span className="glow-btn-sheen" aria-hidden />
-      <span className="relative z-[1] inline-flex items-center gap-2">{children}</span>
-    </button>
-  )
-})
+  return ref
+}

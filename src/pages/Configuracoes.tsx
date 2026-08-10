@@ -37,7 +37,7 @@ export function Configuracoes() {
   return (
     <div className="animate-fade-in space-y-5">
       <div>
-        <h2 className="text-[27px] font-bold tracking-[-0.025em] text-txt">Configurações</h2>
+        <h2 className="text-[22px] font-bold tracking-[-0.025em] text-txt sm:text-[27px]">Configurações</h2>
         <p className="text-[13px] text-txt-dim">Personalize a identidade visual e veja o status da integração com o banco de dados.</p>
       </div>
 

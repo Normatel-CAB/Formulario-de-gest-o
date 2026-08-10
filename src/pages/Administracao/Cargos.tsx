@@ -166,7 +166,7 @@ export function Cargos() {
     <div className="animate-fade-in space-y-5">
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
         <div>
-          <h2 className="text-[27px] font-bold tracking-[-0.025em] text-txt">Cargos</h2>
+          <h2 className="text-[22px] font-bold tracking-[-0.025em] text-txt sm:text-[27px]">Cargos</h2>
           <p className="text-[13px] text-txt-dim">Gerencie cargos e vincule permissões de acesso por módulo.</p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -186,7 +186,7 @@ export function Cargos() {
       </div>
 
       <Card>
-        <CardContent className="grid gap-3 p-4 sm:grid-cols-[1fr_200px]">
+        <CardContent className="grid gap-3 p-4 md:grid-cols-[1fr_200px]">
           <Input placeholder="Pesquisar cargos por nome ou descrição" value={busca} onChange={(e) => setBusca(e.target.value)} aria-label="Pesquisar cargos" />
           <Select value={filtroStatus} onChange={(e) => setFiltroStatus(e.target.value as StatusRegistro | 'todos')} aria-label="Filtrar por status">
             <option value="todos">Todos os status</option>
@@ -201,7 +201,7 @@ export function Cargos() {
       ) : cargosFiltrados.length === 0 ? (
         <EmptyState title="Nenhum cargo encontrado" description="Ajuste os filtros ou crie um novo cargo." />
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {cargosFiltrados.map((c) => {
             const qtdUsuarios = usuariosPorCargo.get(c.nome) ?? 0
             return (

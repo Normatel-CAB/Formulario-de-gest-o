@@ -18,6 +18,21 @@ const SESSAO_STORAGE_KEY = 'gestao-integrada:sessao-usuario-id'
 const ADMIN_SEED_EMAIL = 'admin@empresa.com'
 const ADMIN_SEED_SENHA = 'Admin@123'
 
+/**
+ * Contas que entram como administrador ao logar com a Microsoft.
+ *
+ * O papel de quem chega pela Microsoft é decidido aqui porque a base de usuários
+ * vive no dispositivo (IndexedDB): sem esta lista, o primeiro acesso de cada
+ * celular/navegador cairia como `visualizador` e não haveria ninguém com
+ * permissão para promover a si mesmo. Para dar acesso de administrador a mais
+ * alguém, acrescente o e-mail (em minúsculas) abaixo.
+ */
+export const EMAILS_ADMINISTRADORES = ['gabriel.cruz@normatel.com.br'] as const
+
+export function ehEmailAdministrador(email: string) {
+  return EMAILS_ADMINISTRADORES.includes(email.trim().toLowerCase() as (typeof EMAILS_ADMINISTRADORES)[number])
+}
+
 async function gerarSalt() {
   const bytes = crypto.getRandomValues(new Uint8Array(16))
   return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('')
@@ -183,10 +198,18 @@ export async function sincronizarSessaoMicrosoft(): Promise<Usuario | null> {
   const email = conta?.email?.toLowerCase()
   if (!email) return null
 
+  const admin = ehEmailAdministrador(email)
+
   const existente = await obterUsuarioPorEmail(email)
   if (existente) {
     if (existente.status === 'inativo') throw new AuthError('Este usuário está desativado. Contate o administrador.')
-    const atualizado: Usuario = { ...existente, ultimoAcesso: new Date().toISOString() }
+    const atualizado: Usuario = {
+      ...existente,
+      // Promove a conta que já havia entrado como visualizador antes de o e-mail
+      // estar na lista — sem isso o usuário ficaria preso no papel antigo.
+      papel: admin ? 'administrador' : existente.papel,
+      ultimoAcesso: new Date().toISOString(),
+    }
     await salvarUsuarioLocal(atualizado)
     return atualizado
   }
@@ -198,8 +221,8 @@ export async function sincronizarSessaoMicrosoft(): Promise<Usuario | null> {
     email,
     cpf: '',
     matricula: '',
-    cargo: 'Conta Microsoft',
-    papel: 'visualizador',
+    cargo: admin ? 'Administrador do Sistema' : 'Conta Microsoft',
+    papel: admin ? 'administrador' : 'visualizador',
     projeto: PROJETOS_PADRAO[0],
     status: 'ativo',
     criadoEm: new Date().toISOString(),

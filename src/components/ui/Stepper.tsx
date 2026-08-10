@@ -14,8 +14,20 @@ export function Stepper({
   current: number
   onStepClick?: (index: number) => void
 }) {
+  const atual = steps[current]
+
   return (
     <nav aria-label="Progresso do formulário" className="w-full">
+      {/* No celular não cabe o rótulo de cada etapa ao lado da bolinha, então o
+          nome da etapa atual aparece acima da trilha. */}
+      <div className="mb-3 sm:hidden">
+        <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-txt-faint">
+          Etapa {current + 1} de {steps.length}
+        </p>
+        <p className="text-[14px] font-semibold tracking-[-0.01em] text-txt">{atual?.label}</p>
+        {atual?.description && <p className="text-[11.5px] text-txt-dim">{atual.description}</p>}
+      </div>
+
       <ol className="flex items-center">
         {steps.map((step, index) => {
           const done = index < current
@@ -27,7 +39,7 @@ export function Stepper({
                 type="button"
                 disabled={!clickable}
                 onClick={() => onStepClick?.(index)}
-                className={cn('group flex items-center gap-2.5 text-left', clickable ? 'cursor-pointer' : 'cursor-default')}
+                className={cn('tap-target group flex items-center gap-2.5 text-left', clickable ? 'cursor-pointer' : 'cursor-default')}
                 aria-current={active ? 'step' : undefined}
               >
                 <span

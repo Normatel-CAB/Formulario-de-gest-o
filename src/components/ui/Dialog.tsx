@@ -49,16 +49,16 @@ export function Dialog({ open, onClose, title, description, children, footer, si
             role="dialog"
             aria-modal="true"
             aria-labelledby={title ? 'dialog-title' : undefined}
-            className={`relative z-10 max-h-[85vh] w-full ${sizeClasses[size]} overflow-y-auto glass rounded-t-[var(--radius)] p-6`}
+            className={`glass safe-bottom relative z-10 max-h-[88dvh] w-full ${sizeClasses[size]} overflow-y-auto rounded-b-none p-5 sm:max-h-[85vh] sm:rounded-b-[var(--radius)] sm:p-6`}
           >
             {title && (
-              <h2 id="dialog-title" className="text-lg font-semibold text-ink">
+              <h2 id="dialog-title" className="text-[17px] font-bold tracking-[-0.02em] text-txt">
                 {title}
               </h2>
             )}
-            {description && <p className="mt-1 text-sm text-ink-muted">{description}</p>}
+            {description && <p className="mt-1 text-[12.5px] text-txt-dim">{description}</p>}
             <div className={title || description ? 'mt-4' : ''}>{children}</div>
-            {footer && <div className="mt-6 flex justify-end gap-2">{footer}</div>}
+            {footer && <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">{footer}</div>}
           </motion.div>
         </div>
       )}

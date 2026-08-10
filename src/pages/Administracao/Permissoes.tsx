@@ -118,7 +118,7 @@ export function Permissoes() {
     <div className="animate-fade-in space-y-5">
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
         <div>
-          <h2 className="text-[27px] font-bold tracking-[-0.025em] text-txt">Permissões</h2>
+          <h2 className="text-[22px] font-bold tracking-[-0.025em] text-txt sm:text-[27px]">Permissões</h2>
           <p className="text-[13px] text-txt-dim">Gerencie as permissões disponíveis para vincular aos cargos.</p>
         </div>
         <Button onClick={abrirCriacao}>
@@ -130,7 +130,7 @@ export function Permissoes() {
       </div>
 
       <Card>
-        <CardContent className="grid gap-3 p-4 sm:grid-cols-[1fr_200px_160px]">
+        <CardContent className="grid gap-3 p-4 md:grid-cols-2 lg:grid-cols-[1fr_200px_160px]">
           <Input placeholder="Pesquisar por nome ou descrição" value={busca} onChange={(e) => setBusca(e.target.value)} aria-label="Pesquisar permissões" />
           <Select value={filtroCategoria} onChange={(e) => setFiltroCategoria(e.target.value)} aria-label="Filtrar por categoria">
             <option value="">Todas as categorias</option>

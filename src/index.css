@@ -304,20 +304,29 @@
   }
 
   /* ---------- Botão magnético com brilho ----------
-     Só transform e opacity mudam por frame; nada disso força layout. */
+     Só transform e opacity mudam por frame; nada disso força layout.
+
+     O levantar do hover entra como `--lift` DENTRO do mesmo transform, e não
+     como utilitária `hover:-translate-y-*`: são a mesma propriedade, e a camada
+     `utilities` vence a `components`, então a utilitária apagaria o
+     deslocamento magnético. Um transform só, duas variáveis. */
   .glow-btn {
     position: relative;
     overflow: hidden;
     isolation: isolate;
-    transform: translate3d(var(--dx, 0), var(--dy, 0), 0);
+    transform: translate3d(var(--dx, 0px), calc(var(--dy, 0px) + var(--lift, 0px)), 0);
     transition: transform 0.35s cubic-bezier(0.22, 0.75, 0.28, 1),
       box-shadow 0.35s cubic-bezier(0.22, 0.75, 0.28, 1);
   }
   .glow-btn:hover {
-    /* o transform do magnetismo cancelaria um -translate-y de hover */
-    transform: translate3d(var(--dx, 0), var(--dy, 0), 0);
+    --lift: -2px;
     box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.14) inset,
       0 10px 26px -10px var(--brand), 0 0 26px -4px var(--brand-glow);
+  }
+  /* Afunda um pouco no clique — dá o retorno tátil que o hover não dá no toque. */
+  .glow-btn:active {
+    --lift: 1px;
+    transition-duration: 0.09s;
   }
   .glow-btn-sheen {
     position: absolute;
@@ -333,18 +342,23 @@
     );
   }
 
-  /* ---------- Suporte da logo ----------
-     As artes disponíveis em /public são todas em branco (vazado). No tema
-     escuro elas aparecem direto; no claro sumiriam, então ganham um plaquinha
-     verde-escura da própria identidade por baixo. */
-  .logo-plate {
-    display: inline-flex;
-    align-items: center;
-    border-radius: 0.5rem;
+  /* ---------- Alvo de toque ampliado ----------
+     Para controles pequenos que não podem crescer visualmente (interruptor,
+     bolinha do stepper, botão de ícone): a área clicável passa a 44px através de
+     um pseudo-elemento invisível, sem mexer no desenho. */
+  .tap-target {
+    position: relative;
   }
-  :root:not(.dark) .logo-plate {
-    background: var(--brand-deep);
-    padding: 0.3rem 0.55rem;
+  .tap-target::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    min-width: 44px;
+    min-height: 44px;
+    width: 100%;
+    height: 100%;
+    transform: translate(-50%, -50%);
   }
 
   /* ---------- Chip / pílula ---------- */
@@ -423,6 +437,45 @@
 select option {
   background-color: var(--surface-solid);
   color: var(--txt);
+}
+
+/* ============================================================================
+   CELULAR E TABLET
+   A ficha é preenchida em campo, quase sempre no celular. Estas regras valem
+   para todo o app e não dependem de cada tela lembrar de aplicá-las.
+   ========================================================================= */
+
+/* O Safari do iPhone dá zoom na página quando um campo com fonte menor que 16px
+   recebe foco — e não volta ao normal depois. O layout é feito em 12.5px, então
+   os campos sobem para 16px só nas telas pequenas. */
+@media (max-width: 767px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Em tela de toque o dedo precisa de área: os campos ganham a altura mínima
+   recomendada (44px). Não vale para todo <button> de propósito — as bolinhas do
+   Stepper e o interruptor têm tamanho próprio e esticariam. */
+@media (pointer: coarse) {
+  input:not([type='checkbox']):not([type='radio']):not([type='file']),
+  select,
+  textarea {
+    min-height: 44px;
+  }
+}
+
+/* Evita o "elástico" da página inteira quando uma lista interna chega ao fim. */
+html {
+  overscroll-behavior-y: none;
+}
+
+/* Nenhum elemento deve criar rolagem horizontal na página. As tabelas rolam
+   dentro do próprio wrapper (ver components/ui/Table.tsx). */
+body {
+  overflow-x: hidden;
 }
 
 /* O ícone nativo do date/time é escuro; no tema escuro ele desaparece. */

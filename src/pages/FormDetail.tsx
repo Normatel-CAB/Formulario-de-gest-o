@@ -79,24 +79,28 @@ export function FormDetail() {
   }
 
   return (
-    <div className="animate-fade-in space-y-5">
-      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-        <div>
-          <div className="flex items-center gap-2">
-            <h2 className="text-[27px] font-bold tracking-[-0.025em] text-txt">{formulario.infoGerais.localAtividade || 'Atividade sem nome'}</h2>
+    <div className="space-y-5">
+      <div className="flex flex-col justify-between gap-3 lg:flex-row lg:items-center">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="text-[19px] font-bold leading-tight tracking-[-0.025em] text-txt sm:text-[24px]">{formulario.infoGerais.localAtividade || 'Atividade sem nome'}</h2>
             <StatusBadge status={formulario.status} />
           </div>
           <p className="text-[13px] text-txt-dim">
             Nº {formulario.infoGerais.numeroSolicitacao || '—'} · Atualizado em {formatarDataHora(formulario.updatedAt)}
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        {/* No celular as ações viram largura total: são poucos botões e cada um
+            precisa da área de toque inteira. */}
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
           <Button variant="outline" onClick={baixarPdf}>
             Exportar PDF
           </Button>
           {!somenteLeitura && podeEditar && (
-            <Link to={`/novo/${formulario.id}`}>
-              <Button variant="outline">Continuar edição</Button>
+            <Link to={`/novo/${formulario.id}`} className="contents">
+              <Button variant="outline" className="w-full sm:w-auto">
+                Continuar edição
+              </Button>
             </Link>
           )}
           {!somenteLeitura && podeExcluir && (
@@ -137,7 +141,7 @@ export function FormDetail() {
           <CardHeader>
             <CardTitle>Imagens</CardTitle>
           </CardHeader>
-          <CardContent className="grid grid-cols-3 gap-3 sm:grid-cols-4">
+          <CardContent className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             {formulario.imagens.map((img) => (
               <img key={img.id} src={img.dataUrl} alt={img.nome} className="aspect-square rounded-xl border border-border object-cover" />
             ))}

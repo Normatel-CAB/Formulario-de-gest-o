@@ -67,7 +67,7 @@ export function MeuPerfil() {
   return (
     <div className="animate-fade-in space-y-5">
       <div>
-        <h2 className="text-[27px] font-bold tracking-[-0.025em] text-txt">Meu Perfil</h2>
+        <h2 className="text-[22px] font-bold tracking-[-0.025em] text-txt sm:text-[27px]">Meu Perfil</h2>
         <p className="text-[13px] text-txt-dim">Gerencie suas informações pessoais e credenciais de acesso.</p>
       </div>
 
@@ -101,7 +101,7 @@ export function MeuPerfil() {
           <CardTitle>Alterar senha</CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={trocarSenha} className="grid gap-4 sm:grid-cols-3">
+          <form onSubmit={trocarSenha} className="grid gap-4 md:grid-cols-3">
             <Input
               label="Senha atual"
               type="password"

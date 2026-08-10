@@ -22,7 +22,7 @@ export function Toaster() {
 
   return (
     <div
-      className="pointer-events-none fixed inset-x-0 bottom-0 z-[100] flex flex-col items-center gap-2 p-4 sm:items-end sm:right-4 sm:left-auto"
+      className="safe-bottom pointer-events-none fixed inset-x-0 bottom-0 z-[100] flex flex-col items-center gap-2 px-4 pb-20 sm:bottom-4 sm:left-auto sm:right-4 sm:items-end sm:pb-0"
       role="region"
       aria-live="polite"
       aria-label="Notificações"

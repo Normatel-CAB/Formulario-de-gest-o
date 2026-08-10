@@ -9,6 +9,7 @@ import { Badge } from '../../components/ui/Badge'
 import { Dialog } from '../../components/ui/Dialog'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { Pagination } from '../../components/ui/Pagination'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/Table'
 import { toast } from '../../store/toastStore'
 import type { Papel, Usuario } from '../../lib/types'
 import { PAPEL_LABELS, PROJETOS_PADRAO } from '../../lib/types'
@@ -175,10 +176,10 @@ export function Usuarios() {
   }
 
   return (
-    <div className="animate-fade-in space-y-5">
+    <div className="space-y-5">
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
         <div>
-          <h2 className="text-[27px] font-bold tracking-[-0.025em] text-txt">Usuários</h2>
+          <h2 className="text-[22px] font-bold tracking-[-0.025em] text-txt sm:text-[27px]">Usuários</h2>
           <p className="text-[13px] text-txt-dim">Gerencie contas, cargos e permissões de acesso ao sistema.</p>
         </div>
         <Button onClick={abrirCriacao}>
@@ -190,7 +191,7 @@ export function Usuarios() {
       </div>
 
       <Card>
-        <CardContent className="grid gap-3 p-4 sm:grid-cols-[1fr_180px_200px]">
+        <CardContent className="grid gap-3 p-4 md:grid-cols-[1fr_180px_200px]">
           <Input placeholder="Pesquisar por nome ou e-mail" value={busca} onChange={(e) => setBusca(e.target.value)} aria-label="Pesquisar usuários" />
           <Select value={filtroPapel} onChange={(e) => setFiltroPapel(e.target.value as Papel | 'todos')} aria-label="Filtrar por cargo">
             <option value="todos">Todos os papéis</option>
@@ -219,69 +220,73 @@ export function Usuarios() {
             <EmptyState title="Nenhum usuário encontrado" description="Ajuste os filtros ou crie um novo usuário." />
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="border-b border-border bg-surface-2 text-xs uppercase tracking-wide text-ink-subtle">
-                  <th className="px-4 py-3 font-semibold">Nome</th>
-                  <th className="px-4 py-3 font-semibold">E-mail</th>
-                  <th className="px-4 py-3 font-semibold">Cargo</th>
-                  <th className="px-4 py-3 font-semibold">Papel</th>
-                  <th className="px-4 py-3 font-semibold">Projeto</th>
-                  <th className="px-4 py-3 font-semibold">Status</th>
-                  <th className="px-4 py-3 font-semibold">Último acesso</th>
-                  <th className="px-4 py-3 font-semibold text-right">Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {paginados.map((u, i) => (
-                  <tr
-                    key={u.id}
-                    className={`border-b border-border/60 transition-colors hover:bg-surface-2 ${i % 2 === 1 ? 'bg-surface-2/40' : ''}`}
-                  >
-                    <td className="px-4 py-3 font-medium text-ink">{u.nome}</td>
-                    <td className="px-4 py-3 text-ink-muted">{u.email}</td>
-                    <td className="px-4 py-3 text-ink-muted">{u.cargo || '—'}</td>
-                    <td className="px-4 py-3">
-                      <Badge tone="brand">{PAPEL_LABELS[u.papel]}</Badge>
-                    </td>
-                    <td className="px-4 py-3 text-ink-muted">{u.projeto || '—'}</td>
-                    <td className="px-4 py-3">
-                      <Badge tone={u.status === 'ativo' ? 'brand' : 'slate'}>{u.status === 'ativo' ? 'Ativo' : 'Inativo'}</Badge>
-                    </td>
-                    <td className="px-4 py-3 text-ink-muted">{u.ultimoAcesso ? formatarDataHora(u.ultimoAcesso) : '—'}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center justify-end gap-1">
-                        <Button variant="ghost" size="sm" onClick={() => abrirEdicao(u)}>
-                          Editar
-                        </Button>
-                        <Button variant="ghost" size="sm" onClick={() => abrirResetSenha(u)}>
-                          Resetar senha
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => alternarStatus(u.id, u.status === 'ativo' ? 'inativo' : 'ativo')}
-                          disabled={u.id === usuarioLogado?.id}
-                        >
-                          {u.status === 'ativo' ? 'Desativar' : 'Ativar'}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-viz-red hover:bg-viz-red/10"
-                          onClick={() => setExcluindo(u)}
-                          disabled={u.id === usuarioLogado?.id}
-                        >
-                          Excluir
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <Table className="px-3 pb-3">
+            <TableHeader>
+              <TableRow className="[&>th]:bg-transparent">
+                <TableHead>Nome</TableHead>
+                {/* Colunas de apoio saem no celular: com 8 colunas a rolagem
+                    horizontal viraria a única forma de ler a tabela. */}
+                <TableHead className="hidden lg:table-cell">E-mail</TableHead>
+                <TableHead className="hidden xl:table-cell">Cargo</TableHead>
+                <TableHead>Papel</TableHead>
+                <TableHead className="hidden xl:table-cell">Projeto</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="hidden lg:table-cell">Último acesso</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {paginados.map((u) => (
+                <TableRow key={u.id}>
+                  <TableCell className="min-w-[9rem] font-semibold">
+                    {u.nome}
+                    <span className="block truncate text-[10.5px] font-normal text-txt-faint lg:hidden">{u.email}</span>
+                  </TableCell>
+                  <TableCell className="hidden text-txt-dim lg:table-cell">{u.email}</TableCell>
+                  <TableCell className="hidden whitespace-nowrap text-txt-dim xl:table-cell">{u.cargo || '—'}</TableCell>
+                  <TableCell>
+                    <Badge tone="brand">{PAPEL_LABELS[u.papel]}</Badge>
+                  </TableCell>
+                  <TableCell className="hidden whitespace-nowrap text-txt-dim xl:table-cell">{u.projeto || '—'}</TableCell>
+                  <TableCell>
+                    <Badge tone={u.status === 'ativo' ? 'brand' : 'slate'}>
+                      {u.status === 'ativo' ? 'Ativo' : 'Inativo'}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="hidden whitespace-nowrap text-txt-dim lg:table-cell">
+                    {u.ultimoAcesso ? formatarDataHora(u.ultimoAcesso) : '—'}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center justify-end gap-1 whitespace-nowrap">
+                      <Button variant="ghost" size="sm" onClick={() => abrirEdicao(u)}>
+                        Editar
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => abrirResetSenha(u)}>
+                        Senha
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => alternarStatus(u.id, u.status === 'ativo' ? 'inativo' : 'ativo')}
+                        disabled={u.id === usuarioLogado?.id}
+                      >
+                        {u.status === 'ativo' ? 'Desativar' : 'Ativar'}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-viz-red hover:bg-viz-red/10"
+                        onClick={() => setExcluindo(u)}
+                        disabled={u.id === usuarioLogado?.id}
+                      >
+                        Excluir
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         )}
       </Card>
 

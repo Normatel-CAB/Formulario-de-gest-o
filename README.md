@@ -63,7 +63,15 @@ VITE_SUPABASE_ANON_KEY=<anon key>
 - erro devolvido na URL (`?error=…`) é lido e exibido em vez de sumir silenciosamente
 - `signOut()` no Supabase ao sair — antes a sessão sobrevivia ao logout e o app reautenticava sozinho
 
-> **Papel do usuário Microsoft:** uma conta Microsoft que ainda não existe na base entra como `visualizador`. Para virar administrador, um admin precisa promovê-la em *Usuários*, ou o e-mail precisa já existir cadastrado com o papel desejado.
+### Quem entra como administrador
+
+A base de usuários vive no dispositivo (IndexedDB), então não existe um "servidor" para consultar papéis no primeiro acesso de cada celular. Quem decide isso é a lista em `src/lib/auth.ts`:
+
+```ts
+export const EMAILS_ADMINISTRADORES = ['gabriel.cruz@normatel.com.br']
+```
+
+Um e-mail nessa lista entra como **administrador** ao logar com a Microsoft — e uma conta que já havia entrado antes como visualizador é promovida no login seguinte. Qualquer outra conta Microsoft entra como `visualizador`, e um administrador pode mudar o papel em *Usuários*. Para dar acesso administrativo a mais alguém, acrescente o e-mail (em minúsculas) à lista.
 
 ## Banco de dados (Supabase)
 
@@ -91,7 +99,27 @@ Sem as variáveis `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY`, o app funciona
 - Dashboard com indicadores e últimos envios
 - Funcionamento offline com fila de sincronização automática ao reconectar
 - Temas claro e escuro (padrão escuro), com a preferência salva no navegador
-- Logo da empresa configurável no cabeçalho
+- Logo da empresa configurável no cabeçalho (padrão: `public/logo.png`)
+
+### Dashboard
+
+Mesmos blocos do dashboard do organograma, construídos com os componentes de `src/components/ui` e `src/components/dashboard`:
+
+- 4 KPIs com contador animado e sparkline (total, pendentes, aprovadas, equipamento mais pedido)
+- rosca de participação por status, em SVG puro, com rótulo central que cicla
+- volume de fichas por mês e ranking de equipamentos solicitados, em barras
+- tabela de fichas por lotação com a barra de proporção crescendo ao fundo da linha
+
+Os gráficos são feitos à mão em SVG/CSS de propósito — o app não tem Recharts nas dependências, e trazer uma biblioteca de gráficos pesaria mais no bundle (que roda offline no celular) do que os componentes inteiros.
+
+### Celular e tablet
+
+- A gaveta de navegação vale até 1023px: no tablet em retrato uma coluna fixa comeria a largura útil da ficha
+- Campos sobem para 16px abaixo de 768px — o Safari do iPhone dá zoom (e não volta) em campos com fonte menor
+- Em tela de toque, campos têm 44px de altura mínima; controles que não podem crescer (interruptor, bolinha do stepper) ganham área de toque por um pseudo-elemento (`.tap-target`)
+- O stepper mostra "Etapa N de 4 · nome" no celular, onde não cabe o rótulo de cada etapa
+- Tabelas rolam dentro do próprio wrapper e escondem colunas de apoio nas telas estreitas; nada cria rolagem horizontal na página
+- Barra de ações da ficha, diálogos e avisos respeitam a área segura (notch e barra inferior do iPhone)
 
 ## Build de produção
 

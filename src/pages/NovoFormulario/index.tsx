@@ -125,7 +125,7 @@ export function NovoFormulario() {
       <Reveal index={0}>
         <div>
           <span className="chip">Ficha Técnica de Avaliação</span>
-          <h2 className="mt-3 text-[27px] font-bold tracking-[-0.025em] text-txt">
+          <h2 className="mt-3 text-[21px] font-bold leading-tight tracking-[-0.025em] text-txt sm:text-[27px]">
             Nova Ficha Técnica de Avaliação
           </h2>
           <p className="mt-1 text-[13px] text-txt-dim">
@@ -145,19 +145,33 @@ export function NovoFormulario() {
       {step === 2 && <StepApoioAnexos formulario={formulario} onPatch={patch} />}
       {step === 3 && <StepRevisao formulario={formulario} />}
 
-      <div className="glass safe-bottom sticky bottom-4 z-20 flex items-center justify-between gap-2 p-3 sm:bottom-4">
-        <Button variant="ghost" onClick={() => setStep((s) => Math.max(s - 1, 0))} disabled={step === 0}>
+      <div className="glass safe-bottom sticky bottom-0 z-20 flex items-center gap-2 p-3 sm:bottom-4">
+        <Button
+          variant="ghost"
+          size="md"
+          onClick={() => setStep((s) => Math.max(s - 1, 0))}
+          disabled={step === 0}
+          className="shrink-0"
+        >
           Voltar
         </Button>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={salvarRascunhoManual}>
-            Salvar rascunho
+        <div className="ml-auto flex min-w-0 items-center gap-2">
+          <Button variant="outline" onClick={salvarRascunhoManual} className="shrink-0">
+            <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M5 4h11l3 3v13H5z" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M9 4v5h6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <span className="hidden sm:inline">Salvar rascunho</span>
+            <span className="sm:hidden">Rascunho</span>
           </Button>
           {step < STEPS.length - 1 ? (
-            <Button onClick={proximaEtapa}>Avançar</Button>
+            <Button onClick={proximaEtapa} className="shrink-0">
+              Avançar
+            </Button>
           ) : (
-            <Button onClick={enviarFormulario} loading={enviando}>
-              Enviar formulário
+            <Button onClick={enviarFormulario} loading={enviando} className="shrink-0">
+              <span className="hidden sm:inline">Enviar formulário</span>
+              <span className="sm:hidden">Enviar</span>
             </Button>
           )}
         </div>

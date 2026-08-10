@@ -3,7 +3,6 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { AuthLayout } from './AuthLayout'
 import { Input } from '../../components/ui/Field'
 import { Button } from '../../components/ui/Button'
-import { GlowButton } from '../../components/ui/GlowButton'
 import { useAuthStore } from '../../store/authStore'
 import { toast } from '../../store/toastStore'
 import { ADMIN_SEED_EMAIL, ADMIN_SEED_SENHA } from '../../lib/auth'
@@ -62,7 +61,7 @@ export function Login() {
 
       {/* O caminho principal é a conta corporativa; e-mail e senha ficam como
           alternativa para quem ainda não tem conta Microsoft vinculada. */}
-      <GlowButton
+      <Button
         type="button"
         size="lg"
         className="h-12 w-full"
@@ -76,7 +75,7 @@ export function Login() {
           <rect x="11" y="11" width="9" height="9" fill="#FFB900" />
         </svg>
         {carregandoMicrosoft ? 'Redirecionando…' : 'Entrar com Microsoft'}
-      </GlowButton>
+      </Button>
 
       <div className="my-6 flex items-center gap-3">
         <span className="h-px flex-1 bg-hairline" />
