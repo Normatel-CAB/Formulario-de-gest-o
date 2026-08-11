@@ -121,9 +121,83 @@ Os gráficos são feitos à mão em SVG/CSS de propósito — o app não tem Rec
 - Tabelas rolam dentro do próprio wrapper e escondem colunas de apoio nas telas estreitas; nada cria rolagem horizontal na página
 - Barra de ações da ficha, diálogos e avisos respeitam a área segura (notch e barra inferior do iPhone)
 
+## Instalar no celular e no tablet (PWA)
+
+O app é instalável: abre pelo ícone, em tela cheia, sem barra de navegador, e continua funcionando sem sinal.
+
+| Sistema | Como instalar |
+| --- | --- |
+| Android (Chrome, Edge) | Botão **Instalar app** no cabeçalho, ou menu ⋮ → *Instalar aplicativo* |
+| iPhone / iPad (Safari) | **Compartilhar** → *Adicionar à Tela de Início*. O botão do app abre um passo a passo. |
+| Windows / macOS (Chrome, Edge) | Ícone de instalar na barra de endereço, ou o mesmo botão do cabeçalho |
+
+O convite de instalação também aparece abaixo da ficha e fica dispensado no `localStorage` quando a pessoa fecha — não insiste a cada visita.
+
+> **Requisito:** o navegador só oferece instalação em **HTTPS** ou em **localhost**. Demonstrando pelo IP da rede local (`http://192.168.x.x:5173`) o botão não aparece — publique em HTTPS (Vercel, Netlify) ou use `localhost` na própria máquina.
+
+### O que está configurado
+
+- `orientation: 'any'` — travar em retrato deixaria o app de lado no tablet
+- `display_override: ['standalone', 'minimal-ui']` — se o sistema não suportar tela cheia, cai no próximo em vez de abrir no navegador comum
+- atalhos no toque longo do ícone: *Nova ficha técnica* e *Painel de indicadores*
+- metas próprias do iOS (`apple-mobile-web-app-*`), que ignora o manifest para tela cheia e nome do ícone
+- ícones 192/512 (`any`) e um 512 `maskable` com fundo verde-escuro, porque o Android corta o ícone em círculo
+- Google Fonts em cache: sem isso o app abriria offline com a fonte do sistema e o layout dançaria
+- `registerType: 'prompt'` — a versão nova só entra quando a pessoa aceita o aviso. Atualização automática trocaria o app por baixo de quem está no meio de uma ficha.
+- `devOptions.enabled` — dá para instalar e testar o PWA rodando `npm run dev`. Se algo parecer desatualizado em desenvolvimento, remova o service worker em DevTools → Application → Service workers → Unregister.
+
 ## Build de produção
 
 ```bash
 npm run build
 npm run preview
 ```
+
+## Publicação na Vercel
+
+O `vercel.json` na raiz é obrigatório e faz uma coisa essencial: reescreve toda
+rota para o `index.html`.
+
+Sem isso, um app de página única só funciona na raiz — abrir ou recarregar
+`/dashboard`, `/historico` ou `/login` devolve **404**, porque esses arquivos não
+existem no disco. E como o login Microsoft volta justamente em `/dashboard`, o
+login inteiro quebraria em produção. O arquivo também tira o `sw.js` e o
+manifest do cache longo (senão o navegador serviria um service worker velho
+depois de cada deploy) e fixa o cache imutável dos `assets/`, que já têm hash no
+nome.
+
+### Variáveis de ambiente
+
+O `.env` **não vai** para a Vercel — é ignorado no git e no upload. As duas
+variáveis precisam ser cadastradas no painel, em *Settings → Environment
+Variables*, para os ambientes Production e Preview:
+
+```
+VITE_SUPABASE_URL
+VITE_SUPABASE_ANON_KEY
+```
+
+Elas são lidas **no momento do build**, não em execução: depois de cadastrar é
+preciso um novo deploy (*Deployments → ⋯ → Redeploy*). Sem elas o app sobe
+funcionando, mas 100% local — o botão da Microsoft mostra "indisponível" e nada
+chega ao Supabase.
+
+### Depois do primeiro deploy
+
+No Supabase, em *Authentication → URL Configuration*, aponte para o domínio
+publicado:
+
+- **Site URL**: `https://<seu-app>.vercel.app`
+- **Redirect URLs**: acrescente `https://<seu-app>.vercel.app/**`
+
+O Redirect URI do Azure **não muda** — continua sendo o callback do Supabase
+(`https://<projeto>.supabase.co/auth/v1/callback`).
+
+### Deploy por pasta vs. Git
+
+O arraste de pasta (*Vercel Drop*) funciona, mas cada atualização é um novo
+arraste e não há histórico ligado ao código. Conectando o repositório
+(*Connect Git*), cada `git push` publica sozinho e o *Instant Rollback* volta
+para uma versão anterior com um clique. O `.vercelignore` mantém `node_modules`,
+`dist` e `dev-dist` fora do upload — o `dev-dist` em especial carrega um service
+worker de desenvolvimento que atrapalharia o cache do app publicado.

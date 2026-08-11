@@ -7,6 +7,7 @@ import { useSettingsStore } from './store/settingsStore'
 import { useAuthStore } from './store/authStore'
 import { iniciarSincronizacaoAutomatica } from './lib/sync'
 import { ThemeProvider } from './components/theme/ThemeProvider'
+import { registrarServiceWorker } from './pwa'
 
 function Root() {
   const initSettings = useSettingsStore((s) => s.init)
@@ -15,6 +16,7 @@ function Root() {
   useEffect(() => {
     void initSettings()
     void initAuth()
+    registrarServiceWorker()
     return iniciarSincronizacaoAutomatica()
   }, [initSettings, initAuth])
 

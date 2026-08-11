@@ -6,6 +6,7 @@ import { ThemeToggle } from '../theme/ThemeToggle'
 import { SkeletonCard } from '../ui/Skeleton'
 import { ErrorBoundary } from '../ui/ErrorBoundary'
 import { Button } from '../ui/Button'
+import { BotaoInstalar, ConviteInstalacao } from '../pwa/InstalarApp'
 import { Logo } from '../ui/Logo'
 import { useAuthStore } from '../../store/authStore'
 import { useEntranceMotion } from '../../lib/motion'
@@ -66,6 +67,7 @@ export function PublicFormShell() {
           <div className="mx-auto flex max-w-3xl items-center gap-3 px-4 pb-3 sm:px-6 lg:px-8">
             <Logo className="h-9 w-9 shrink-0" withWordmark />
             <div className="ml-auto flex items-center gap-2">
+              <BotaoInstalar />
               <ThemeToggle />
               <Button
                 variant="outline"
@@ -134,12 +136,13 @@ export function PublicFormShell() {
         </header>
 
         <main className="px-4 pb-16 pt-5 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-3xl">
+          <div className="mx-auto max-w-3xl space-y-5">
             <Suspense fallback={<SkeletonCard />}>
               <ErrorBoundary>
                 <NovoFormulario />
               </ErrorBoundary>
             </Suspense>
+            <ConviteInstalacao />
           </div>
         </main>
 

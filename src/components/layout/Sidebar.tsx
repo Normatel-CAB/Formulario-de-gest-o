@@ -8,6 +8,7 @@ import { toast } from '../../store/toastStore'
 import { PAPEL_LABELS, type Papel } from '../../lib/types'
 import { ThemeToggle } from '../theme/ThemeToggle'
 import { Logo } from '../ui/Logo'
+import { BotaoInstalar } from '../pwa/InstalarApp'
 import {
   ChevronIcon,
   CloseIcon,
@@ -274,6 +275,7 @@ export function Sidebar() {
 
         <div className={cn('mt-1 flex items-center gap-1', compacta && 'flex-col')}>
           <ThemeToggle className="h-8 w-8 shrink-0" />
+          {!compacta && <BotaoInstalar className="shrink-0" />}
           <button
             type="button"
             onClick={() => navigate('/perfil')}

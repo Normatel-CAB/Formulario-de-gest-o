@@ -46,8 +46,20 @@ export function Toaster() {
               {variantIcon[t.variant]}
             </span>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-ink">{t.title}</p>
-              {t.description && <p className="mt-0.5 text-xs text-ink-muted">{t.description}</p>}
+              <p className="text-[12.5px] font-semibold text-txt">{t.title}</p>
+              {t.description && <p className="mt-0.5 text-[11.5px] text-txt-dim">{t.description}</p>}
+              {t.acao && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    t.acao?.onClick()
+                    dismiss(t.id)
+                  }}
+                  className="mt-2 rounded-md border border-current/30 px-2.5 py-1 text-[11.5px] font-bold text-current transition-colors hover:bg-current/10"
+                >
+                  {t.acao.label}
+                </button>
+              )}
             </div>
             <button
               onClick={() => dismiss(t.id)}

@@ -1,0 +1,10 @@
+# Arquivos que não devem subir no deploy por pasta (Vercel Drop).
+# O node_modules é reinstalado no build, e o dev-dist traz um service worker de
+# desenvolvimento que confundiria o cache do app publicado.
+node_modules
+dev-dist
+dist
+.git
+*.pptx
+*.xlsx
+*.xls

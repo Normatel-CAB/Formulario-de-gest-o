@@ -7,6 +7,10 @@ export interface Toast {
   title: string
   description?: string
   variant: ToastVariant
+  /** Milissegundos até desaparecer. Avisos com ação pedem mais tempo. */
+  duracao?: number
+  /** Botão opcional dentro do aviso (ex.: "Atualizar agora"). */
+  acao?: { label: string; onClick: () => void }
 }
 
 interface ToastState {
@@ -15,6 +19,8 @@ interface ToastState {
   dismiss: (id: string) => void
 }
 
+const DURACAO_PADRAO = 4500
+
 export const useToastStore = create<ToastState>((set) => ({
   toasts: [],
   push: (toast) => {
@@ -22,7 +28,7 @@ export const useToastStore = create<ToastState>((set) => ({
     set((s) => ({ toasts: [...s.toasts, { ...toast, id }] }))
     window.setTimeout(() => {
       set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) }))
-    }, 4500)
+    }, toast.duracao ?? DURACAO_PADRAO)
   },
   dismiss: (id) => set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })),
 }))
