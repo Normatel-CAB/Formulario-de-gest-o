@@ -87,7 +87,10 @@ export function FormDetail() {
             <StatusBadge status={formulario.status} />
           </div>
           <p className="text-[13px] text-txt-dim">
-            Nº {formulario.infoGerais.numeroSolicitacao || '—'} · Atualizado em {formatarDataHora(formulario.updatedAt)}
+            {formulario.infoGerais.numeroSolicitacao
+              ? `Nº ${formulario.infoGerais.numeroSolicitacao}`
+              : 'Sem número'}{' '}
+            · Atualizado em {formatarDataHora(formulario.updatedAt)}
           </p>
         </div>
         {/* No celular as ações viram largura total: são poucos botões e cada um

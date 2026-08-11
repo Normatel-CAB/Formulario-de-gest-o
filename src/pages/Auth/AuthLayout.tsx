@@ -53,7 +53,7 @@ export function AuthLayout({ children, title, subtitle }: { children: ReactNode;
             <span className="block text-[11px] uppercase tracking-[0.22em] text-white/50">Engenharia</span>
           </div>
           <p className="max-w-xs text-center text-[15px] font-light leading-relaxed text-white/70">
-            Ficha Técnica de Avaliação de Serviços — avaliação, necessidades e evidências em um só
+            Ficha Técnica de Avaliação de Serviços. Avaliação, necessidades e evidências em um só
             lugar.
           </p>
 

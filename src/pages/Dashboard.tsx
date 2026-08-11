@@ -128,7 +128,7 @@ export function Dashboard() {
     [escopo],
   )
 
-  const equipamentoMaisPedido = porEquipamento[0]?.valor ? porEquipamento[0].name : '—'
+  const equipamentoMaisPedido = porEquipamento[0]?.valor ? porEquipamento[0].name : 'Nenhum ainda'
 
   return (
     <div className="space-y-5">
@@ -372,7 +372,7 @@ export function Dashboard() {
                           {f.infoGerais.localAtividade || 'Atividade sem nome'}
                         </p>
                         <p className="truncate text-[11px] text-txt-faint">
-                          Nº {f.infoGerais.numeroSolicitacao || '—'}
+                          {f.infoGerais.numeroSolicitacao ? `Nº ${f.infoGerais.numeroSolicitacao}` : 'Sem número'}
                           {f.infoGerais.lotacao ? ` · ${f.infoGerais.lotacao}` : ''}
                         </p>
                       </div>

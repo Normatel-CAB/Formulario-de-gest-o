@@ -98,7 +98,7 @@ export function PublicFormShell() {
                     Entrar na área administrativa
                   </h2>
                   <p className="mt-1 text-[12.5px] text-txt-dim">
-                    Use sua conta Microsoft da Normatel. Só a equipe de gestão precisa entrar — a
+                    Use sua conta Microsoft da Normatel. Só a equipe de gestão precisa entrar. A
                     ficha ao lado pode ser preenchida sem login.
                   </p>
 

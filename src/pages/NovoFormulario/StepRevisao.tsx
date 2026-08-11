@@ -57,7 +57,7 @@ export function StepRevisao({ formulario }: { formulario: FormularioAvaliacao })
           </CardHeader>
           <CardContent className="grid gap-3 sm:grid-cols-2">
             <InfoRow label="Responsável" value={info.responsavel} />
-            <InfoRow label="Data da Avaliação" value={info.dataAvaliacao ? formatarData(info.dataAvaliacao) : '—'} />
+            <InfoRow label="Data da Avaliação" value={info.dataAvaliacao ? formatarData(info.dataAvaliacao) : 'Não informada'} />
             <InfoRow label="Tempo Estimado" value={info.tempoEstimadoExecucao} />
             <InfoRow label="Nº da Solicitação" value={info.numeroSolicitacao} />
             <InfoRow label="Equipe Necessária" value={info.equipeNecessaria} />
@@ -140,7 +140,7 @@ function InfoRow({ label, value }: { label: string; value: string }) {
   return (
     <div>
       <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-txt-faint">{label}</p>
-      <p className="mt-0.5 text-[12.5px] font-medium text-txt">{value || '—'}</p>
+      <p className="mt-0.5 text-[12.5px] font-medium text-txt">{value || 'Não informado'}</p>
     </div>
   )
 }

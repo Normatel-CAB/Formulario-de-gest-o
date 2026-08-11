@@ -243,18 +243,18 @@ export function Usuarios() {
                     <span className="block truncate text-[10.5px] font-normal text-txt-faint lg:hidden">{u.email}</span>
                   </TableCell>
                   <TableCell className="hidden text-txt-dim lg:table-cell">{u.email}</TableCell>
-                  <TableCell className="hidden whitespace-nowrap text-txt-dim xl:table-cell">{u.cargo || '—'}</TableCell>
+                  <TableCell className="hidden whitespace-nowrap text-txt-dim xl:table-cell">{u.cargo || 'Não informado'}</TableCell>
                   <TableCell>
                     <Badge tone="brand">{PAPEL_LABELS[u.papel]}</Badge>
                   </TableCell>
-                  <TableCell className="hidden whitespace-nowrap text-txt-dim xl:table-cell">{u.projeto || '—'}</TableCell>
+                  <TableCell className="hidden whitespace-nowrap text-txt-dim xl:table-cell">{u.projeto || 'Não informado'}</TableCell>
                   <TableCell>
                     <Badge tone={u.status === 'ativo' ? 'brand' : 'slate'}>
                       {u.status === 'ativo' ? 'Ativo' : 'Inativo'}
                     </Badge>
                   </TableCell>
                   <TableCell className="hidden whitespace-nowrap text-txt-dim lg:table-cell">
-                    {u.ultimoAcesso ? formatarDataHora(u.ultimoAcesso) : '—'}
+                    {u.ultimoAcesso ? formatarDataHora(u.ultimoAcesso) : 'Nunca acessou'}
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center justify-end gap-1 whitespace-nowrap">

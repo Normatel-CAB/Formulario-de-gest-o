@@ -83,10 +83,10 @@ export function MeuPerfil() {
           <form onSubmit={salvarPerfil} className="grid gap-4 sm:grid-cols-2">
             <Input label="Nome" required value={nome} onChange={(e) => setNome(e.target.value)} />
             <Input label="E-mail" value={usuario.email} disabled />
-            <Input label="CPF" value={usuario.cpf || '—'} disabled />
-            <Input label="Matrícula" value={usuario.matricula || '—'} disabled />
-            <Input label="Cargo" value={usuario.cargo || '—'} disabled />
-            <Input label="Último acesso" value={usuario.ultimoAcesso ? formatarDataHora(usuario.ultimoAcesso) : '—'} disabled />
+            <Input label="CPF" value={usuario.cpf || 'Não informado'} disabled />
+            <Input label="Matrícula" value={usuario.matricula || 'Não informada'} disabled />
+            <Input label="Cargo" value={usuario.cargo || 'Não informado'} disabled />
+            <Input label="Último acesso" value={usuario.ultimoAcesso ? formatarDataHora(usuario.ultimoAcesso) : 'Nunca acessou'} disabled />
             <div className="sm:col-span-2">
               <Button type="submit" loading={salvandoPerfil}>
                 Salvar alterações

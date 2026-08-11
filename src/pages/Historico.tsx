@@ -137,10 +137,10 @@ export function Historico() {
                     <StatusBadge status={f.status} className="shrink-0" />
                   </div>
                   <p className="mt-2 truncate text-[11.5px] text-txt-dim">
-                    Nº {f.infoGerais.numeroSolicitacao || '—'}
+                    {f.infoGerais.numeroSolicitacao ? `Nº ${f.infoGerais.numeroSolicitacao}` : 'Sem número'}
                   </p>
                   <p className="truncate text-[11.5px] text-txt-dim">
-                    Responsável: {f.infoGerais.responsavel || '—'}
+                    Responsável: {f.infoGerais.responsavel || 'não informado'}
                   </p>
                   <p className="mt-2 truncate text-[10.5px] text-txt-faint">
                     {f.infoGerais.lotacao ? `${f.infoGerais.lotacao} · ` : ''}

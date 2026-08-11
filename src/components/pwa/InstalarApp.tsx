@@ -80,7 +80,8 @@ function AjudaIOS({ aberta, onFechar }: { aberta: boolean; onFechar: () => void 
             Escolha <b className="font-semibold">Adicionar à Tela de Início</b>
           </>,
           <>
-            Confirme em <b className="font-semibold">Adicionar</b> — o ícone aparece junto dos outros apps
+            Confirme em <b className="font-semibold">Adicionar</b>. O ícone aparece junto dos outros
+            apps.
           </>,
         ].map((texto, i) => (
           <li key={i} className="flex gap-3 text-[12.5px] text-txt-dim">
@@ -92,7 +93,7 @@ function AjudaIOS({ aberta, onFechar }: { aberta: boolean; onFechar: () => void 
         ))}
       </ol>
       <p className="mt-4 rounded-md border border-hairline bg-surface-2 px-3 py-2 text-[11.5px] text-txt-faint">
-        Precisa ser o Safari. No Chrome ou Firefox do iPhone a opção não existe — é limitação do
+        Precisa ser o Safari. No Chrome ou Firefox do iPhone a opção não existe, por limitação do
         sistema.
       </p>
     </Dialog>
@@ -128,7 +129,7 @@ export function ConviteInstalacao() {
             <div className="min-w-0 flex-1">
               <p className="text-[13px] font-semibold text-txt">Instale a ficha no seu celular</p>
               <p className="mt-0.5 text-[11.5px] leading-relaxed text-txt-dim">
-                Abre direto pelo ícone, sem navegador, e continua funcionando em área sem sinal — o
+                Abre direto pelo ícone, sem navegador, e continua funcionando em área sem sinal. O
                 que você preencher é enviado quando a rede voltar.
               </p>
             </div>

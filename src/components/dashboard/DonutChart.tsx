@@ -124,10 +124,10 @@ export function DonutChart({
 
         <div className="pointer-events-none absolute inset-0 grid place-content-center gap-0.5 text-center">
           <div className="tabular text-[25px] font-bold leading-none tracking-[-0.03em]">
-            {active ? `${Math.round((active.value / soma) * 100)}%` : '—'}
+            {active ? `${Math.round((active.value / soma) * 100)}%` : soma}
           </div>
           <div className="max-w-[104px] text-[10.5px] leading-tight text-txt-dim">
-            {active?.name ?? unidade}
+            {active?.name ?? `no total, em ${unidade}`}
           </div>
         </div>
       </div>

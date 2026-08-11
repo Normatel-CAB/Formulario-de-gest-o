@@ -119,7 +119,8 @@ export function Administracao() {
                       <StatusBadge status={f.status} />
                     </div>
                     <p className="mt-0.5 text-[11px] text-txt-faint">
-                      Nº {f.infoGerais.numeroSolicitacao || '—'} · {f.infoGerais.lotacao || f.projeto || '—'} ·{' '}
+                      {f.infoGerais.numeroSolicitacao ? `Nº ${f.infoGerais.numeroSolicitacao}` : 'Sem número'} ·{' '}
+                      {f.infoGerais.lotacao || f.projeto || 'Sem lotação'} ·{' '}
                       {formatarDataHora(f.updatedAt)}
                     </p>
                   </div>

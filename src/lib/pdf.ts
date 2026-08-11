@@ -123,7 +123,7 @@ export async function gerarPdfFormulario(formulario: FormularioAvaliacao): Promi
     doc.setFontSize(9)
     doc.setTextColor(97, 104, 111)
     doc.text(label, x, y)
-    const valueLines = doc.splitTextToSize(value || '—', width)
+    const valueLines = doc.splitTextToSize(value || 'Não informado', width)
     doc.setFont('helvetica', 'normal')
     doc.setFontSize(10)
     doc.setTextColor(26, 32, 39)
@@ -155,7 +155,7 @@ export async function gerarPdfFormulario(formulario: FormularioAvaliacao): Promi
 
   function drawMetricRow(label: string, value: string) {
     const currentY = y
-    const lines = doc.splitTextToSize(value || '—', contentWidth - 120)
+    const lines = doc.splitTextToSize(value || 'Não informado', contentWidth - 120)
     doc.setFont('helvetica', 'bold')
     doc.setFontSize(9)
     doc.setTextColor(97, 104, 111)
@@ -224,11 +224,11 @@ export async function gerarPdfFormulario(formulario: FormularioAvaliacao): Promi
   sectionHeader('Informações Gerais')
   drawStatusBadge(formulario.status)
   y += 14
-  drawTwoColumns('Responsável', formulario.infoGerais.responsavel || '—', 'Nº da Solicitação', formulario.infoGerais.numeroSolicitacao || '—')
-  drawTwoColumns('Data da Avaliação', formulario.infoGerais.dataAvaliacao ? formatarData(formulario.infoGerais.dataAvaliacao) : '—', 'Tempo Estimado', formulario.infoGerais.tempoEstimadoExecucao || '—')
-  drawTwoColumns('Equipe Necessária', formulario.infoGerais.equipeNecessaria || '—', 'Lotação', formulario.infoGerais.lotacao || '—')
-  drawTwoColumns('Local da Atividade', formulario.infoGerais.localAtividade || '—', 'Status', STATUS_LABELS[formulario.status])
-  drawTwoColumns('Projeto', formulario.projeto || '—', 'Atualizado em', formatarDataHora(formulario.updatedAt || formulario.createdAt || new Date().toISOString()))
+  drawTwoColumns('Responsável', formulario.infoGerais.responsavel || 'Não informado', 'Nº da Solicitação', formulario.infoGerais.numeroSolicitacao || 'Sem número')
+  drawTwoColumns('Data da Avaliação', formulario.infoGerais.dataAvaliacao ? formatarData(formulario.infoGerais.dataAvaliacao) : 'Não informada', 'Tempo Estimado', formulario.infoGerais.tempoEstimadoExecucao || 'Não informado')
+  drawTwoColumns('Equipe Necessária', formulario.infoGerais.equipeNecessaria || 'Não informada', 'Lotação', formulario.infoGerais.lotacao || 'Não informada')
+  drawTwoColumns('Local da Atividade', formulario.infoGerais.localAtividade || 'Não informado', 'Status', STATUS_LABELS[formulario.status])
+  drawTwoColumns('Projeto', formulario.projeto || 'Não informado', 'Atualizado em', formatarDataHora(formulario.updatedAt || formulario.createdAt || new Date().toISOString()))
 
   sectionHeader('Necessidades da Execução')
   const necessidades = formulario.necessidades as unknown as Record<string, { necessario: boolean; dias?: number; data?: string; descricao?: string }>
@@ -241,7 +241,7 @@ export async function gerarPdfFormulario(formulario: FormularioAvaliacao): Promi
       equipamento.dias ? `${equipamento.dias} dia(s)` : null,
       equipamento.data ? formatarData(equipamento.data) : null,
     ].filter(Boolean)
-    itens.push(`${EQUIPAMENTO_LABELS[chave]}${detalhes.length ? `: ${detalhes.join(' — ')}` : ''}`)
+    itens.push(`${EQUIPAMENTO_LABELS[chave]}${detalhes.length ? `: ${detalhes.join(', ')}` : ''}`)
   }
   for (const [chave, rotulo] of Object.entries(QTD_DIAS_LABELS)) {
     if (necessidades[chave]?.necessario) itens.push(`${rotulo}: ${necessidades[chave].dias ?? 0} dia(s)`)
@@ -250,7 +250,7 @@ export async function gerarPdfFormulario(formulario: FormularioAvaliacao): Promi
     if (necessidades[chave]?.necessario) itens.push(`${rotulo}${necessidades[chave].data ? ` (${formatarData(necessidades[chave].data as string)})` : ''}`)
   }
   for (const [chave, rotulo] of Object.entries(DESCRICAO_LABELS)) {
-    if (necessidades[chave]?.necessario) itens.push(`${rotulo}: ${necessidades[chave].descricao || '—'}`)
+    if (necessidades[chave]?.necessario) itens.push(`${rotulo}: ${necessidades[chave].descricao || 'sem descrição'}`)
   }
   if (itens.length === 0) {
     doc.setFont('helvetica', 'normal')
@@ -271,8 +271,8 @@ export async function gerarPdfFormulario(formulario: FormularioAvaliacao): Promi
   }
 
   sectionHeader('Observações e Apoio')
-  const observacoes = formulario.observacoes || '—'
-  const apoio = formulario.descricaoApoio || '—'
+  const observacoes = formulario.observacoes || 'Sem observações.'
+  const apoio = formulario.descricaoApoio || 'Sem descrição de apoio.'
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(10)
   doc.setTextColor(55, 65, 81)
@@ -296,7 +296,7 @@ export async function gerarPdfFormulario(formulario: FormularioAvaliacao): Promi
 
   sectionHeader('Anexos')
   drawMetricRow('Localização GPS', formulario.localizacao ? `${formulario.localizacao.latitude.toFixed(6)}, ${formulario.localizacao.longitude.toFixed(6)}` : 'Não capturada')
-  drawMetricRow('Colaborador', formulario.criadoPorNome || formulario.infoGerais.responsavel || '—')
+  drawMetricRow('Colaborador', formulario.criadoPorNome || formulario.infoGerais.responsavel || 'Não informado')
   if (formulario.assinaturaDataUrl) {
     ensurePageSpace(140)
     doc.setFont('helvetica', 'bold')
