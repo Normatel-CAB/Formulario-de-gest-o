@@ -9,7 +9,7 @@ import { useSolicitacoesStore } from '../../store/solicitacoesStore'
 import { useAuthStore } from '../../store/authStore'
 import { toast } from '../../store/toastStore'
 import { PAPEL_LABELS, PROJETOS_PADRAO, type Papel } from '../../lib/types'
-import type { SolicitacaoAcesso } from '../../lib/acesso'
+import { emailDaSessaoSupabase, type SolicitacaoAcesso } from '../../lib/acesso'
 import { formatarDataHora } from '../../lib/format'
 
 /**
@@ -39,9 +39,20 @@ export function SolicitacoesAcesso() {
   const [novoPapel, setNovoPapel] = useState<Papel>('visualizador')
   const [novoProjeto, setNovoProjeto] = useState('')
 
+  // Sessão do Supabase, que é independente da sessão do app. Sem ela as policies
+  // devolvem zero linhas SEM erro, e a lista vazia parece falha da migração.
+  const [emailSessao, setEmailSessao] = useState<string | null>(null)
+  const [sessaoVerificada, setSessaoVerificada] = useState(false)
+
   useEffect(() => {
     void carregar()
+    void emailDaSessaoSupabase().then((email) => {
+      setEmailSessao(email)
+      setSessaoVerificada(true)
+    })
   }, [carregar])
+
+  const semSessaoSupabase = sessaoVerificada && !emailSessao
 
   const pendentes = useMemo(() => solicitacoes.filter((s) => s.status === 'pendente'), [solicitacoes])
   const aprovados = useMemo(() => solicitacoes.filter((s) => s.status === 'aprovado'), [solicitacoes])
@@ -106,6 +117,19 @@ export function SolicitacoesAcesso() {
         </CardHeader>
 
         <CardContent className="space-y-4">
+          {semSessaoSupabase && (
+            <div className="rounded-md border border-viz-amber/25 bg-viz-amber/10 px-3 py-3 text-[12px] text-viz-amber">
+              <p className="font-semibold">Você não está autenticado no banco de dados.</p>
+              <p className="mt-1 leading-relaxed">
+                A sessão da interface e a sessão do Supabase são separadas. Sem a do Supabase, esta
+                lista volta vazia e o botão de liberar falha, mesmo com as migrações aplicadas.
+              </p>
+              <p className="mt-2">
+                Saia e entre de novo usando <b className="font-semibold">Entrar com Microsoft</b>.
+              </p>
+            </div>
+          )}
+
           {erro && (
             <div className="rounded-md border border-viz-red/25 bg-viz-red/10 px-3 py-3 text-[12px] text-viz-red">
               <p className="font-semibold">Não foi possível carregar a lista.</p>

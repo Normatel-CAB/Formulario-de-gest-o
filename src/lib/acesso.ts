@@ -53,6 +53,20 @@ function paraSolicitacao(linha: Record<string, unknown>): SolicitacaoAcesso {
   }
 }
 
+/**
+ * E-mail da sessão ativa no Supabase, ou null.
+ *
+ * IMPORTANTE para diagnóstico: a sessão do app (guardada no localStorage) é
+ * independente da sessão do Supabase. Dá para estar "logado" na interface e ser
+ * anônimo para o banco — situação em que as policies não devolvem erro, apenas
+ * zero linhas. A lista aparece vazia e parece que a migração não funcionou.
+ */
+export async function emailDaSessaoSupabase(): Promise<string | null> {
+  if (!supabase) return null
+  const { data } = await supabase.auth.getSession()
+  return data.session?.user?.email?.toLowerCase() ?? null
+}
+
 export async function obterSolicitacao(email: string): Promise<SolicitacaoAcesso | null> {
   if (!supabase) return null
   const { data, error } = await supabase

@@ -17,15 +17,30 @@ const sizeClasses = { sm: 'max-w-sm', md: 'max-w-lg', lg: 'max-w-2xl' }
 export function Dialog({ open, onClose, title, description, children, footer, size = 'md' }: DialogProps) {
   const ref = useRef<HTMLDivElement>(null)
 
+  /**
+   * `onClose` chega como arrow function inline em toda chamada, então sua
+   * identidade muda a cada render de quem usa o Dialog. Guardar num ref permite
+   * que o efeito abaixo dependa só de `open`.
+   */
+  const onCloseRef = useRef(onClose)
+  onCloseRef.current = onClose
+
   useEffect(() => {
     if (!open) return
+
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
+      if (e.key === 'Escape') onCloseRef.current()
     }
     document.addEventListener('keydown', onKey)
+
+    // BUG QUE ISTO CORRIGE: com `onClose` na lista de dependências, o efeito
+    // rodava a cada tecla digitada (nova identidade da função a cada render) e
+    // o `focus()` roubava o cursor do campo. O resultado era ter que clicar de
+    // novo no campo para cada letra. Focar só na abertura resolve.
     ref.current?.focus()
+
     return () => document.removeEventListener('keydown', onKey)
-  }, [open, onClose])
+  }, [open])
 
   return createPortal(
     <AnimatePresence>
