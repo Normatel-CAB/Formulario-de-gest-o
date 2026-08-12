@@ -96,6 +96,7 @@ Sem as variáveis `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY`, o app funciona
 - Upload de imagens, captura pela câmera, localização GPS com mapa embutido e assinatura digital
 - Rascunho automático (autosave) + salvar rascunho manual
 - Histórico com pesquisa, filtros e status (Rascunho, Enviado, Em Análise, Aprovado, Reprovado)
+- **Exportar fotos** no histórico: uma ficha por vez ou todas as do período filtrado, em .zip nomeado pelo nº da solicitação
 - Dashboard com indicadores e últimos envios
 - Funcionamento offline com fila de sincronização automática ao reconectar
 - Temas claro e escuro (padrão escuro), com a preferência salva no navegador
@@ -120,6 +121,41 @@ Os gráficos são feitos à mão em SVG/CSS de propósito — o app não tem Rec
 - O stepper mostra "Etapa N de 4 · nome" no celular, onde não cabe o rótulo de cada etapa
 - Tabelas rolam dentro do próprio wrapper e escondem colunas de apoio nas telas estreitas; nada cria rolagem horizontal na página
 - Barra de ações da ficha, diálogos e avisos respeitam a área segura (notch e barra inferior do iPhone)
+
+### Exportar fotos (.zip)
+
+Duas formas, as duas no Histórico:
+
+**Uma ficha** — botão no rodapé do cartão (e no detalhe da ficha):
+
+```
+SOL-2026-0142.zip
+└── SOL-2026-0142/
+    ├── SOL-2026-0142-foto-01.jpg
+    └── SOL-2026-0142-foto-02.jpg
+```
+
+**Várias fichas** — filtro *Data da avaliação: de / até* + botão **Exportar fotos do período**. Sai um zip com uma pasta por ficha:
+
+```
+fotos-2026-01-01_a_2026-02-28.zip
+├── SOL-2026-0142/
+├── SOL-2026-0143/
+└── ficha-d4e5f6a7/
+```
+
+O lote respeita **todos** os filtros ativos da tela, não só as datas: status, projeto e a busca também entram. O contador ao lado do botão mostra quantas fotos vão no pacote antes de clicar.
+
+Detalhes que evitam surpresa:
+
+- **Só fotos.** A assinatura não entra: ela já consta no PDF da ficha.
+- O nome sai do **Nº da Solicitação**, normalizado (sem acento nem caractere que o Windows recuse). Ficha sem número cai em `ficha-<id>`; número repetido em duas fichas ganha sufixo (`-2`), senão as fotos de uma cairiam na pasta da outra.
+- Fichas sem foto são ignoradas no lote.
+- O filtro de data usa a **data da avaliação**; quando ela está vazia, a data de criação. A comparação é textual sobre `YYYY-MM-DD`, então não há fuso horário no meio.
+
+Tudo roda no navegador, em cima das fotos que já vieram do Supabase: **não há nada para instalar na máquina de quem baixa**, nem passo de servidor. Abrir o site em qualquer computador basta.
+
+O zip é escrito à mão em `src/lib/zip.ts`, sem dependência. O conteúdo são JPEG/PNG, já comprimidos, então usamos o método *store* (cópia direta) — deflate gastaria CPU para não economizar quase nada. Não há Zip64, o que limita a 4 GB por pacote (folgado para fotos, mas vale saber ao exportar períodos muito longos).
 
 ## Instalar no celular e no tablet (PWA)
 

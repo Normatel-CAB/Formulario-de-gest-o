@@ -11,6 +11,7 @@ import { Dialog } from '../components/ui/Dialog'
 import { toast } from '../store/toastStore'
 import { formatarData, formatarDataHora } from '../lib/format'
 import { gerarPdfFormulario, nomeArquivoPdf } from '../lib/pdf'
+import { baixarZipFotos, nomeArquivoFotos, totalFotos } from '../lib/exportarFotos'
 import { StepRevisao } from './NovoFormulario/StepRevisao'
 
 const STATUS_TRANSICOES: FormStatus[] = ['enviado', 'em_analise', 'aprovado', 'reprovado']
@@ -78,6 +79,25 @@ export function FormDetail() {
     toast({ variant: 'success', title: 'PDF exportado com sucesso' })
   }
 
+  /** Zip com o registro fotográfico, nomeado pelo número da solicitação. */
+  function exportarFotos() {
+    if (!formulario) return
+    try {
+      baixarZipFotos(formulario)
+      toast({
+        variant: 'success',
+        title: 'Fotos exportadas',
+        description: `Arquivo ${nomeArquivoFotos(formulario)} salvo nos downloads.`,
+      })
+    } catch (err) {
+      toast({
+        variant: 'warning',
+        title: 'Nada para exportar',
+        description: err instanceof Error ? err.message : undefined,
+      })
+    }
+  }
+
   return (
     <div className="space-y-5">
       <div className="flex flex-col justify-between gap-3 lg:flex-row lg:items-center">
@@ -98,6 +118,18 @@ export function FormDetail() {
         <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
           <Button variant="outline" onClick={baixarPdf}>
             Exportar PDF
+          </Button>
+          <Button
+            variant="outline"
+            disabled={totalFotos(formulario) === 0}
+            onClick={exportarFotos}
+            title={
+              totalFotos(formulario) === 0
+                ? 'Esta ficha não tem fotos anexadas'
+                : `Baixar ${nomeArquivoFotos(formulario)}`
+            }
+          >
+            Exportar fotos
           </Button>
           {!somenteLeitura && podeEditar && (
             <Link to={`/novo/${formulario.id}`} className="contents">
