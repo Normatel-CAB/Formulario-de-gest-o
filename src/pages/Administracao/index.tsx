@@ -13,7 +13,7 @@ import { Reveal } from '../../components/ui/Reveal'
 import { formatarDataHora } from '../../lib/format'
 import { PROJETOS_PADRAO } from '../../lib/types'
 import { VIZ } from '../../lib/chartTheme'
-import { SolicitacoesAcesso } from './SolicitacoesAcesso'
+import { FilaAprovacao } from './AcessosCompartilhados'
 
 export function Administracao() {
   const { formularios, loading, carregar, atualizarStatus } = useFormsStore()
@@ -55,7 +55,7 @@ export function Administracao() {
         </Link>
       </section>
 
-      <SolicitacoesAcesso />
+      <FilaAprovacao />
 
       <Card>
         <CardContent className="flex flex-wrap gap-2 p-4">

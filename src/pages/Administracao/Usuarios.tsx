@@ -10,7 +10,7 @@ import { Dialog } from '../../components/ui/Dialog'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { Pagination } from '../../components/ui/Pagination'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/Table'
-import { SolicitacoesAcesso } from './SolicitacoesAcesso'
+import { FilaAprovacao, UsuariosComAcesso } from './AcessosCompartilhados'
 import { toast } from '../../store/toastStore'
 import type { Papel, Usuario } from '../../lib/types'
 import { PAPEL_LABELS, PROJETOS_PADRAO } from '../../lib/types'
@@ -191,7 +191,9 @@ export function Usuarios() {
         </Button>
       </div>
 
-      <SolicitacoesAcesso />
+      <FilaAprovacao />
+
+      <UsuariosComAcesso />
 
       <Card>
         <CardContent className="grid gap-3 p-4 md:grid-cols-[1fr_180px_200px]">
