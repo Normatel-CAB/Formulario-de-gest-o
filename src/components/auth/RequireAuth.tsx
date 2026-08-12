@@ -4,19 +4,23 @@ import { useAuthStore } from '../../store/authStore'
 import type { Papel } from '../../lib/types'
 
 export function RequireAuth({ children }: { children: ReactNode }) {
-  const { usuario, inicializado } = useAuthStore()
+  const { usuario, inicializado, acesso } = useAuthStore()
   const location = useLocation()
 
   if (!inicializado) return null
+  // A conta autenticou na Microsoft mas ainda não foi aprovada: a tela de espera
+  // explica o estado, em vez de devolver a pessoa ao login em looping.
+  if (!usuario && acesso) return <Navigate to="/acesso" replace />
   if (!usuario) return <Navigate to="/login" replace state={{ from: location.pathname }} />
   return <>{children}</>
 }
 
 export function RequireRole({ roles, children }: { roles: Papel[]; children: ReactNode }) {
-  const { usuario, inicializado } = useAuthStore()
+  const { usuario, inicializado, acesso } = useAuthStore()
   const location = useLocation()
 
   if (!inicializado) return null
+  if (!usuario && acesso) return <Navigate to="/acesso" replace />
   if (!usuario) return <Navigate to="/login" replace state={{ from: location.pathname }} />
   if (!roles.includes(usuario.papel)) return <Navigate to="/dashboard" replace />
   return <>{children}</>

@@ -13,6 +13,7 @@ import { Reveal } from '../../components/ui/Reveal'
 import { formatarDataHora } from '../../lib/format'
 import { PROJETOS_PADRAO } from '../../lib/types'
 import { VIZ } from '../../lib/chartTheme'
+import { SolicitacoesAcesso } from './SolicitacoesAcesso'
 
 export function Administracao() {
   const { formularios, loading, carregar, atualizarStatus } = useFormsStore()
@@ -48,11 +49,13 @@ export function Administracao() {
         <Link to="/usuarios" className="min-w-0">
           <KpiCard index={1} label="Total de usuários" value={usuarios.length} hint="contas cadastradas" icon="stack" color={VIZ.teal} />
         </Link>
-        <KpiCard index={2} label="Aguardando aprovação" value={pendentes.length} hint="enviadas ou em análise" icon="clock" color={VIZ.amber} />
+        <KpiCard index={2} label="Fichas em análise" value={pendentes.length} hint="enviadas ou em análise" icon="clock" color={VIZ.amber} />
         <Link to="/administracao/cargos" className="min-w-0">
           <KpiCard index={3} label="Cargos e permissões" value={cargos.length} hint="perfis configurados" icon="check" color={VIZ.green} />
         </Link>
       </section>
+
+      <SolicitacoesAcesso />
 
       <Card>
         <CardContent className="flex flex-wrap gap-2 p-4">

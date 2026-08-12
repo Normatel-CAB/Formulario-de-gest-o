@@ -11,6 +11,7 @@ import { useAuthStore } from './store/authStore'
 const Login = lazy(() => import('./pages/Auth/Login').then((m) => ({ default: m.Login })))
 const Cadastro = lazy(() => import('./pages/Auth/Cadastro').then((m) => ({ default: m.Cadastro })))
 const EsqueciSenha = lazy(() => import('./pages/Auth/EsqueciSenha').then((m) => ({ default: m.EsqueciSenha })))
+const AcessoPendente = lazy(() => import('./pages/Auth/AcessoPendente').then((m) => ({ default: m.AcessoPendente })))
 const Dashboard = lazy(() => import('./pages/Dashboard').then((m) => ({ default: m.Dashboard })))
 const NovoFormulario = lazy(() => import('./pages/NovoFormulario').then((m) => ({ default: m.NovoFormulario })))
 const Historico = lazy(() => import('./pages/Historico').then((m) => ({ default: m.Historico })))
@@ -38,6 +39,9 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/cadastro" element={<Cadastro />} />
         <Route path="/esqueci-senha" element={<EsqueciSenha />} />
+        {/* Fora do RequireAuth de propósito: quem cai aqui justamente não tem
+            sessão no app, só na Microsoft. */}
+        <Route path="/acesso" element={<AcessoPendente />} />
         <Route
           path="/*"
           element={

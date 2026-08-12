@@ -1,4 +1,10 @@
 import type { Papel, Usuario } from './types'
+import {
+  AcessoPendenteError,
+  AcessoRejeitadoError,
+  criarSolicitacao,
+  obterSolicitacao,
+} from './acesso'
 import { PROJETOS_PADRAO } from './types'
 import { supabase } from './supabase'
 import {
@@ -180,17 +186,38 @@ export function lerErroRetornoOAuth(): string | null {
  * Quem esperava só pelo getSession via a tela de login de novo. Aqui ficamos
  * ouvindo o SIGNED_IN e avisamos o app quando a sessão realmente existir.
  */
-export function observarSessaoMicrosoft(ao: (usuario: Usuario | null) => void): () => void {
+export interface ResultadoSessaoMicrosoft {
+  usuario: Usuario | null
+  erro?: unknown
+}
+
+export function observarSessaoMicrosoft(ao: (resultado: ResultadoSessaoMicrosoft) => void): () => void {
   if (!supabase) return () => {}
   const { data } = supabase.auth.onAuthStateChange((evento) => {
     if (evento !== 'SIGNED_IN' && evento !== 'INITIAL_SESSION' && evento !== 'TOKEN_REFRESHED') return
     void sincronizarSessaoMicrosoft()
-      .then(ao)
-      .catch(() => ao(null))
+      .then((usuario) => ao({ usuario }))
+      // O erro tem que subir: "aguardando aprovação" e "acesso recusado" chegam
+      // por aqui, e engoli-los devolveria a pessoa ao login sem explicação.
+      .catch((erro) => ao({ usuario: null, erro }))
   })
   return () => data.subscription.unsubscribe()
 }
 
+/**
+ * Resolve o login Microsoft contra a fila de aprovação.
+ *
+ * O caminho é sempre o mesmo, sem cadastro manual: a conta autentica na
+ * Microsoft, o app consulta a solicitação daquele e-mail e decide.
+ *
+ *  - não existe solicitação → abre uma pendente e barra o acesso
+ *  - pendente               → barra o acesso (tela de espera)
+ *  - rejeitado              → barra o acesso, com o motivo
+ *  - aprovado               → cria/atualiza a conta local com o papel aprovado
+ *
+ * Os e-mails de `EMAILS_ADMINISTRADORES` passam direto: alguém precisa poder
+ * entrar para aprovar o primeiro pedido.
+ */
 export async function sincronizarSessaoMicrosoft(): Promise<Usuario | null> {
   if (!supabase) return null
   const { data } = await supabase.auth.getSession()
@@ -199,31 +226,56 @@ export async function sincronizarSessaoMicrosoft(): Promise<Usuario | null> {
   if (!email) return null
 
   const admin = ehEmailAdministrador(email)
+  const meta = (conta?.user_metadata ?? {}) as Record<string, string>
+  const nome = meta.name || meta.full_name || email.split('@')[0]
+
+  let papelAprovado: Papel = 'visualizador'
+  let projetoAprovado = PROJETOS_PADRAO[0] as string
+
+  if (admin) {
+    papelAprovado = 'administrador'
+  } else {
+    // Uma falha de rede aqui não pode virar "acesso liberado". Se não deu para
+    // consultar a fila, o login não passa.
+    const solicitacao = await obterSolicitacao(email).catch(() => {
+      throw new AuthError('Não foi possível verificar seu acesso agora. Tente novamente em instantes.')
+    })
+
+    if (!solicitacao) {
+      await criarSolicitacao(email, nome)
+      throw new AcessoPendenteError()
+    }
+    if (solicitacao.status === 'pendente') throw new AcessoPendenteError()
+    if (solicitacao.status === 'rejeitado') throw new AcessoRejeitadoError(solicitacao.observacao)
+
+    papelAprovado = solicitacao.papel
+    projetoAprovado = solicitacao.projeto || projetoAprovado
+  }
 
   const existente = await obterUsuarioPorEmail(email)
   if (existente) {
     if (existente.status === 'inativo') throw new AuthError('Este usuário está desativado. Contate o administrador.')
     const atualizado: Usuario = {
       ...existente,
-      // Promove a conta que já havia entrado como visualizador antes de o e-mail
-      // estar na lista — sem isso o usuário ficaria preso no papel antigo.
-      papel: admin ? 'administrador' : existente.papel,
+      // O papel vem sempre da decisão do administrador (ou da lista de admins).
+      // Sem isso, mudar o papel na aprovação não teria efeito em quem já entrou.
+      papel: papelAprovado,
+      projeto: existente.projeto || projetoAprovado,
       ultimoAcesso: new Date().toISOString(),
     }
     await salvarUsuarioLocal(atualizado)
     return atualizado
   }
 
-  const meta = (conta?.user_metadata ?? {}) as Record<string, string>
   const usuario: Usuario = {
     id: crypto.randomUUID(),
-    nome: meta.name || meta.full_name || email.split('@')[0],
+    nome,
     email,
     cpf: '',
     matricula: '',
     cargo: admin ? 'Administrador do Sistema' : 'Conta Microsoft',
-    papel: admin ? 'administrador' : 'visualizador',
-    projeto: PROJETOS_PADRAO[0],
+    papel: papelAprovado,
+    projeto: projetoAprovado,
     status: 'ativo',
     criadoEm: new Date().toISOString(),
     ultimoAcesso: new Date().toISOString(),

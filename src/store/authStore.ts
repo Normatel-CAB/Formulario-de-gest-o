@@ -13,15 +13,26 @@ import {
   sincronizarSessaoMicrosoft,
   type DadosCadastro,
 } from '../lib/auth'
+import { AcessoPendenteError, AcessoRejeitadoError } from '../lib/acesso'
 import { toast } from './toastStore'
+
+/** Situação do acesso quando a conta Microsoft autenticou mas não pode entrar. */
+export interface EstadoAcesso {
+  estado: 'pendente' | 'rejeitado'
+  email?: string
+  mensagem: string
+}
 
 interface AuthState {
   usuario: Usuario | null
   carregando: boolean
   inicializado: boolean
+  /** Preenchido quando a conta autenticou mas aguarda (ou perdeu) aprovação. */
+  acesso: EstadoAcesso | null
   inicializar: () => Promise<void>
   entrar: (email: string, senha: string, lembrar?: boolean) => Promise<void>
   entrarComMicrosoft: () => Promise<void>
+  reverificarAcesso: () => Promise<void>
   cadastrar: (dados: DadosCadastro, papel?: Papel) => Promise<void>
   sair: () => void
   definirUsuario: (usuario: Usuario) => void
@@ -31,10 +42,18 @@ interface AuthState {
     StrictMode do React montando os efeitos duas vezes em desenvolvimento. */
 let observadorRegistrado = false
 
+/** Traduz o erro do login Microsoft no estado que a interface precisa mostrar. */
+function classificar(erro: unknown): EstadoAcesso | null {
+  if (erro instanceof AcessoPendenteError) return { estado: 'pendente', mensagem: erro.message }
+  if (erro instanceof AcessoRejeitadoError) return { estado: 'rejeitado', mensagem: erro.message }
+  return null
+}
+
 export const useAuthStore = create<AuthState>((set, get) => ({
   usuario: null,
   carregando: true,
   inicializado: false,
+  acesso: null,
   inicializar: async () => {
     await garantirAdministradorPadrao()
 
@@ -47,16 +66,21 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
 
     let usuario = await obterUsuarioDaSessao()
+    let acesso: EstadoAcesso | null = null
+
     if (!usuario) {
       try {
         usuario = await sincronizarSessaoMicrosoft()
         if (usuario) iniciarSessao(usuario.id)
       } catch (err) {
-        toast({
-          variant: 'error',
-          title: 'Não foi possível concluir o login',
-          description: err instanceof Error ? err.message : undefined,
-        })
+        acesso = classificar(err)
+        if (!acesso) {
+          toast({
+            variant: 'error',
+            title: 'Não foi possível concluir o login',
+            description: err instanceof Error ? err.message : undefined,
+          })
+        }
         usuario = null
       }
     }
@@ -65,33 +89,65 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       observadorRegistrado = true
       // A troca do código pela sessão termina depois deste ponto: o listener
       // pega o SIGNED_IN atrasado e completa o login sem recarregar a página.
-      observarSessaoMicrosoft((usuarioMicrosoft) => {
+      observarSessaoMicrosoft(({ usuario: usuarioMicrosoft, erro }) => {
+        if (erro) {
+          const classificado = classificar(erro)
+          if (classificado) set({ acesso: classificado, usuario: null })
+          return
+        }
         if (!usuarioMicrosoft || get().usuario) return
         iniciarSessao(usuarioMicrosoft.id)
-        set({ usuario: usuarioMicrosoft })
+        set({ usuario: usuarioMicrosoft, acesso: null })
         limparParametrosDaUrl()
       })
     }
 
     if (usuario) limparParametrosDaUrl()
-    set({ usuario, carregando: false, inicializado: true })
+    set({ usuario, acesso, carregando: false, inicializado: true })
   },
   entrar: async (email, senha, lembrar = true) => {
     const usuario = await autenticar(email, senha)
     iniciarSessao(usuario.id, lembrar)
-    set({ usuario })
+    set({ usuario, acesso: null })
   },
   entrarComMicrosoft: async () => {
     await iniciarLoginMicrosoft()
   },
+  /** Botão "Verificar novamente" da tela de espera: reconsulta a fila. */
+  reverificarAcesso: async () => {
+    try {
+      const usuario = await sincronizarSessaoMicrosoft()
+      if (usuario) {
+        iniciarSessao(usuario.id)
+        set({ usuario, acesso: null })
+        toast({ variant: 'success', title: 'Acesso aprovado', description: `Bem-vindo, ${usuario.nome}.` })
+        return
+      }
+      set({ acesso: null })
+    } catch (err) {
+      const classificado = classificar(err)
+      if (classificado) {
+        set({ acesso: classificado })
+        if (classificado.estado === 'pendente') {
+          toast({ variant: 'info', title: 'Ainda aguardando aprovação' })
+        }
+        return
+      }
+      toast({
+        variant: 'error',
+        title: 'Não foi possível verificar',
+        description: err instanceof Error ? err.message : undefined,
+      })
+    }
+  },
   cadastrar: async (dados, papel) => {
     const usuario = await cadastrarUsuario(dados, papel)
     iniciarSessao(usuario.id)
-    set({ usuario })
+    set({ usuario, acesso: null })
   },
   sair: () => {
     encerrarSessao()
-    set({ usuario: null })
+    set({ usuario: null, acesso: null })
   },
   definirUsuario: (usuario) => set({ usuario }),
 }))

@@ -63,6 +63,21 @@ VITE_SUPABASE_ANON_KEY=<anon key>
 - erro devolvido na URL (`?error=…`) é lido e exibido em vez de sumir silenciosamente
 - `signOut()` no Supabase ao sair — antes a sessão sobrevivia ao logout e o app reautenticava sozinho
 
+### Acesso por autoatendimento
+
+Não existe cadastro manual de usuário. Quem clica em **Entrar com Microsoft** e ainda não tem acesso gera sozinho uma solicitação pendente e cai numa tela de espera. O administrador só aprova, escolhendo papel e projeto — o acesso libera no login seguinte da pessoa.
+
+A fila fica em `solicitacoes_acesso`, **no Supabase**, e aparece no topo de *Usuários* e da *Administração*. Ela precisa estar no banco: a base de usuários do app vive no IndexedDB de cada aparelho, então um pedido aberto no celular de um colaborador nunca apareceria no seu computador.
+
+O que a migração 002 garante no próprio banco, não só na interface:
+
+- a pessoa só insere solicitação para o **próprio** e-mail, e só como `pendente` com papel `visualizador` — sem isso bastaria editar o JavaScript no navegador para entrar como administrador
+- só quem está em `administradores` aprova, recusa ou reabre
+- **leitura das fichas exige aprovação.** Esta era a brecha que o autoatendimento abria: a policy antiga liberava `SELECT` para todo `authenticated`, então uma conta apenas pendente, barrada na tela, ainda leria tudo chamando a API direto
+- exclusão de ficha passa a ser exclusiva de administrador
+
+> **Vale conferir no Azure:** se o App registration estiver como multi-tenant, qualquer conta Microsoft do mundo consegue autenticar e entrar na fila. Para receber pedido só de quem é da Normatel, deixe-o *Single tenant* em *Authentication → Supported account types*.
+
 ### Quem entra como administrador
 
 A base de usuários vive no dispositivo (IndexedDB), então não existe um "servidor" para consultar papéis no primeiro acesso de cada celular. Quem decide isso é a lista em `src/lib/auth.ts`:
@@ -71,15 +86,24 @@ A base de usuários vive no dispositivo (IndexedDB), então não existe um "serv
 export const EMAILS_ADMINISTRADORES = ['gabriel.cruz@normatel.com.br']
 ```
 
-Um e-mail nessa lista entra como **administrador** ao logar com a Microsoft — e uma conta que já havia entrado antes como visualizador é promovida no login seguinte. Qualquer outra conta Microsoft entra como `visualizador`, e um administrador pode mudar o papel em *Usuários*. Para dar acesso administrativo a mais alguém, acrescente o e-mail (em minúsculas) à lista.
+Um e-mail nessa lista entra direto como **administrador**, sem passar pela fila. Alguém precisa poder entrar para aprovar o primeiro pedido.
+
+A mesma lista existe na tabela `administradores` do Supabase, e é ela que manda de verdade: as policies do banco consultam a tabela, não o código. Para dar acesso administrativo a mais alguém, acrescente o e-mail nos dois lugares — no arquivo (para o app já reconhecer no login) e na tabela (para o banco autorizar as aprovações).
 
 ## Banco de dados (Supabase)
 
-Execute `supabase/schema.sql` no SQL Editor. Em bancos que já existiam, rode também `supabase/migrations/001_ficha_publica_e_equipamentos.sql`, que:
+Execute `supabase/schema.sql` no SQL Editor, depois as migrações em ordem.
+
+`001_ficha_publica_e_equipamentos.sql`:
 
 - libera `INSERT` para o papel anônimo (só inserir — ler, alterar e excluir continuam exigindo login)
 - acrescenta `lotacao` às fichas antigas
 - move `necessidades.pemt` e `necessidades.caminhaoMunck` para `necessidades.equipamentos`
+
+`002_solicitacoes_de_acesso.sql`:
+
+- cria `administradores` e `solicitacoes_acesso` com as policies de aprovação
+- **fecha a leitura das fichas para quem não foi aprovado** (ver *Acesso por autoatendimento*)
 
 O app também normaliza fichas antigas ao carregá-las (`normalizarFormulario` em `src/lib/factory.ts`), então rascunhos locais continuam abrindo.
 

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { AuthLayout } from './AuthLayout'
 import { Input } from '../../components/ui/Field'
 import { Button } from '../../components/ui/Button'
@@ -8,6 +8,7 @@ import { toast } from '../../store/toastStore'
 import { ADMIN_SEED_EMAIL, ADMIN_SEED_SENHA } from '../../lib/auth'
 
 export function Login() {
+  const acesso = useAuthStore((s) => s.acesso)
   const entrar = useAuthStore((s) => s.entrar)
   const entrarComMicrosoft = useAuthStore((s) => s.entrarComMicrosoft)
   const navigate = useNavigate()
@@ -47,6 +48,9 @@ export function Login() {
       setCarregando(false)
     }
   }
+
+  // Voltou ao login com um pedido em aberto: a tela de espera é o lugar certo.
+  if (acesso) return <Navigate to="/acesso" replace />
 
   return (
     <AuthLayout title="Área administrativa" subtitle="Entre com sua conta Microsoft da Normatel.">
