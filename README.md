@@ -105,6 +105,8 @@ Execute `supabase/schema.sql` no SQL Editor, depois as migrações em ordem.
 - cria `administradores` e `solicitacoes_acesso` com as policies de aprovação
 - **fecha a leitura das fichas para quem não foi aprovado** (ver *Acesso por autoatendimento*)
 
+> **Ao editar este arquivo, respeite a nota de formato no topo dele.** O SQL Editor do Supabase divide o script para executar um comando por vez, e a divisão não respeita ponto-e-vírgula dentro de bloco com aspas-dólar nem dentro de comentário. Por isso o arquivo não tem bloco `DO`, o status usa `CHECK` em vez de tipo enumerado, o corpo das funções é uma expressão única sem ponto-e-vírgula, e nenhum comentário contém `;`. A primeira versão tinha essas coisas e falhava com **42601 syntax error**.
+
 O app também normaliza fichas antigas ao carregá-las (`normalizarFormulario` em `src/lib/factory.ts`), então rascunhos locais continuam abrindo.
 
 > A sincronização usa `upsert`. Como o papel anônimo só tem permissão de `INSERT`, um reenvio da *mesma* ficha sem login falha na segunda tentativa e fica na fila offline. Se isso virar um problema na prática, o caminho é uma função `rpc` de envio em vez de abrir `UPDATE` para o anônimo.
