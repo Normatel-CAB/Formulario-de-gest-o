@@ -71,7 +71,9 @@ A lista fica em `solicitacoes_acesso`, **no Supabase**, e aparece no topo de *Us
 
 > **A tabela "Usuários" logo abaixo é outra coisa.** Ela lê o IndexedDB, ou seja, as contas de e-mail e senha **deste navegador**. Quem entra com a Microsoft pelo próprio celular cria o registro no aparelho dele, e isso nunca aparece para você. Foi por isso que a lista parecia vazia mesmo com gente usando o sistema.
 
-**Liberar quem já usava o sistema.** Quem entrava antes da migração 002 não tem linha na tabela e só apareceria na fila depois de logar de novo. O botão **Liberar e-mail** cadastra o acesso já aprovado — a pessoa entra direto no próximo login, sem fila. Se o e-mail já estiver na lista, a ação atualiza a decisão dele.
+**Importar quem já tinha entrado.** As contas que aparecem no painel do Supabase ficam em `auth.users`, a tabela do login — que é do schema `auth` e o app não lê pelo navegador. Antes da migração 002 o login liberava direto sem criar pedido, então `solicitacoes_acesso` ficou vazia mesmo com gente usando o sistema. `004_importar_contas_existentes.sql` copia todas para a fila como pendentes, de uma vez, e aí você aprova com um clique cada. Rodar de novo depois reimporta quem faltou.
+
+**Liberar um e-mail avulso.** Quem entrava antes da migração 002 não tem linha na tabela e só apareceria na fila depois de logar de novo. O botão **Liberar e-mail** cadastra o acesso já aprovado — a pessoa entra direto no próximo login, sem fila. Se o e-mail já estiver na lista, a ação atualiza a decisão dele.
 
 O que a migração 002 garante no próprio banco, não só na interface:
 
