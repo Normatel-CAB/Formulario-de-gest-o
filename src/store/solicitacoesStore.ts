@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import type { Papel } from '../lib/types'
 import {
+  cadastrarAcessoAprovado,
   decidirSolicitacao,
   listarSolicitacoes,
   reabrirSolicitacao,
@@ -15,6 +16,7 @@ interface SolicitacoesState {
   aprovar: (id: string, papel: Papel, projeto: string, decididoPor: string) => Promise<void>
   rejeitar: (id: string, observacao: string, decididoPor: string) => Promise<void>
   reabrir: (id: string) => Promise<void>
+  cadastrar: (email: string, papel: Papel, projeto: string, decididoPor: string) => Promise<void>
 }
 
 export const useSolicitacoesStore = create<SolicitacoesState>((set, get) => ({
@@ -41,6 +43,10 @@ export const useSolicitacoesStore = create<SolicitacoesState>((set, get) => ({
   },
   reabrir: async (id) => {
     await reabrirSolicitacao(id)
+    await get().carregar()
+  },
+  cadastrar: async (email, papel, projeto, decididoPor) => {
+    await cadastrarAcessoAprovado(email, papel, projeto, decididoPor)
     await get().carregar()
   },
 }))

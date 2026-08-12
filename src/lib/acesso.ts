@@ -88,6 +88,43 @@ export async function criarSolicitacao(email: string, nome: string): Promise<Sol
   return data ? paraSolicitacao(data) : null
 }
 
+/**
+ * Cadastra um acesso já aprovado, pelo administrador.
+ *
+ * Serve para liberar quem entrou antes de a fila existir: essas contas foram
+ * criadas no IndexedDB do próprio aparelho da pessoa e nunca apareceram aqui.
+ * Sem isto, a única saída seria pedir para cada um logar de novo só para o
+ * pedido aparecer.
+ */
+export async function cadastrarAcessoAprovado(
+  email: string,
+  papel: Papel,
+  projeto: string,
+  decididoPor: string,
+): Promise<void> {
+  if (!supabase) throw new Error('Cadastro indisponível sem conexão com o Supabase.')
+  const limpo = email.trim().toLowerCase()
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(limpo)) throw new Error('E-mail inválido.')
+
+  const existente = await obterSolicitacao(limpo)
+  if (existente) {
+    // Já está na lista: em vez de recusar, aplica a decisão na linha existente.
+    await decidirSolicitacao(existente.id, { status: 'aprovado', papel, projeto }, decididoPor)
+    return
+  }
+
+  const { error } = await supabase.from(SOLICITACOES_TABLE).insert({
+    email: limpo,
+    nome: '',
+    status: 'aprovado',
+    papel,
+    projeto,
+    decididoEm: new Date().toISOString(),
+    decididoPor,
+  })
+  if (error) throw new Error(error.message)
+}
+
 export async function listarSolicitacoes(): Promise<SolicitacaoAcesso[]> {
   if (!supabase) return []
   const { data, error } = await supabase

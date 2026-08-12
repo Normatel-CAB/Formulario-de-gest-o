@@ -67,7 +67,11 @@ VITE_SUPABASE_ANON_KEY=<anon key>
 
 Não existe cadastro manual de usuário. Quem clica em **Entrar com Microsoft** e ainda não tem acesso gera sozinho uma solicitação pendente e cai numa tela de espera. O administrador só aprova, escolhendo papel e projeto — o acesso libera no login seguinte da pessoa.
 
-A fila fica em `solicitacoes_acesso`, **no Supabase**, e aparece no topo de *Usuários* e da *Administração*. Ela precisa estar no banco: a base de usuários do app vive no IndexedDB de cada aparelho, então um pedido aberto no celular de um colaborador nunca apareceria no seu computador.
+A lista fica em `solicitacoes_acesso`, **no Supabase**, e aparece no topo de *Usuários* e da *Administração* como **Acessos à área administrativa**. É o único cadastro de contas compartilhado entre aparelhos, com três blocos: aguardando aprovação, com acesso liberado e recusados. Dá para mudar papel e projeto de quem já está liberado, e revogar.
+
+> **A tabela "Usuários" logo abaixo é outra coisa.** Ela lê o IndexedDB, ou seja, as contas de e-mail e senha **deste navegador**. Quem entra com a Microsoft pelo próprio celular cria o registro no aparelho dele, e isso nunca aparece para você. Foi por isso que a lista parecia vazia mesmo com gente usando o sistema.
+
+**Liberar quem já usava o sistema.** Quem entrava antes da migração 002 não tem linha na tabela e só apareceria na fila depois de logar de novo. O botão **Liberar e-mail** cadastra o acesso já aprovado — a pessoa entra direto no próximo login, sem fila. Se o e-mail já estiver na lista, a ação atualiza a decisão dele.
 
 O que a migração 002 garante no próprio banco, não só na interface:
 
@@ -105,7 +109,11 @@ Execute `supabase/schema.sql` no SQL Editor, depois as migrações em ordem.
 - cria `administradores` e `solicitacoes_acesso` com as policies de aprovação
 - **fecha a leitura das fichas para quem não foi aprovado** (ver *Acesso por autoatendimento*)
 
-> **Ao editar este arquivo, respeite a nota de formato no topo dele.** O SQL Editor do Supabase divide o script para executar um comando por vez, e a divisão não respeita ponto-e-vírgula dentro de bloco com aspas-dólar nem dentro de comentário. Por isso o arquivo não tem bloco `DO`, o status usa `CHECK` em vez de tipo enumerado, o corpo das funções é uma expressão única sem ponto-e-vírgula, e nenhum comentário contém `;`. A primeira versão tinha essas coisas e falhava com **42601 syntax error**.
+`003_admin_gerencia_acessos.sql`:
+
+- permite ao administrador **cadastrar um acesso já aprovado** (o botão *Liberar e-mail*). A policy da 002 é restrita ao próprio e-mail e a `pendente`, de propósito, para ninguém se aprovar sozinho — esta abre a inserção só para quem está em `administradores`.
+
+> **Ao editar estes arquivos, respeite a nota de formato no topo deles.** O SQL Editor do Supabase divide o script para executar um comando por vez, e a divisão não respeita ponto-e-vírgula dentro de bloco com aspas-dólar nem dentro de comentário. Por isso o arquivo não tem bloco `DO`, o status usa `CHECK` em vez de tipo enumerado, o corpo das funções é uma expressão única sem ponto-e-vírgula, e nenhum comentário contém `;`. A primeira versão tinha essas coisas e falhava com **42601 syntax error**.
 
 O app também normaliza fichas antigas ao carregá-las (`normalizarFormulario` em `src/lib/factory.ts`), então rascunhos locais continuam abrindo.
 

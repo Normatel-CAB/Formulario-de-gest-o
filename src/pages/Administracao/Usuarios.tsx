@@ -215,6 +215,12 @@ export function Usuarios() {
         </CardContent>
       </Card>
 
+      <p className="rounded-md border border-viz-amber/25 bg-viz-amber/10 px-3 py-2.5 text-[11.5px] leading-relaxed text-viz-amber">
+        <b className="font-semibold">Contas locais deste navegador.</b> A tabela abaixo é o cadastro de
+        e-mail e senha guardado neste aparelho, então quem entra com a Microsoft pelo próprio celular
+        não aparece aqui. Quem tem acesso de verdade está no painel acima.
+      </p>
+
       <Card className="overflow-hidden">
         {loading ? (
           <div className="p-8 text-center text-sm text-ink-muted">Carregando usuários…</div>
