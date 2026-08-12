@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import type {
   Agendamento,
@@ -10,7 +10,7 @@ import type {
 } from '../../lib/types'
 import { SimNaoField } from '../../components/ui/Switch'
 import { Input, Select, Textarea } from '../../components/ui/Field'
-import { useUsersStore } from '../../store/usersStore'
+import { listarSolicitacoes } from '../../lib/acesso'
 
 function CondicionalWrapper({ show, children }: { show: boolean; children: React.ReactNode }) {
   return (
@@ -165,16 +165,40 @@ export function VisitaSMSField({
   onChange: (v: AgendamentoVisitaSMS) => void
   formulario: FormularioAvaliacao
 }) {
-  const { usuarios, carregar } = useUsersStore()
+  /**
+   * A lista vem dos acessos liberados no Supabase.
+   *
+   * Antes lia as contas locais (IndexedDB), filtrando por cargo "Técnico de
+   * Segurança". Com o login só por Microsoft essas contas deixaram de existir e
+   * o seletor ficaria vazio em qualquer aparelho novo. Aqui vem quem tem acesso
+   * de verdade, que é a mesma lista em todo lugar.
+   *
+   * A ficha é pública: quem preenche sem login não consegue ler a tabela pelas
+   * policies. Nesse caso o campo aceita o nome digitado à mão, senão o passo
+   * ficaria intransponível para quem está em campo.
+   */
+  const [tecnicos, setTecnicos] = useState<{ id: string; nome: string; email: string }[]>([])
+  const [podeListar, setPodeListar] = useState(true)
 
   useEffect(() => {
-    void carregar()
-  }, [carregar])
-
-  const tecnicos = useMemo(
-    () => usuarios.filter((u) => u.cargo === 'Técnico de Segurança' && u.status === 'ativo'),
-    [usuarios],
-  )
+    let ativo = true
+    void listarSolicitacoes()
+      .then((lista) => {
+        if (!ativo) return
+        const aprovados = lista
+          .filter((s) => s.status === 'aprovado')
+          .map((s) => ({ id: s.id, nome: s.nome || s.email.split('@')[0], email: s.email }))
+          .sort((a, b) => a.nome.localeCompare(b.nome))
+        setTecnicos(aprovados)
+        setPodeListar(aprovados.length > 0)
+      })
+      .catch(() => {
+        if (ativo) setPodeListar(false)
+      })
+    return () => {
+      ativo = false
+    }
+  }, [])
 
   function selecionarTecnico(tecnicoId: string) {
     const tecnico = tecnicos.find((t) => t.id === tecnicoId)
@@ -195,14 +219,28 @@ export function VisitaSMSField({
             <Input label="Data" type="date" value={value.data ?? ''} onChange={(e) => onChange({ ...value, data: e.target.value })} />
             <Input label="Hora" type="time" value={value.hora ?? ''} onChange={(e) => onChange({ ...value, hora: e.target.value })} />
           </div>
-          <Select label="Técnico de Segurança" value={value.tecnicoId ?? ''} onChange={(e) => selecionarTecnico(e.target.value)}>
-            <option value="">Selecione um técnico</option>
-            {tecnicos.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.nome}
-              </option>
-            ))}
-          </Select>
+          {podeListar ? (
+            <Select
+              label="Técnico de Segurança"
+              value={value.tecnicoId ?? ''}
+              onChange={(e) => selecionarTecnico(e.target.value)}
+            >
+              <option value="">Selecione um técnico</option>
+              {tecnicos.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.nome}
+                </option>
+              ))}
+            </Select>
+          ) : (
+            <Input
+              label="Técnico de Segurança"
+              hint="Digite o nome de quem vai acompanhar a visita."
+              value={value.tecnicoNome ?? ''}
+              onChange={(e) => onChange({ ...value, tecnicoNome: e.target.value, tecnicoId: '' })}
+              placeholder="Nome do técnico"
+            />
+          )}
           <Textarea
             label="Observações"
             value={value.observacoes ?? ''}

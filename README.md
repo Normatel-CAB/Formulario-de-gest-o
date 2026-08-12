@@ -27,7 +27,7 @@ npm run dev
 | Rota | Quem acessa | O que é |
 | --- | --- | --- |
 | `/` | qualquer pessoa, sem login | Nova Ficha Técnica de Avaliação (tela inicial) |
-| `/login` | qualquer pessoa | Área administrativa (Microsoft ou e-mail/senha) |
+| `/login` | qualquer pessoa | Área administrativa (só conta Microsoft) |
 | `/dashboard`, `/historico`, `/usuarios`, … | autenticado | Gestão, histórico e administração |
 
 A raiz é a ficha **de propósito**: a maioria dos colaboradores não tem e-mail corporativo, então exigir login na entrada bloquearia justamente quem preenche a ficha. O acesso à área administrativa fica num painel que abre no próprio cabeçalho da ficha.
@@ -69,7 +69,9 @@ Não existe cadastro manual de usuário. Quem clica em **Entrar com Microsoft** 
 
 A lista fica em `solicitacoes_acesso`, **no Supabase**, e aparece no topo de *Usuários* e da *Administração* como **Acessos à área administrativa**. É o único cadastro de contas compartilhado entre aparelhos, com três blocos: aguardando aprovação, com acesso liberado e recusados. Dá para mudar papel e projeto de quem já está liberado, e revogar.
 
-> **A tabela "Usuários" logo abaixo é outra coisa.** Ela lê o IndexedDB, ou seja, as contas de e-mail e senha **deste navegador**. Quem entra com a Microsoft pelo próprio celular cria o registro no aparelho dele, e isso nunca aparece para você. Foi por isso que a lista parecia vazia mesmo com gente usando o sistema.
+**Entrar é só pela conta Microsoft.** O login por e-mail e senha, o cadastro, o "esqueci minha senha" e a tabela de contas locais saíram do app. Aquelas contas viviam no IndexedDB de cada navegador, então a mesma pessoa tinha cadastros diferentes em cada aparelho, e a tela de Usuários acabava mostrando duas listas de usuário. Também saiu a conta semente `admin@empresa.com`, cuja senha padrão aparecia **em texto na tela de login**, num endereço público — era uma porta aberta para a área administrativa.
+
+> Consequência: o seletor de *Técnico de Segurança* no passo 2 passou a listar os acessos aprovados no Supabase. Quem preenche a ficha sem login não consegue ler essa tabela (as policies barram), e nesse caso o campo aceita o nome digitado à mão — senão o passo ficaria intransponível para quem está em campo.
 
 **Importar quem já tinha entrado.** As contas que aparecem no painel do Supabase ficam em `auth.users`, a tabela do login — que é do schema `auth` e o app não lê pelo navegador. Antes da migração 002 o login liberava direto sem criar pedido, então `solicitacoes_acesso` ficou vazia mesmo com gente usando o sistema. `004_importar_contas_existentes.sql` copia todas para a fila como pendentes, de uma vez, e aí você aprova com um clique cada. Rodar de novo depois reimporta quem faltou.
 

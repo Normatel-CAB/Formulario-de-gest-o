@@ -1,17 +1,13 @@
 import { create } from 'zustand'
-import type { Papel, Usuario } from '../lib/types'
+import type { Usuario } from '../lib/types'
 import {
-  autenticar,
-  cadastrarUsuario,
   encerrarSessao,
-  garantirAdministradorPadrao,
   iniciarLoginMicrosoft,
   iniciarSessao,
   lerErroRetornoOAuth,
   observarSessaoMicrosoft,
   obterUsuarioDaSessao,
   sincronizarSessaoMicrosoft,
-  type DadosCadastro,
 } from '../lib/auth'
 import { AcessoPendenteError, AcessoRejeitadoError } from '../lib/acesso'
 import { toast } from './toastStore'
@@ -30,10 +26,8 @@ interface AuthState {
   /** Preenchido quando a conta autenticou mas aguarda (ou perdeu) aprovação. */
   acesso: EstadoAcesso | null
   inicializar: () => Promise<void>
-  entrar: (email: string, senha: string, lembrar?: boolean) => Promise<void>
   entrarComMicrosoft: () => Promise<void>
   reverificarAcesso: () => Promise<void>
-  cadastrar: (dados: DadosCadastro, papel?: Papel) => Promise<void>
   sair: () => void
   definirUsuario: (usuario: Usuario) => void
 }
@@ -55,8 +49,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   inicializado: false,
   acesso: null,
   inicializar: async () => {
-    await garantirAdministradorPadrao()
-
     // Se a Microsoft devolveu um erro na própria URL, mostramos em vez de
     // simplesmente cair de volta na tela de login sem explicação.
     const erroRetorno = lerErroRetornoOAuth()
@@ -105,11 +97,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     if (usuario) limparParametrosDaUrl()
     set({ usuario, acesso, carregando: false, inicializado: true })
   },
-  entrar: async (email, senha, lembrar = true) => {
-    const usuario = await autenticar(email, senha)
-    iniciarSessao(usuario.id, lembrar)
-    set({ usuario, acesso: null })
-  },
   entrarComMicrosoft: async () => {
     await iniciarLoginMicrosoft()
   },
@@ -139,11 +126,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         description: err instanceof Error ? err.message : undefined,
       })
     }
-  },
-  cadastrar: async (dados, papel) => {
-    const usuario = await cadastrarUsuario(dados, papel)
-    iniciarSessao(usuario.id)
-    set({ usuario, acesso: null })
   },
   sair: () => {
     encerrarSessao()

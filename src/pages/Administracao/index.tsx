@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useFormsStore } from '../../store/formsStore'
-import { useUsersStore } from '../../store/usersStore'
+import { useSolicitacoesStore } from '../../store/solicitacoesStore'
 import { useCargosStore } from '../../store/cargosStore'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
@@ -17,15 +17,15 @@ import { FilaAprovacao } from './AcessosCompartilhados'
 
 export function Administracao() {
   const { formularios, loading, carregar, atualizarStatus } = useFormsStore()
-  const { usuarios, carregar: carregarUsuarios } = useUsersStore()
+  const { solicitacoes, carregar: carregarAcessos } = useSolicitacoesStore()
   const { cargos, carregar: carregarCargos } = useCargosStore()
   const [filtroProjeto, setFiltroProjeto] = useState('')
 
   useEffect(() => {
     void carregar()
-    void carregarUsuarios()
+    void carregarAcessos()
     void carregarCargos()
-  }, [carregar, carregarUsuarios, carregarCargos])
+  }, [carregar, carregarAcessos, carregarCargos])
 
   const pendentes = useMemo(
     () =>
@@ -47,7 +47,7 @@ export function Administracao() {
 
       <section className="grid gap-3 sm:grid-cols-3 sm:gap-4">
         <Link to="/usuarios" className="min-w-0">
-          <KpiCard index={1} label="Total de usuários" value={usuarios.length} hint="contas cadastradas" icon="stack" color={VIZ.teal} />
+          <KpiCard index={1} label="Total de usuários" value={solicitacoes.filter((s) => s.status === 'aprovado').length} hint="com acesso liberado" icon="stack" color={VIZ.teal} />
         </Link>
         <KpiCard index={2} label="Fichas em análise" value={pendentes.length} hint="enviadas ou em análise" icon="clock" color={VIZ.amber} />
         <Link to="/administracao/cargos" className="min-w-0">

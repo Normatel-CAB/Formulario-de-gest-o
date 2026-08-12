@@ -1,56 +1,40 @@
 import { useState } from 'react'
-import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
+import { Link, Navigate } from 'react-router-dom'
 import { AuthLayout } from './AuthLayout'
-import { Input } from '../../components/ui/Field'
 import { Button } from '../../components/ui/Button'
 import { useAuthStore } from '../../store/authStore'
-import { toast } from '../../store/toastStore'
-import { ADMIN_SEED_EMAIL, ADMIN_SEED_SENHA } from '../../lib/auth'
 
+/**
+ * Entrada na área administrativa: só conta Microsoft.
+ *
+ * O formulário de e-mail e senha saiu daqui junto com as contas locais. Elas
+ * viviam no IndexedDB de cada navegador, então a mesma pessoa tinha cadastros
+ * diferentes em cada aparelho — e a tela exibia, em texto e num endereço
+ * público, o usuário e a senha da conta semente de administrador.
+ *
+ * Quem não tem acesso ainda entra normalmente, gera a solicitação sozinho e cai
+ * na tela de espera.
+ */
 export function Login() {
   const acesso = useAuthStore((s) => s.acesso)
-  const entrar = useAuthStore((s) => s.entrar)
   const entrarComMicrosoft = useAuthStore((s) => s.entrarComMicrosoft)
-  const navigate = useNavigate()
-  const location = useLocation()
 
-  const [email, setEmail] = useState('')
-  const [senha, setSenha] = useState('')
-  const [mostrarSenha, setMostrarSenha] = useState(false)
-  const [lembrar, setLembrar] = useState(true)
   const [carregando, setCarregando] = useState(false)
-  const [carregandoMicrosoft, setCarregandoMicrosoft] = useState(false)
   const [erro, setErro] = useState('')
+
+  // Voltou ao login com um pedido em aberto: a tela de espera é o lugar certo.
+  if (acesso) return <Navigate to="/acesso" replace />
 
   async function onMicrosoft() {
     setErro('')
-    setCarregandoMicrosoft(true)
+    setCarregando(true)
     try {
       await entrarComMicrosoft()
     } catch (err) {
       setErro(err instanceof Error ? err.message : 'Não foi possível entrar com a Microsoft.')
-      setCarregandoMicrosoft(false)
-    }
-  }
-
-  async function onSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setErro('')
-    setCarregando(true)
-    try {
-      await entrar(email, senha, lembrar)
-      toast({ variant: 'success', title: 'Login realizado com sucesso' })
-      const destino = (location.state as { from?: string } | null)?.from ?? '/dashboard'
-      navigate(destino, { replace: true })
-    } catch (err) {
-      setErro(err instanceof Error ? err.message : 'Não foi possível entrar.')
-    } finally {
       setCarregando(false)
     }
   }
-
-  // Voltou ao login com um pedido em aberto: a tela de espera é o lugar certo.
-  if (acesso) return <Navigate to="/acesso" replace />
 
   return (
     <AuthLayout title="Área administrativa" subtitle="Entre com sua conta Microsoft da Normatel.">
@@ -63,101 +47,29 @@ export function Login() {
         </p>
       )}
 
-      {/* O caminho principal é a conta corporativa; e-mail e senha ficam como
-          alternativa para quem ainda não tem conta Microsoft vinculada. */}
-      <Button
-        type="button"
-        size="lg"
-        className="h-12 w-full"
-        onClick={onMicrosoft}
-        disabled={carregandoMicrosoft}
-      >
+      <Button type="button" size="lg" className="h-12 w-full" onClick={onMicrosoft} disabled={carregando}>
         <svg className="h-4 w-4 shrink-0" viewBox="0 0 21 21" fill="none" aria-hidden="true">
           <rect x="1" y="1" width="9" height="9" fill="#F25022" />
           <rect x="11" y="1" width="9" height="9" fill="#7FBA00" />
           <rect x="1" y="11" width="9" height="9" fill="#00A4EF" />
           <rect x="11" y="11" width="9" height="9" fill="#FFB900" />
         </svg>
-        {carregandoMicrosoft ? 'Redirecionando…' : 'Entrar com Microsoft'}
+        {carregando ? 'Redirecionando…' : 'Entrar com Microsoft'}
       </Button>
 
-      <div className="my-6 flex items-center gap-3">
-        <span className="h-px flex-1 bg-hairline" />
-        <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-txt-faint">ou</span>
-        <span className="h-px flex-1 bg-hairline" />
-      </div>
-
-      <form onSubmit={onSubmit} className="space-y-4" noValidate>
-        <Input
-          label="E-mail"
-          type="email"
-          required
-          autoComplete="username"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="seuemail@empresa.com"
-        />
-        <div className="relative">
-          <Input
-            label="Senha"
-            type={mostrarSenha ? 'text' : 'password'}
-            required
-            autoComplete="current-password"
-            value={senha}
-            onChange={(e) => setSenha(e.target.value)}
-            placeholder="Digite sua senha"
-            className="pr-11"
-          />
-          <button
-            type="button"
-            onClick={() => setMostrarSenha((v) => !v)}
-            className="absolute right-3 top-[31px] text-txt-faint transition-colors hover:text-txt"
-            aria-label={mostrarSenha ? 'Ocultar senha' : 'Mostrar senha'}
-          >
-            {mostrarSenha ? (
-              <svg className="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M3 3l18 18M10.6 10.6a2.5 2.5 0 003.5 3.5M6.5 6.7C4.4 8.1 2.9 10 2 12c1.6 3.6 5.4 7 10 7 1.6 0 3.1-.4 4.4-1.1M9.9 4.2A9.9 9.9 0 0112 4c4.6 0 8.4 3.4 10 7-.5 1.1-1.1 2.1-1.9 3" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            ) : (
-              <svg className="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M2 12c1.6-3.6 5.4-7 10-7s8.4 3.4 10 7c-1.6 3.6-5.4 7-10 7s-8.4-3.4-10-7z" strokeLinecap="round" strokeLinejoin="round" />
-                <circle cx="12" cy="12" r="3" />
-              </svg>
-            )}
-          </button>
-        </div>
-
-        <div className="flex items-center justify-between">
-          <label className="flex items-center gap-2 text-[12px] text-txt-dim">
-            <input
-              type="checkbox"
-              checked={lembrar}
-              onChange={(e) => setLembrar(e.target.checked)}
-              className="h-4 w-4 rounded border-hairline bg-surface-2 accent-brand"
-            />
-            Lembrar acesso
-          </label>
-          <Link to="/esqueci-senha" className="text-[12px] font-medium text-brand-lite hover:underline">
-            Esqueci minha senha
-          </Link>
-        </div>
-
-        <Button type="submit" variant="outline" className="w-full" size="lg" loading={carregando}>
-          Entrar com e-mail
-        </Button>
-      </form>
-
-      <div className="mt-6 space-y-1.5 text-center">
-        <p className="text-[12px] text-txt-dim">
-          Não tem uma conta?{' '}
-          <Link to="/cadastro" className="font-medium text-brand-lite hover:underline">
-            Ir para cadastro
-          </Link>
-        </p>
-        <p className="text-[11px] text-txt-faint">
-          Acesso administrador padrão: {ADMIN_SEED_EMAIL} / {ADMIN_SEED_SENHA}
+      <div className="mt-6 rounded-md border border-hairline bg-surface-2 px-3 py-3">
+        <p className="text-[11.5px] leading-relaxed text-txt-dim">
+          Primeira vez? Entrar já registra seu pedido de acesso. Um administrador aprova e você entra
+          no login seguinte.
         </p>
       </div>
+
+      <p className="mt-5 text-center text-[11px] text-txt-faint">
+        Para preencher uma ficha técnica não precisa de login.{' '}
+        <Link to="/" className="font-medium text-txt-dim underline-offset-4 hover:text-txt hover:underline">
+          Ir para a ficha
+        </Link>
+      </p>
     </AuthLayout>
   )
 }
