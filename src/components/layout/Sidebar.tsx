@@ -48,7 +48,7 @@ const NAV: NavGroup[] = [
     label: 'Formulários',
     icon: FormsIcon,
     children: [
-      { to: '/novo', label: 'Novo Formulário', icon: PlusIcon, roles: ['administrador', 'operador'] },
+      { to: '/novo', label: 'Nova Ficha', icon: PlusIcon, roles: ['administrador', 'operador'] },
       { to: '/historico', label: 'Histórico', icon: HistoryIcon },
     ],
   },

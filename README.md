@@ -26,11 +26,15 @@ npm run dev
 
 | Rota | Quem acessa | O que é |
 | --- | --- | --- |
-| `/` | qualquer pessoa, sem login | Nova Ficha Técnica de Avaliação (tela inicial) |
-| `/login` | qualquer pessoa | Área administrativa (só conta Microsoft) |
-| `/dashboard`, `/historico`, `/usuarios`, … | autenticado | Gestão, histórico e administração |
+| `/login` | qualquer pessoa | Entrada, só conta Microsoft |
+| `/acesso` | autenticado sem aprovação | Tela de espera da solicitação |
+| `/`, `/novo` | qualquer conta aprovada | Nova Ficha Técnica de Avaliação |
+| `/historico` | qualquer conta aprovada | Fichas próprias (administrador vê todas) |
+| `/dashboard`, `/usuarios`, … | administrador | Indicadores e administração |
 
-A raiz é a ficha **de propósito**: a maioria dos colaboradores não tem e-mail corporativo, então exigir login na entrada bloquearia justamente quem preenche a ficha. O acesso à área administrativa fica num painel que abre no próprio cabeçalho da ficha.
+**Tudo passa pelo login.** A ficha já foi pública, e isso trazia dois problemas: quem preenchia não conseguia ver o próprio histórico (não sabia se o envio chegou), e a ficha ficava sem dono. Como todo colaborador tem e-mail `@normatel.com.br`, exigir login não bloqueia ninguém e resolve os dois.
+
+Preencher ficha **não depende de papel**: qualquer conta aprovada preenche, porque é a função central do app. O papel controla a parte administrativa.
 
 ## Login Microsoft (Supabase + Entra ID)
 
@@ -73,6 +77,8 @@ A lista fica em `solicitacoes_acesso`, **no Supabase**, e aparece no topo de *Us
 
 > Consequência: o seletor de *Técnico de Segurança* no passo 2 passou a listar os acessos aprovados no Supabase. Quem preenche a ficha sem login não consegue ler essa tabela (as policies barram), e nesse caso o campo aceita o nome digitado à mão — senão o passo ficaria intransponível para quem está em campo.
 
+**Liberação automática por domínio.** Quem entra com e-mail `@normatel.com.br` já vem aprovado como `visualizador` — preenche a ficha e vê o próprio histórico na hora, sem fila. Outros domínios continuam caindo na aprovação. A regra vive na tabela `dominios_liberados` e é aplicada pela função `registrar_acesso` (migração 005), com `security definer`: fica no banco de propósito, porque no navegador bastaria editar o JavaScript para se inserir como aprovado.
+
 **Importar quem já tinha entrado.** As contas que aparecem no painel do Supabase ficam em `auth.users`, a tabela do login — que é do schema `auth` e o app não lê pelo navegador. Antes da migração 002 o login liberava direto sem criar pedido, então `solicitacoes_acesso` ficou vazia mesmo com gente usando o sistema. `004_importar_contas_existentes.sql` copia todas para a fila como pendentes, de uma vez, e aí você aprova com um clique cada. Rodar de novo depois reimporta quem faltou.
 
 **Liberar um e-mail avulso.** Quem entrava antes da migração 002 não tem linha na tabela e só apareceria na fila depois de logar de novo. O botão **Liberar e-mail** cadastra o acesso já aprovado — a pessoa entra direto no próximo login, sem fila. Se o e-mail já estiver na lista, a ação atualiza a decisão dele.
@@ -112,6 +118,11 @@ Execute `supabase/schema.sql` no SQL Editor, depois as migrações em ordem.
 
 - cria `administradores` e `solicitacoes_acesso` com as policies de aprovação
 - **fecha a leitura das fichas para quem não foi aprovado** (ver *Acesso por autoatendimento*)
+
+`005_acesso_por_dominio.sql`:
+
+- cria `dominios_liberados` e a função `registrar_acesso`, que decide aprovado ou pendente pelo domínio
+- **fecha o envio anônimo de ficha**: agora inserir exige acesso aprovado, igual à leitura
 
 `003_admin_gerencia_acessos.sql`:
 
@@ -159,6 +170,15 @@ Os gráficos são feitos à mão em SVG/CSS de propósito — o app não tem Rec
 - O stepper mostra "Etapa N de 4 · nome" no celular, onde não cabe o rótulo de cada etapa
 - Tabelas rolam dentro do próprio wrapper e escondem colunas de apoio nas telas estreitas; nada cria rolagem horizontal na página
 - Barra de ações da ficha, diálogos e avisos respeitam a área segura (notch e barra inferior do iPhone)
+
+### Ficha enviada que não aparecia no histórico
+
+Eram duas causas somadas:
+
+- o histórico casava o autor por `criadoPorId`, que é o id da conta **local** e é gerado por aparelho. A mesma pessoa recebia um id diferente em cada navegador, então as fichas enviadas do celular sumiam quando ela abria no computador. Agora o vínculo é pelo **e-mail** da conta Microsoft, igual em qualquer lugar.
+- ficha preenchida sem login não tinha dono nenhum, e ninguém além do administrador conseguia vê-la. Com o login obrigatório isso deixa de existir.
+
+Além disso, uma ficha que ainda não subiu para a nuvem mostra o selo **Aguardando envio** no histórico. Antes ela ficava indistinguível de uma enviada, e a pessoa achava que tinha se perdido.
 
 ### Exportar fotos (.zip)
 

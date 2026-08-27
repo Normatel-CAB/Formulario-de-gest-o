@@ -203,6 +203,15 @@ export interface FormularioAvaliacao {
   syncPending?: boolean
   criadoPorId?: string
   criadoPorNome?: string
+  /**
+   * Identidade estável do autor.
+   *
+   * `criadoPorId` é o id da conta LOCAL, gerado por aparelho: a mesma pessoa
+   * recebe um id diferente em cada navegador, então filtrar o histórico por ele
+   * escondia as próprias fichas de quem trocava de dispositivo. O e-mail vem da
+   * conta Microsoft e é o mesmo em qualquer lugar.
+   */
+  criadoPorEmail?: string
 }
 
 export interface DashboardIndicadores {

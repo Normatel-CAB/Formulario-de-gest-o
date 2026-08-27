@@ -5,6 +5,7 @@ import { useAuthStore } from '../store/authStore'
 import { Card, CardContent } from '../components/ui/Card'
 import { Input, Select } from '../components/ui/Field'
 import { StatusBadge } from '../components/ui/StatusBadge'
+import { Badge } from '../components/ui/Badge'
 import { EmptyState } from '../components/ui/EmptyState'
 import { SkeletonCard } from '../components/ui/Skeleton'
 import { Button } from '../components/ui/Button'
@@ -72,11 +73,16 @@ export function Historico() {
 
   const visiveis = useMemo(() => {
     let lista = formularios
-    if (usuario?.papel === 'operador') {
-      lista = lista.filter((f) => f.criadoPorId === usuario.id)
-    }
-    if (!ehAdministrador && usuario) {
-      lista = lista.filter((f) => !f.projeto || !usuario.projeto || f.projeto === usuario.projeto)
+    // Administrador vê tudo. Os demais veem as próprias fichas, casadas pelo
+    // e-mail: o id local muda de aparelho para aparelho e escondia do autor as
+    // fichas que ele mesmo tinha enviado de outro celular.
+    if (usuario && !ehAdministrador) {
+      const meuEmail = usuario.email.toLowerCase()
+      lista = lista.filter(
+        (f) =>
+          (f.criadoPorEmail ?? '').toLowerCase() === meuEmail ||
+          (Boolean(f.criadoPorId) && f.criadoPorId === usuario.id),
+      )
     }
     return lista
   }, [formularios, usuario, ehAdministrador])
@@ -257,7 +263,13 @@ export function Historico() {
                         <p className="line-clamp-2 text-[12.5px] font-semibold">
                           {f.infoGerais.localAtividade || 'Atividade sem nome'}
                         </p>
-                        <StatusBadge status={f.status} className="shrink-0" />
+                        <span className="flex shrink-0 flex-col items-end gap-1">
+                          <StatusBadge status={f.status} />
+                          {/* Sem este aviso, uma ficha que ainda não subiu parece
+                              ter sumido: a pessoa viu "enviado" e não entende por
+                              que ninguém recebeu. */}
+                          {f.syncPending && <Badge tone="amber">Aguardando envio</Badge>}
+                        </span>
                       </div>
                       <p className="mt-2 truncate text-[11.5px] text-txt-dim">
                         {f.infoGerais.numeroSolicitacao ? `Nº ${f.infoGerais.numeroSolicitacao}` : 'Sem número'}

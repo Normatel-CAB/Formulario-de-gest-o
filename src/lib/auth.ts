@@ -1,10 +1,5 @@
 import type { Papel, Usuario } from './types'
-import {
-  AcessoPendenteError,
-  AcessoRejeitadoError,
-  criarSolicitacao,
-  obterSolicitacao,
-} from './acesso'
+import { AcessoPendenteError, AcessoRejeitadoError, registrarAcesso } from './acesso'
 import { PROJETOS_PADRAO } from './types'
 import { supabase } from './supabase'
 import {
@@ -136,7 +131,10 @@ export async function autenticar(email: string, senha: string): Promise<Usuario>
     Precisa estar na lista de "Redirect URLs" do Supabase (Authentication →
     URL Configuration) e nas "Redirect URIs" do app no Azure. */
 export function urlRetornoMicrosoft() {
-  return `${window.location.origin}/dashboard`
+  // A raiz é a ficha, que é o que a maioria vem fazer. Quem administra chega ao
+  // painel pelo menu. Manter o retorno em "/" também evita depender de mais um
+  // caminho na lista de Redirect URLs do Supabase.
+  return `${window.location.origin}/`
 }
 
 export async function iniciarLoginMicrosoft(): Promise<void> {
@@ -236,20 +234,17 @@ export async function sincronizarSessaoMicrosoft(): Promise<Usuario | null> {
     papelAprovado = 'administrador'
   } else {
     // Uma falha de rede aqui não pode virar "acesso liberado". Se não deu para
-    // consultar a fila, o login não passa.
-    const solicitacao = await obterSolicitacao(email).catch(() => {
+    // registrar, o login não passa.
+    const acesso = await registrarAcesso(nome).catch(() => {
       throw new AuthError('Não foi possível verificar seu acesso agora. Tente novamente em instantes.')
     })
 
-    if (!solicitacao) {
-      await criarSolicitacao(email, nome)
-      throw new AcessoPendenteError()
-    }
-    if (solicitacao.status === 'pendente') throw new AcessoPendenteError()
-    if (solicitacao.status === 'rejeitado') throw new AcessoRejeitadoError(solicitacao.observacao)
+    if (!acesso) throw new AcessoPendenteError()
+    if (acesso.status === 'pendente') throw new AcessoPendenteError()
+    if (acesso.status === 'rejeitado') throw new AcessoRejeitadoError()
 
-    papelAprovado = solicitacao.papel
-    projetoAprovado = solicitacao.projeto || projetoAprovado
+    papelAprovado = acesso.papel
+    projetoAprovado = acesso.projeto || projetoAprovado
   }
 
   const existente = await obterUsuarioPorEmail(email)

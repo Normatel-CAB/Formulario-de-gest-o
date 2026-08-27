@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, Navigate } from 'react-router-dom'
+import { Navigate } from 'react-router-dom'
 import { AuthLayout } from './AuthLayout'
 import { Button } from '../../components/ui/Button'
 import { useAuthStore } from '../../store/authStore'
@@ -58,7 +58,7 @@ export function AcessoPendente() {
           {[
             'Sua conta Microsoft foi autenticada com sucesso',
             'A solicitação de acesso já está registrada, você não precisa fazer nada',
-            'Um administrador aprova e o acesso libera no próximo login',
+            'Um administrador aprova e você já consegue preencher fichas',
           ].map((passo, i) => (
             <li key={i} className="flex gap-3 text-[12px] text-txt-dim">
               <span className="grid h-5 w-5 shrink-0 place-items-center rounded-md border border-hairline bg-surface-2 text-[10px] font-bold text-txt">
@@ -76,11 +76,6 @@ export function AcessoPendente() {
             Verificar novamente
           </Button>
         )}
-        <Link to="/" className="contents">
-          <Button variant="outline" className="w-full">
-            Preencher uma ficha técnica
-          </Button>
-        </Link>
         <Button variant="ghost" className="w-full" onClick={sair}>
           Sair desta conta
         </Button>

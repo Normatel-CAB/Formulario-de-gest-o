@@ -1,5 +1,4 @@
 import type { ReactNode } from 'react'
-import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ThemeToggle } from '../../components/theme/ThemeToggle'
 import { Logo } from '../../components/ui/Logo'
@@ -99,9 +98,7 @@ export function AuthLayout({ children, title, subtitle }: { children: ReactNode;
           </motion.div>
 
           <p className="mt-6 text-center text-[11px] text-txt-faint">
-            <Link to="/" className="font-medium text-txt-dim underline-offset-4 hover:text-txt hover:underline">
-              Voltar para a ficha técnica
-            </Link>
+            Normatel Engenharia · Acesso restrito a colaboradores
           </p>
         </div>
       </div>

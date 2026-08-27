@@ -1,7 +1,6 @@
 import { lazy, Suspense } from 'react'
-import { Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes } from 'react-router-dom'
 import { AppShell } from './components/layout/AppShell'
-import { PublicFormShell } from './components/layout/PublicFormShell'
 import { SkeletonCard } from './components/ui/Skeleton'
 import { Toaster } from './components/ui/Toaster'
 import { ErrorBoundary } from './components/ui/ErrorBoundary'
@@ -21,6 +20,14 @@ const Cargos = lazy(() => import('./pages/Administracao/Cargos').then((m) => ({ 
 const Permissoes = lazy(() => import('./pages/Administracao/Permissoes').then((m) => ({ default: m.Permissoes })))
 const Configuracoes = lazy(() => import('./pages/Configuracoes').then((m) => ({ default: m.Configuracoes })))
 
+/** Destino da raiz conforme o papel: preencher para quem preenche, consultar
+    para quem só consulta. */
+function Inicio() {
+  const papel = useAuthStore((s) => s.usuario?.papel)
+  if (papel === 'visualizador') return <Navigate to="/historico" replace />
+  return <NovoFormulario />
+}
+
 export default function App() {
   const inicializado = useAuthStore((s) => s.inicializado)
 
@@ -29,11 +36,6 @@ export default function App() {
   return (
     <Suspense fallback={null}>
       <Routes>
-        {/* A raiz é a ficha técnica aberta: a maioria dos colaboradores não tem
-            e-mail corporativo, então o login não pode ser a porta de entrada.
-            O acesso administrativo fica no cabeçalho da própria ficha. */}
-        <Route path="/" element={<PublicFormShell />} />
-        <Route path="/formulario" element={<PublicFormShell />} />
         <Route path="/login" element={<Login />} />
         {/* Fora do RequireAuth de propósito: quem cai aqui justamente não tem
             sessão no app, só na Microsoft. */}
@@ -46,7 +48,12 @@ export default function App() {
                 <Suspense fallback={<SkeletonCard />}>
                   <ErrorBoundary>
                     <Routes>
-                      <Route path="/dashboard" element={<Dashboard />} />
+                      {/* Quem entra pelo domínio já vem como operador, então
+                          cai direto na ficha sem esperar promoção. O
+                          visualizador, que só consulta, começa no histórico —
+                          mandá-lo para um formulário que ele não pode enviar
+                          seria um beco sem saída. */}
+                      <Route path="/" element={<Inicio />} />
                       <Route
                         path="/novo"
                         element={
@@ -63,6 +70,7 @@ export default function App() {
                           </RequireRole>
                         }
                       />
+                      <Route path="/dashboard" element={<Dashboard />} />
                       <Route path="/historico" element={<Historico />} />
                       <Route path="/formulario/:id" element={<FormDetail />} />
                       <Route path="/perfil" element={<MeuPerfil />} />

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, Navigate } from 'react-router-dom'
+import { Navigate } from 'react-router-dom'
 import { AuthLayout } from './AuthLayout'
 import { Button } from '../../components/ui/Button'
 import { useAuthStore } from '../../store/authStore'
@@ -59,16 +59,14 @@ export function Login() {
 
       <div className="mt-6 rounded-md border border-hairline bg-surface-2 px-3 py-3">
         <p className="text-[11.5px] leading-relaxed text-txt-dim">
-          Primeira vez? Entrar já registra seu pedido de acesso. Um administrador aprova e você entra
-          no login seguinte.
+          Com e-mail <b className="font-semibold">@normatel.com.br</b> o acesso é liberado na hora e
+          você já pode preencher fichas. Outros domínios passam por aprovação.
         </p>
       </div>
 
       <p className="mt-5 text-center text-[11px] text-txt-faint">
-        Para preencher uma ficha técnica não precisa de login.{' '}
-        <Link to="/" className="font-medium text-txt-dim underline-offset-4 hover:text-txt hover:underline">
-          Ir para a ficha
-        </Link>
+        Preencher a ficha também é por aqui. Entre com a conta da Normatel para registrar e acompanhar
+        os seus envios.
       </p>
     </AuthLayout>
   )

@@ -79,27 +79,31 @@ export async function obterSolicitacao(email: string): Promise<SolicitacaoAcesso
 }
 
 /**
- * Abre a solicitação do próprio usuário logado.
+ * Registra o acesso da conta que acabou de autenticar e devolve a situação.
  *
- * O papel vai fixo em `visualizador` porque a policy do banco exige isso na
- * inserção: se o app pudesse escolher o papel aqui, bastaria editar o
- * JavaScript no navegador para entrar como administrador.
+ * Quem decide se entra aprovado ou pendente é o banco, pela função
+ * `registrar_acesso` (migração 005): e-mail de domínio liberado entra como o
+ * papel configurado, os demais ficam na fila. A regra mora lá de propósito — no
+ * navegador bastaria editar o JavaScript para se inserir como administrador.
+ *
+ * Chamar de novo é inofensivo: a função só atualiza o nome e devolve o estado
+ * atual, sem mexer em status nem papel de quem já foi decidido.
  */
-export async function criarSolicitacao(email: string, nome: string): Promise<SolicitacaoAcesso | null> {
+export async function registrarAcesso(nome: string): Promise<{
+  status: StatusSolicitacao
+  papel: Papel
+  projeto: string
+} | null> {
   if (!supabase) return null
-  const { data, error } = await supabase
-    .from(SOLICITACOES_TABLE)
-    .insert({ email: email.trim().toLowerCase(), nome: nome.trim(), status: 'pendente', papel: 'visualizador' })
-    .select()
-    .maybeSingle()
-
-  // Corrida entre duas abas ou dois cliques: o índice único barra a segunda
-  // inserção. Nesse caso a solicitação existe, e é ela que interessa.
-  if (error) {
-    if (error.code === '23505' || /duplicate key/i.test(error.message)) return obterSolicitacao(email)
-    throw new Error(error.message)
+  const { data, error } = await supabase.rpc('registrar_acesso', { p_nome: nome.trim() })
+  if (error) throw new Error(error.message)
+  const linha = Array.isArray(data) ? data[0] : data
+  if (!linha) return null
+  return {
+    status: (linha.status as StatusSolicitacao) ?? 'pendente',
+    papel: (linha.papel as Papel) ?? 'visualizador',
+    projeto: String(linha.projeto ?? ''),
   }
-  return data ? paraSolicitacao(data) : null
 }
 
 /**
