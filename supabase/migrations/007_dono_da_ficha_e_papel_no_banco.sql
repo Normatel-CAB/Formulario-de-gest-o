@@ -73,6 +73,23 @@ as $fn$
   end
 $fn$;
 
+-- Quem pode decidir uma ficha, ou seja, aprovar e reprovar.
+--
+-- Hoje devolve o mesmo que eh_administrador. Existe separada de proposito: a
+-- intencao e ter gente que aprova e reprova ficha SEM administrar acessos de
+-- usuario, e essas duas coisas nao sao o mesmo poder. Quando esse papel for
+-- criado, basta acrescentar o nome dele na lista aqui embaixo e as policies de
+-- leitura e alteracao passam a respeita-lo sozinhas, sem reescrever nada.
+create or replace function pode_decidir_ficha()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $fn$
+  select papel_atual() in ('administrador')
+$fn$;
+
 -- 3) Leitura: cada um ve as proprias fichas -------------------------------
 drop policy if exists "Permitir leitura para usuários autenticados" on formularios_avaliacao;
 drop policy if exists "Leitura para acesso aprovado" on formularios_avaliacao;
@@ -81,7 +98,7 @@ create policy "Leitura das proprias fichas"
   on formularios_avaliacao for select
   to authenticated
   using (
-    eh_administrador()
+    pode_decidir_ficha()
     or (
       papel_atual() in ('operador', 'visualizador')
       and lower(coalesce("criadoPorEmail", '')) = email_da_sessao()
@@ -118,7 +135,7 @@ create policy "Atualizacao do autor ou do admin"
   on formularios_avaliacao for update
   to authenticated
   using (
-    eh_administrador()
+    pode_decidir_ficha()
     or (
       papel_atual() = 'operador'
       and lower(coalesce("criadoPorEmail", '')) = email_da_sessao()
@@ -126,7 +143,7 @@ create policy "Atualizacao do autor ou do admin"
     )
   )
   with check (
-    eh_administrador()
+    pode_decidir_ficha()
     or (
       papel_atual() = 'operador'
       and lower(coalesce("criadoPorEmail", '')) = email_da_sessao()
