@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useFormsStore } from '../store/formsStore'
 import { useAuthStore } from '../store/authStore'
@@ -11,6 +11,7 @@ import { SkeletonCard } from '../components/ui/Skeleton'
 import { Button } from '../components/ui/Button'
 import { Pagination } from '../components/ui/Pagination'
 import { Reveal } from '../components/ui/Reveal'
+import { Tabs, type AbaItem } from '../components/ui/Tabs'
 import {
   baixarZipFotos,
   baixarZipFotosLote,
@@ -21,10 +22,14 @@ import {
 } from '../lib/exportarFotos'
 import { toast } from '../store/toastStore'
 import type { FormStatus, FormularioAvaliacao } from '../lib/types'
-import { PROJETOS_PADRAO, STATUS_LABELS } from '../lib/types'
+import { PROJETOS_PADRAO } from '../lib/types'
+import { STATUS_COLOR } from '../lib/chartTheme'
 import { formatarDataHora } from '../lib/format'
 
 const POR_PAGINA = 9
+
+/** Situação selecionada no histórico. Cada valor, exceto `todas`, é um status. */
+type Aba = FormStatus | 'todas'
 
 function IconeFotos() {
   return (
@@ -58,7 +63,8 @@ export function Historico() {
   const { formularios, loading, carregar } = useFormsStore()
   const usuario = useAuthStore((s) => s.usuario)
   const [busca, setBusca] = useState('')
-  const [status, setStatus] = useState<FormStatus | 'todos'>('todos')
+  const [aba, setAba] = useState<Aba>('enviado')
+  const abaEscolhidaPeloUsuario = useRef(false)
   const [filtroProjeto, setFiltroProjeto] = useState('')
   const [de, setDe] = useState('')
   const [ate, setAte] = useState('')
@@ -90,7 +96,7 @@ export function Historico() {
   const filtrados = useMemo(() => {
     const termo = busca.trim().toLowerCase()
     return visiveis.filter((f) => {
-      const matchStatus = status === 'todos' || f.status === status
+      const matchAba = aba === 'todas' || f.status === aba
       const matchProjeto = !ehAdministrador || !filtroProjeto || f.projeto === filtroProjeto
       const matchBusca =
         !termo ||
@@ -103,15 +109,68 @@ export function Historico() {
       const dataFicha = f.infoGerais.dataAvaliacao || (f.createdAt ?? '').slice(0, 10)
       const matchDe = !de || (dataFicha !== '' && dataFicha >= de)
       const matchAte = !ate || (dataFicha !== '' && dataFicha <= ate)
-      return matchStatus && matchProjeto && matchBusca && matchDe && matchAte
+      return matchAba && matchProjeto && matchBusca && matchDe && matchAte
     })
-  }, [visiveis, busca, status, filtroProjeto, ehAdministrador, de, ate])
+  }, [visiveis, busca, aba, filtroProjeto, ehAdministrador, de, ate])
+
+  /**
+   * Contagem por situação, sempre sobre a lista completa do usuário.
+   *
+   * De propósito não passa pelos outros filtros: o número na aba precisa
+   * responder "quanto tem no total", senão pesquisar algo zeraria os contadores
+   * e o planejador acharia que a fila esvaziou.
+   */
+  const contagem = useMemo(() => {
+    const base: Record<FormStatus, number> = {
+      rascunho: 0,
+      enviado: 0,
+      em_analise: 0,
+      aprovado: 0,
+      reprovado: 0,
+    }
+    for (const f of visiveis) base[f.status] += 1
+    return base
+  }, [visiveis])
+
+  const abas: AbaItem<Aba>[] = useMemo(() => {
+    const lista: AbaItem<Aba>[] = [
+      { valor: 'enviado', label: 'Aguardando análise', total: contagem.enviado, cor: STATUS_COLOR.enviado },
+      { valor: 'em_analise', label: 'Em análise', total: contagem.em_analise, cor: STATUS_COLOR.em_analise },
+      { valor: 'aprovado', label: 'Aprovadas', total: contagem.aprovado, cor: STATUS_COLOR.aprovado },
+      { valor: 'reprovado', label: 'Reprovadas', total: contagem.reprovado, cor: STATUS_COLOR.reprovado },
+    ]
+    // Rascunho é assunto de quem escreveu, não do planejador: a aba só aparece
+    // quando existe algum, para não poluir a fila com uma aba sempre vazia.
+    if (contagem.rascunho > 0) {
+      lista.push({ valor: 'rascunho', label: 'Rascunhos', total: contagem.rascunho, cor: STATUS_COLOR.rascunho })
+    }
+    lista.push({ valor: 'todas', label: 'Todas', total: visiveis.length })
+    return lista
+  }, [contagem, visiveis.length])
 
   const lote = useMemo(() => resumoLote(filtrados), [filtrados])
 
+  /**
+   * Se a fila de análise está vazia na primeira carga, cai em "Todas".
+   *
+   * Abrir numa aba vazia dá a impressão de que não há ficha nenhuma. Só vale
+   * enquanto a pessoa não tiver escolhido aba, para a tela nunca trocar debaixo
+   * do clique dela.
+   */
+  useEffect(() => {
+    if (loading || abaEscolhidaPeloUsuario.current) return
+    if (aba === 'enviado' && contagem.enviado === 0 && visiveis.length > 0) setAba('todas')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, contagem.enviado, visiveis.length])
+
+  function trocarAba(nova: Aba) {
+    abaEscolhidaPeloUsuario.current = true
+    setAba(nova)
+  }
+
   useEffect(() => {
     setPagina(1)
-  }, [busca, status, filtroProjeto, de, ate])
+  }, [busca, aba, filtroProjeto, de, ate])
 
   /**
    * Exporta as fotos de todas as fichas filtradas num único zip.
@@ -158,28 +217,22 @@ export function Historico() {
           Histórico de Formulários
         </h2>
         <p className="mt-1 text-[13px] text-txt-dim">
-          {usuario?.papel === 'operador'
-            ? 'Pesquise e acompanhe o status dos formulários que você criou.'
-            : 'Pesquise, filtre e acompanhe o status de todas as fichas técnicas.'}
+          {ehAdministrador
+            ? 'Comece pelas que aguardam análise. As abas separam por situação.'
+            : 'Acompanhe a situação das fichas que você enviou.'}
         </p>
       </div>
 
+      <Tabs itens={abas} valor={aba} onChange={trocarAba} />
+
       <Card>
-        <CardContent className={`grid gap-3 p-4 ${ehAdministrador ? 'md:grid-cols-[1fr_180px_180px]' : 'md:grid-cols-[1fr_220px]'}`}>
+        <CardContent className={`grid gap-3 p-4 ${ehAdministrador ? 'md:grid-cols-[1fr_220px]' : ''}`}>
           <Input
             placeholder="Pesquisar por responsável, local ou nº da solicitação"
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
             aria-label="Pesquisar formulários"
           />
-          <Select value={status} onChange={(e) => setStatus(e.target.value as FormStatus | 'todos')} aria-label="Filtrar por status">
-            <option value="todos">Todos os status</option>
-            {(Object.keys(STATUS_LABELS) as FormStatus[]).map((s) => (
-              <option key={s} value={s}>
-                {STATUS_LABELS[s]}
-              </option>
-            ))}
-          </Select>
           {ehAdministrador && (
             <Select value={filtroProjeto} onChange={(e) => setFiltroProjeto(e.target.value)} aria-label="Filtrar por projeto">
               <option value="">Todos os projetos</option>
@@ -238,12 +291,28 @@ export function Historico() {
         </div>
       ) : filtrados.length === 0 ? (
         <EmptyState
-          title="Nenhum formulário encontrado"
-          description="Ajuste os filtros de pesquisa ou crie um novo formulário."
+          title={
+            aba === 'enviado'
+              ? 'Nenhuma ficha aguardando análise'
+              : aba === 'todas'
+                ? 'Nenhuma ficha encontrada'
+                : `Nenhuma ficha em "${abas.find((a) => a.valor === aba)?.label ?? ''}"`
+          }
+          description={
+            aba === 'enviado'
+              ? 'A fila está limpa. Fichas novas aparecem aqui assim que forem enviadas.'
+              : 'Ajuste a pesquisa ou veja em outra aba.'
+          }
           action={
-            <Link to="/novo">
-              <Button>Criar formulário</Button>
-            </Link>
+            aba !== 'todas' ? (
+              <Button variant="outline" onClick={() => trocarAba('todas')}>
+                Ver todas as fichas
+              </Button>
+            ) : (
+              <Link to="/novo">
+                <Button>Criar formulário</Button>
+              </Link>
+            )
           }
         />
       ) : (

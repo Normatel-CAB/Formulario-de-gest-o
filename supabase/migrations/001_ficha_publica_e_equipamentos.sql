@@ -4,7 +4,7 @@
 -- Rode este arquivo no SQL Editor do Supabase em um banco que já tenha o
 -- schema.sql aplicado. Ele é idempotente: pode rodar mais de uma vez.
 --
--- `infoGerais` e `necessidades` são jsonb, então os campos novos (lotacao e
+-- As colunas infoGerais e necessidades sao jsonb, entao os campos novos (lotacao e
 -- necessidades.equipamentos) não exigem alteração de coluna. O que muda aqui é
 -- só a permissão de envio anônimo e a normalização dos dados já gravados.
 -- ============================================================================

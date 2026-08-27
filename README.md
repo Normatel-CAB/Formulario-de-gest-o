@@ -28,13 +28,14 @@ npm run dev
 | --- | --- | --- |
 | `/login` | qualquer pessoa | Entrada, só conta Microsoft |
 | `/acesso` | autenticado sem aprovação | Tela de espera da solicitação |
-| `/`, `/novo` | qualquer conta aprovada | Nova Ficha Técnica de Avaliação |
-| `/historico` | qualquer conta aprovada | Fichas próprias (administrador vê todas) |
+| `/` | conta aprovada | Redireciona conforme o papel |
+| `/novo` | operador, administrador | Nova Ficha Técnica de Avaliação |
+| `/historico` | conta aprovada | Fichas próprias (administrador vê todas) |
 | `/dashboard`, `/usuarios`, … | administrador | Indicadores e administração |
 
 **Tudo passa pelo login.** A ficha já foi pública, e isso trazia dois problemas: quem preenchia não conseguia ver o próprio histórico (não sabia se o envio chegou), e a ficha ficava sem dono. Como todo colaborador tem e-mail `@normatel.com.br`, exigir login não bloqueia ninguém e resolve os dois.
 
-Preencher ficha **não depende de papel**: qualquer conta aprovada preenche, porque é a função central do app. O papel controla a parte administrativa.
+A raiz (`/`) leva cada um ao seu lugar: `operador` e `administrador` caem na ficha, `visualizador` cai no histórico — mandá-lo a um formulário que ele não pode enviar seria um beco sem saída.
 
 ## Login Microsoft (Supabase + Entra ID)
 
@@ -77,7 +78,15 @@ A lista fica em `solicitacoes_acesso`, **no Supabase**, e aparece no topo de *Us
 
 > Consequência: o seletor de *Técnico de Segurança* no passo 2 passou a listar os acessos aprovados no Supabase. Quem preenche a ficha sem login não consegue ler essa tabela (as policies barram), e nesse caso o campo aceita o nome digitado à mão — senão o passo ficaria intransponível para quem está em campo.
 
-**Liberação automática por domínio.** Quem entra com e-mail `@normatel.com.br` já vem aprovado como `visualizador` — preenche a ficha e vê o próprio histórico na hora, sem fila. Outros domínios continuam caindo na aprovação. A regra vive na tabela `dominios_liberados` e é aplicada pela função `registrar_acesso` (migração 005), com `security definer`: fica no banco de propósito, porque no navegador bastaria editar o JavaScript para se inserir como aprovado.
+**Liberação automática por domínio.** Quem entra com e-mail `@normatel.com.br` já vem aprovado como **`operador`**: preenche a ficha e vê o próprio histórico na hora, sem esperar ninguém mudar o papel dele. Outros domínios continuam caindo na aprovação. A regra vive na tabela `dominios_liberados` e é aplicada pela função `registrar_acesso` (migrações 005 e 006), com `security definer` — fica no banco de propósito, porque no navegador bastaria editar o JavaScript para se inserir como aprovado.
+
+Os papéis significam exatamente o que dizem:
+
+| Papel | Pode |
+| --- | --- |
+| `visualizador` | só consulta o histórico |
+| `operador` | preenche ficha e vê as próprias (padrão do domínio) |
+| `administrador` | tudo, inclusive aprovar acessos e ver todas as fichas |
 
 **Importar quem já tinha entrado.** As contas que aparecem no painel do Supabase ficam em `auth.users`, a tabela do login — que é do schema `auth` e o app não lê pelo navegador. Antes da migração 002 o login liberava direto sem criar pedido, então `solicitacoes_acesso` ficou vazia mesmo com gente usando o sistema. `004_importar_contas_existentes.sql` copia todas para a fila como pendentes, de uma vez, e aí você aprova com um clique cada. Rodar de novo depois reimporta quem faltou.
 
@@ -124,6 +133,11 @@ Execute `supabase/schema.sql` no SQL Editor, depois as migrações em ordem.
 - cria `dominios_liberados` e a função `registrar_acesso`, que decide aprovado ou pendente pelo domínio
 - **fecha o envio anônimo de ficha**: agora inserir exige acesso aprovado, igual à leitura
 
+`006_dominio_entra_como_operador.sql`:
+
+- o domínio passa a liberar como `operador` em vez de `visualizador`, para ninguém precisar esperar promoção só para preencher
+- promove quem já entrou pela regra automática enquanto ela dava `visualizador`, sem tocar em quem você decidiu à mão
+
 `003_admin_gerencia_acessos.sql`:
 
 - permite ao administrador **cadastrar um acesso já aprovado** (o botão *Liberar e-mail*). A policy da 002 é restrita ao próprio e-mail e a `pendente`, de propósito, para ninguém se aprovar sozinho — esta abre a inserção só para quem está em `administradores`.
@@ -144,7 +158,7 @@ Sem as variáveis `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY`, o app funciona
 - Campos condicionais (Sim/Não), datas de agendamento e quantidade de dias com fim de semana
 - Upload de imagens, captura pela câmera, localização GPS com mapa embutido e assinatura digital
 - Rascunho automático (autosave) + salvar rascunho manual
-- Histórico com pesquisa, filtros e status (Rascunho, Enviado, Em Análise, Aprovado, Reprovado)
+- Histórico separado em abas por situação (Aguardando análise, Em análise, Aprovadas, Reprovadas, Todas), abrindo na fila que espera decisão
 - **Exportar fotos** no histórico: uma ficha por vez ou todas as do período filtrado, em .zip nomeado pelo nº da solicitação
 - Dashboard com indicadores e últimos envios
 - Funcionamento offline com fila de sincronização automática ao reconectar
@@ -170,6 +184,16 @@ Os gráficos são feitos à mão em SVG/CSS de propósito — o app não tem Rec
 - O stepper mostra "Etapa N de 4 · nome" no celular, onde não cabe o rótulo de cada etapa
 - Tabelas rolam dentro do próprio wrapper e escondem colunas de apoio nas telas estreitas; nada cria rolagem horizontal na página
 - Barra de ações da ficha, diálogos e avisos respeitam a área segura (notch e barra inferior do iPhone)
+
+### Abas do histórico
+
+O histórico abre em **Aguardando análise** — as fichas que ninguém olhou ainda —, que é o que o planejador precisa ver de imediato. Cada aba mostra a contagem, e a contagem ignora a pesquisa de propósito: se ela seguisse o filtro, procurar por um nome zeraria os números e pareceria que a fila esvaziou.
+
+Detalhes que evitam becos sem saída:
+
+- a aba **Rascunhos** só aparece quando existe algum, para não deixar uma aba sempre vazia na fila
+- se não há nada aguardando análise na primeira carga, abre em **Todas** — abrir numa aba vazia dá a impressão de que não existe ficha nenhuma. Isso só vale enquanto a pessoa não tiver escolhido aba, para a tela nunca trocar debaixo do clique dela
+- o seletor "Todos os status" saiu: fazia o mesmo trabalho das abas, e dois controles para a mesma coisa é o tipo de duplicação que já confundiu nesta tela
 
 ### Ficha enviada que não aparecia no histórico
 
