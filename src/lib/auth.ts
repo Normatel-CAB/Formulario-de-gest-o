@@ -1,5 +1,6 @@
 import type { Papel, Usuario } from './types'
 import { AcessoPendenteError, AcessoRejeitadoError, registrarAcesso } from './acesso'
+import { nomeDoCargo, permissoesDoCargo } from './cargos'
 import { PROJETOS_PADRAO } from './types'
 import { supabase } from './supabase'
 import {
@@ -64,7 +65,12 @@ export function garantirAdministradorPadrao() {
         email: ADMIN_SEED_EMAIL,
         cpf: '',
         matricula: 'ADM-0001',
-        cargo: 'Administrador do Sistema',
+        cargo: 'administrador',
+        cargoNome: 'Administrador',
+        // Lista vazia de propósito: `papel administrador` já é curinga em
+        // temPermissao, e duplicar as 26 permissões aqui criaria uma segunda
+        // fonte da verdade que envelheceria sozinha.
+        permissoes: [],
         papel: 'administrador',
         projeto: PROJETOS_PADRAO[0],
         status: 'ativo',
@@ -101,6 +107,7 @@ export async function cadastrarUsuario(dados: DadosCadastro, papel: Papel = 'ope
     cpf: dados.cpf,
     matricula: dados.matricula,
     cargo: dados.cargo,
+    permissoes: [],
     papel,
     projeto: dados.projeto,
     status: 'ativo',
@@ -229,9 +236,11 @@ export async function sincronizarSessaoMicrosoft(): Promise<Usuario | null> {
 
   let papelAprovado: Papel = 'visualizador'
   let projetoAprovado = PROJETOS_PADRAO[0] as string
+  let cargoAprovado = 'visualizador'
 
   if (admin) {
     papelAprovado = 'administrador'
+    cargoAprovado = 'administrador'
   } else {
     // Uma falha de rede aqui não pode virar "acesso liberado". Se não deu para
     // registrar, o login não passa.
@@ -244,17 +253,28 @@ export async function sincronizarSessaoMicrosoft(): Promise<Usuario | null> {
     if (acesso.status === 'rejeitado') throw new AcessoRejeitadoError()
 
     papelAprovado = acesso.papel
+    cargoAprovado = acesso.cargo || acesso.papel
     projetoAprovado = acesso.projeto || projetoAprovado
   }
+
+  // As permissões vêm do cargo, no banco. Se a consulta falhar, a sessão
+  // segue com a lista vazia: menos botão na tela é um erro seguro, e as
+  // policies continuam valendo do lado de lá de qualquer jeito.
+  const permissoes = await permissoesDoCargo(cargoAprovado).catch(() => [] as string[])
+  const cargoNome = await nomeDoCargo(cargoAprovado)
 
   const existente = await obterUsuarioPorEmail(email)
   if (existente) {
     if (existente.status === 'inativo') throw new AuthError('Este usuário está desativado. Contate o administrador.')
     const atualizado: Usuario = {
       ...existente,
-      // O papel vem sempre da decisão do administrador (ou da lista de admins).
-      // Sem isso, mudar o papel na aprovação não teria efeito em quem já entrou.
+      // Cargo, papel e permissões vêm sempre da decisão gravada no banco, nunca
+      // do que estava salvo no aparelho. Sem isso, promover alguém a Planejador
+      // não teria efeito para quem já tinha entrado uma vez naquele navegador.
       papel: papelAprovado,
+      cargo: cargoAprovado,
+      cargoNome,
+      permissoes,
       projeto: existente.projeto || projetoAprovado,
       ultimoAcesso: new Date().toISOString(),
     }
@@ -268,7 +288,9 @@ export async function sincronizarSessaoMicrosoft(): Promise<Usuario | null> {
     email,
     cpf: '',
     matricula: '',
-    cargo: admin ? 'Administrador do Sistema' : 'Conta Microsoft',
+    cargo: cargoAprovado,
+    cargoNome,
+    permissoes,
     papel: papelAprovado,
     projeto: projetoAprovado,
     status: 'ativo',

@@ -1,150 +1,87 @@
 import { create } from 'zustand'
 import type { Cargo, StatusRegistro } from '../lib/types'
-import { listarCargosLocais, removerCargoLocal, salvarCargoLocal } from '../lib/db'
-import { PERMISSOES_ADMINISTRADOR_PADRAO, PERMISSOES_OPERADOR_PADRAO, PERMISSOES_VISUALIZADOR_PADRAO, slugificar } from '../lib/permissoes'
+import { atualizarCargo, criarCargo, listarCargos, removerCargo } from '../lib/cargos'
 
-const CARGOS_PADRAO: Array<Omit<Cargo, 'id' | 'criadoEm' | 'atualizadoEm'>> = [
-  {
-    nome: 'Administrador',
-    identificador: 'administrador',
-    descricao: 'Acesso total ao sistema, incluindo administração, usuários e cargos.',
-    cor: '#0b6e4f',
-    icone: 'crown',
-    status: 'ativo',
-    permissoes: PERMISSOES_ADMINISTRADOR_PADRAO,
-    sistema: true,
-  },
-  {
-    nome: 'Operador',
-    identificador: 'operador',
-    descricao: 'Cria e acompanha formulários de avaliação de serviços.',
-    cor: '#2563eb',
-    icone: 'user',
-    status: 'ativo',
-    permissoes: PERMISSOES_OPERADOR_PADRAO,
-    sistema: true,
-  },
-  {
-    nome: 'Visualizador',
-    identificador: 'visualizador',
-    descricao: 'Consulta o dashboard e o histórico em modo somente leitura.',
-    cor: '#4b5563',
-    icone: 'eye',
-    status: 'ativo',
-    permissoes: PERMISSOES_VISUALIZADOR_PADRAO,
-    sistema: true,
-  },
-  {
-    nome: 'Técnico de Segurança',
-    identificador: 'tecnico-de-seguranca',
-    descricao: 'Realiza visitas SMS e acompanhamentos técnicos de segurança do trabalho.',
-    cor: '#d97706',
-    icone: 'wrench',
-    status: 'ativo',
-    permissoes: PERMISSOES_VISUALIZADOR_PADRAO,
-    sistema: false,
-  },
-]
-
+/**
+ * Cargos, agora vindos do Supabase.
+ *
+ * A semente dos três cargos de sistema saiu daqui e foi para a migração 008.
+ * Semear pelo navegador significava que cada aparelho criava a sua própria
+ * cópia, e nenhuma delas era a que as policies do banco consultavam.
+ */
 interface CargosState {
   cargos: Cargo[]
   loading: boolean
+  erro: string | null
   carregar: () => Promise<void>
-  criar: (dados: Omit<Cargo, 'id' | 'identificador' | 'criadoEm' | 'atualizadoEm' | 'sistema'>) => Promise<Cargo>
-  atualizar: (id: string, patch: Partial<Cargo>) => Promise<void>
-  duplicar: (id: string) => Promise<void>
-  alternarStatus: (id: string, status: StatusRegistro) => Promise<void>
-  remover: (id: string, emUso: boolean) => Promise<{ ok: boolean; motivo?: string }>
+  criar: (dados: Omit<Cargo, 'id' | 'identificador' | 'criadoEm' | 'atualizadoEm' | 'sistema'>) => Promise<void>
+  atualizar: (identificador: string, patch: Partial<Cargo>) => Promise<void>
+  duplicar: (identificador: string) => Promise<void>
+  alternarStatus: (identificador: string, status: StatusRegistro) => Promise<void>
+  remover: (identificador: string, emUso: boolean) => Promise<{ ok: boolean; motivo?: string }>
 }
 
-let seedEmAndamento: Promise<Cargo[]> | null = null
-
-async function garantirCargosPadrao(): Promise<Cargo[]> {
-  if (seedEmAndamento) return seedEmAndamento
-
-  seedEmAndamento = (async () => {
-    const existentes = await listarCargosLocais()
-    const nomesExistentes = new Set(existentes.map((c) => c.nome))
-    const faltantes = CARGOS_PADRAO.filter((c) => !nomesExistentes.has(c.nome))
-    const agora = new Date().toISOString()
-    for (const cargo of faltantes) {
-      await salvarCargoLocal({ ...cargo, id: crypto.randomUUID(), criadoEm: agora, atualizadoEm: agora })
-    }
-    return faltantes.length > 0 ? listarCargosLocais() : existentes
-  })()
-
-  try {
-    return await seedEmAndamento
-  } finally {
-    seedEmAndamento = null
-  }
+function mensagem(err: unknown) {
+  return err instanceof Error ? err.message : 'Falha ao falar com o banco de dados.'
 }
 
 export const useCargosStore = create<CargosState>((set, get) => ({
   cargos: [],
   loading: false,
+  erro: null,
   carregar: async () => {
-    set({ loading: true })
-    const cargos = await garantirCargosPadrao()
-    set({ cargos, loading: false })
+    set({ loading: true, erro: null })
+    try {
+      set({ cargos: await listarCargos(), loading: false })
+    } catch (err) {
+      set({ erro: mensagem(err), loading: false })
+    }
   },
   criar: async (dados) => {
-    const agora = new Date().toISOString()
-    const cargo: Cargo = {
-      ...dados,
-      id: crypto.randomUUID(),
-      identificador: slugificar(dados.nome),
-      criadoEm: agora,
-      atualizadoEm: agora,
-    }
-    await salvarCargoLocal(cargo)
-    set({ cargos: [...get().cargos, cargo].sort((a, b) => a.nome.localeCompare(b.nome)) })
-    return cargo
+    await criarCargo(dados)
+    await get().carregar()
   },
-  atualizar: async (id, patch) => {
-    const atual = get().cargos.find((c) => c.id === id)
-    if (!atual) return
-    const atualizado: Cargo = { ...atual, ...patch, atualizadoEm: new Date().toISOString() }
-    await salvarCargoLocal(atualizado)
-    set({ cargos: get().cargos.map((c) => (c.id === id ? atualizado : c)) })
+  atualizar: async (identificador, patch) => {
+    await atualizarCargo(identificador, patch)
+    await get().carregar()
   },
-  duplicar: async (id) => {
-    const original = get().cargos.find((c) => c.id === id)
+  duplicar: async (identificador) => {
+    const original = get().cargos.find((c) => c.identificador === identificador)
     if (!original) return
-    const agora = new Date().toISOString()
     let nome = `${original.nome} (cópia)`
     let contador = 2
     while (get().cargos.some((c) => c.nome === nome)) {
       nome = `${original.nome} (cópia ${contador})`
       contador += 1
     }
-    const copia: Cargo = {
-      ...original,
-      id: crypto.randomUUID(),
+    // A cópia nunca herda `sistema`: ela é um cargo comum, que pode ser
+    // editado e excluído como qualquer outro.
+    await criarCargo({
       nome,
-      identificador: slugificar(nome),
-      sistema: false,
-      criadoEm: agora,
-      atualizadoEm: agora,
-    }
-    await salvarCargoLocal(copia)
-    set({ cargos: [...get().cargos, copia].sort((a, b) => a.nome.localeCompare(b.nome)) })
+      descricao: original.descricao,
+      cor: original.cor,
+      icone: original.icone,
+      status: original.status,
+      permissoes: [...original.permissoes],
+    })
+    await get().carregar()
   },
-  alternarStatus: async (id, status) => {
-    const atual = get().cargos.find((c) => c.id === id)
-    if (!atual) return
-    const atualizado = { ...atual, status, atualizadoEm: new Date().toISOString() }
-    await salvarCargoLocal(atualizado)
-    set({ cargos: get().cargos.map((c) => (c.id === id ? atualizado : c)) })
+  alternarStatus: async (identificador, status) => {
+    await atualizarCargo(identificador, { status })
+    await get().carregar()
   },
-  remover: async (id, emUso) => {
-    const atual = get().cargos.find((c) => c.id === id)
+  remover: async (identificador, emUso) => {
+    const atual = get().cargos.find((c) => c.identificador === identificador)
     if (!atual) return { ok: false, motivo: 'Cargo não encontrado.' }
     if (atual.sistema) return { ok: false, motivo: 'Cargos padrão do sistema não podem ser excluídos.' }
     if (emUso) return { ok: false, motivo: 'Este cargo está em uso por um ou mais usuários e não pode ser excluído.' }
 
-    await removerCargoLocal(id)
-    set({ cargos: get().cargos.filter((c) => c.id !== id) })
-    return { ok: true }
+    try {
+      await removerCargo(identificador)
+      await get().carregar()
+      return { ok: true }
+    } catch (err) {
+      return { ok: false, motivo: mensagem(err) }
+    }
   },
 }))

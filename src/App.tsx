@@ -6,6 +6,7 @@ import { Toaster } from './components/ui/Toaster'
 import { ErrorBoundary } from './components/ui/ErrorBoundary'
 import { RequireAuth, RequireRole } from './components/auth/RequireAuth'
 import { useAuthStore } from './store/authStore'
+import { temPermissao } from './lib/types'
 
 const Login = lazy(() => import('./pages/Auth/Login').then((m) => ({ default: m.Login })))
 const AcessoPendente = lazy(() => import('./pages/Auth/AcessoPendente').then((m) => ({ default: m.AcessoPendente })))
@@ -20,11 +21,11 @@ const Cargos = lazy(() => import('./pages/Administracao/Cargos').then((m) => ({ 
 const Permissoes = lazy(() => import('./pages/Administracao/Permissoes').then((m) => ({ default: m.Permissoes })))
 const Configuracoes = lazy(() => import('./pages/Configuracoes').then((m) => ({ default: m.Configuracoes })))
 
-/** Destino da raiz conforme o papel: preencher para quem preenche, consultar
-    para quem só consulta. */
+/** Destino da raiz conforme a permissão: preencher para quem preenche,
+    consultar para quem só consulta. */
 function Inicio() {
-  const papel = useAuthStore((s) => s.usuario?.papel)
-  if (papel === 'visualizador') return <Navigate to="/historico" replace />
+  const usuario = useAuthStore((s) => s.usuario)
+  if (!temPermissao(usuario ?? null, 'formularios.criar')) return <Navigate to="/historico" replace />
   return <NovoFormulario />
 }
 

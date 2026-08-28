@@ -194,21 +194,15 @@ export async function removerCodigoRecuperacao(email: string) {
   await db.delete('recuperacaoSenha', email.toLowerCase())
 }
 
-export async function listarCargosLocais() {
-  const db = await getDB()
-  const all = await db.getAll('cargos')
-  return all.sort((a, b) => a.nome.localeCompare(b.nome))
-}
-
-export async function salvarCargoLocal(cargo: Cargo) {
-  const db = await getDB()
-  await db.put('cargos', cargo)
-}
-
-export async function removerCargoLocal(id: string) {
-  const db = await getDB()
-  await db.delete('cargos', id)
-}
+/*
+ * Os cargos saíram daqui na migração 008 e vivem no Supabase (lib/cargos.ts).
+ *
+ * Guardá-los por aparelho era a causa de a tela de Cargos não conceder nada:
+ * cada navegador criava a própria cópia dos cargos, e nenhuma delas era a que
+ * as policies do banco consultavam. A store `cargos` do IndexedDB continua
+ * declarada no schema local só para não forçar um upgrade de versão que
+ * apagaria o banco offline de quem tem ficha pendente de sincronizar.
+ */
 
 export async function listarFuncoesLocais() {
   const db = await getDB()

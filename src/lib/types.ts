@@ -16,12 +16,32 @@ export interface Usuario {
   email: string
   cpf: string
   matricula: string
+  /** Identificador do cargo no banco, por exemplo `planejador`. */
   cargo: string
+  /** Nome do cargo para exibir. Guardado junto para a tela não precisar
+      esperar a lista de cargos carregar só para escrever uma palavra. */
+  cargoNome?: string
+  /**
+   * Permissões do cargo, copiadas na entrada.
+   *
+   * Servem para esconder botão e atalho de navegação, e só para isso. Quem
+   * decide de verdade é o banco, pelas policies da migração 008: se alguém
+   * editar esta lista no navegador, ganha botões que a API recusa.
+   */
+  permissoes: string[]
   papel: Papel
   projeto: string
   status: StatusUsuario
   criadoEm: string
   ultimoAcesso?: string
+}
+
+/** Uma permissão do catálogo (ver MODULOS_PERMISSOES) na lista da pessoa. */
+export function temPermissao(usuario: Usuario | null, permissao: string): boolean {
+  if (!usuario) return false
+  // O administrador clássico continua passando por tudo, igual ao banco.
+  if (usuario.papel === 'administrador') return true
+  return usuario.permissoes.includes(permissao)
 }
 
 export type StatusRegistro = 'ativo' | 'inativo'

@@ -77,7 +77,7 @@ export function MeuPerfil() {
             <CardTitle>Dados pessoais</CardTitle>
             <CardDescription>Informações associadas à sua conta.</CardDescription>
           </div>
-          <Badge tone="brand">{PAPEL_LABELS[usuario.papel]}</Badge>
+          <Badge tone="brand">{usuario.cargoNome || PAPEL_LABELS[usuario.papel]}</Badge>
         </CardHeader>
         <CardContent>
           <form onSubmit={salvarPerfil} className="grid gap-4 sm:grid-cols-2">
@@ -85,7 +85,7 @@ export function MeuPerfil() {
             <Input label="E-mail" value={usuario.email} disabled />
             <Input label="CPF" value={usuario.cpf || 'Não informado'} disabled />
             <Input label="Matrícula" value={usuario.matricula || 'Não informada'} disabled />
-            <Input label="Cargo" value={usuario.cargo || 'Não informado'} disabled />
+            <Input label="Cargo" value={usuario.cargoNome || usuario.cargo || 'Não informado'} disabled />
             <Input label="Último acesso" value={usuario.ultimoAcesso ? formatarDataHora(usuario.ultimoAcesso) : 'Nunca acessou'} disabled />
             <div className="sm:col-span-2">
               <Button type="submit" loading={salvandoPerfil}>

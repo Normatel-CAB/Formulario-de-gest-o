@@ -1,4 +1,6 @@
 import { supabase } from './supabase'
+import { permissoesDoCargo } from './cargos'
+import { papelEquivalente } from './permissoes'
 import type { Papel } from './types'
 
 export const SOLICITACOES_TABLE = 'solicitacoes_acesso'
@@ -11,6 +13,14 @@ export interface SolicitacaoAcesso {
   nome: string
   status: StatusSolicitacao
   papel: Papel
+  /**
+   * Identificador do cargo, que é o que as policies leem desde a migração 008.
+   *
+   * `papel` continua existindo ao lado porque três lugares do banco ainda o
+   * usam como atalho e porque ele é o valor herdado de quem entrou antes dos
+   * cargos. Para permissão, o que vale é este campo.
+   */
+  cargo: string
   projeto: string
   observacao?: string
   criadoEm: string
@@ -45,6 +55,9 @@ function paraSolicitacao(linha: Record<string, unknown>): SolicitacaoAcesso {
     nome: String(linha.nome ?? ''),
     status: (linha.status as StatusSolicitacao) ?? 'pendente',
     papel: (linha.papel as Papel) ?? 'visualizador',
+    // Acesso criado antes da 008 não tem cargo. Cai no papel, que é
+    // exatamente o valor que a migração usou para preencher a coluna.
+    cargo: String(linha.cargo || linha.papel || 'visualizador'),
     projeto: String(linha.projeto ?? ''),
     observacao: (linha.observacao as string) ?? '',
     criadoEm: String(linha.criadoEm ?? new Date().toISOString()),
@@ -92,6 +105,7 @@ export async function obterSolicitacao(email: string): Promise<SolicitacaoAcesso
 export async function registrarAcesso(nome: string): Promise<{
   status: StatusSolicitacao
   papel: Papel
+  cargo: string
   projeto: string
 } | null> {
   if (!supabase) return null
@@ -102,6 +116,7 @@ export async function registrarAcesso(nome: string): Promise<{
   return {
     status: (linha.status as StatusSolicitacao) ?? 'pendente',
     papel: (linha.papel as Papel) ?? 'visualizador',
+    cargo: String(linha.cargo || linha.papel || 'visualizador'),
     projeto: String(linha.projeto ?? ''),
   }
 }
@@ -116,7 +131,7 @@ export async function registrarAcesso(nome: string): Promise<{
  */
 export async function cadastrarAcessoAprovado(
   email: string,
-  papel: Papel,
+  cargo: string,
   projeto: string,
   decididoPor: string,
 ): Promise<void> {
@@ -127,7 +142,7 @@ export async function cadastrarAcessoAprovado(
   const existente = await obterSolicitacao(limpo)
   if (existente) {
     // Já está na lista: em vez de recusar, aplica a decisão na linha existente.
-    await decidirSolicitacao(existente.id, { status: 'aprovado', papel, projeto }, decididoPor)
+    await decidirSolicitacao(existente.id, { status: 'aprovado', cargo, projeto }, decididoPor)
     return
   }
 
@@ -135,12 +150,25 @@ export async function cadastrarAcessoAprovado(
     email: limpo,
     nome: '',
     status: 'aprovado',
-    papel,
+    cargo,
+    papel: await papelDoCargo(cargo),
     projeto,
     decididoEm: new Date().toISOString(),
     decididoPor,
   })
   if (error) throw new Error(error.message)
+}
+
+/**
+ * Traduz o cargo para o `papel` antigo, que o banco ainda exige.
+ *
+ * A coluna papel tem CHECK com três valores. Gravar o identificador de um
+ * cargo novo ali seria recusado pelo Postgres, então ela recebe o equivalente
+ * mais próximo. Quem manda em permissão é a coluna cargo.
+ */
+async function papelDoCargo(identificador: string): Promise<Papel> {
+  const permissoes = await permissoesDoCargo(identificador).catch(() => [] as string[])
+  return papelEquivalente(identificador, permissoes)
 }
 
 export async function listarSolicitacoes(): Promise<SolicitacaoAcesso[]> {
@@ -155,15 +183,17 @@ export async function listarSolicitacoes(): Promise<SolicitacaoAcesso[]> {
 
 export async function decidirSolicitacao(
   id: string,
-  decisao: { status: Exclude<StatusSolicitacao, 'pendente'>; papel?: Papel; projeto?: string; observacao?: string },
+  decisao: { status: Exclude<StatusSolicitacao, 'pendente'>; cargo?: string; projeto?: string; observacao?: string },
   decididoPor: string,
 ): Promise<void> {
   if (!supabase) throw new Error('Aprovação indisponível sem conexão com o Supabase.')
+  const cargo = decisao.cargo || 'visualizador'
   const { error } = await supabase
     .from(SOLICITACOES_TABLE)
     .update({
       status: decisao.status,
-      papel: decisao.papel ?? 'visualizador',
+      cargo,
+      papel: await papelDoCargo(cargo),
       projeto: decisao.projeto ?? '',
       observacao: decisao.observacao ?? '',
       decididoEm: new Date().toISOString(),

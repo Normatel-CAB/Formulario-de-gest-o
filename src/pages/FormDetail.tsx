@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useFormsStore } from '../store/formsStore'
 import { useAuthStore } from '../store/authStore'
-import type { FormularioAvaliacao, FormStatus } from '../lib/types'
+import { temPermissao, type FormularioAvaliacao, type FormStatus } from '../lib/types'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card'
 import { StatusBadge } from '../components/ui/StatusBadge'
 import { Button } from '../components/ui/Button'
@@ -47,11 +47,22 @@ export function FormDetail() {
     )
   }
 
-  const ehDono = formulario.criadoPorId === usuario?.id
-  const podeAlterarStatus = usuario?.papel === 'administrador'
-  const podeEditar = formulario.status === 'rascunho' && (usuario?.papel === 'administrador' || ehDono)
-  const podeExcluir = usuario?.papel === 'administrador' || (usuario?.papel === 'operador' && ehDono)
-  const somenteLeitura = usuario?.papel === 'visualizador'
+  // Dono pelo e-mail, não pelo id: o id é gerado por aparelho, então a mesma
+  // pessoa deixava de ser dona da própria ficha ao trocar de navegador.
+  const ehDono =
+    (formulario.criadoPorEmail ?? '').toLowerCase() === (usuario?.email ?? '').toLowerCase() ||
+    (Boolean(formulario.criadoPorId) && formulario.criadoPorId === usuario?.id)
+
+  // Espelham as policies da migração 008. Aqui só escondem botão: quem editar
+  // o JavaScript ganha o botão de volta e recebe a recusa da API.
+  const podeAlterarStatus =
+    temPermissao(usuario, 'formularios.aprovar') ||
+    temPermissao(usuario, 'formularios.reprovar') ||
+    temPermissao(usuario, 'formularios.reabrir')
+  const podeEditar =
+    formulario.status === 'rascunho' && (podeAlterarStatus || (ehDono && temPermissao(usuario, 'formularios.editar')))
+  const podeExcluir = temPermissao(usuario, 'formularios.excluir') && (podeAlterarStatus || ehDono)
+  const somenteLeitura = !podeEditar && !podeAlterarStatus
 
   async function mudarStatus(status: FormStatus) {
     if (!formulario) return

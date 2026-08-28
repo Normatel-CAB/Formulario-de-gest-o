@@ -22,7 +22,7 @@ import {
 } from '../lib/exportarFotos'
 import { toast } from '../store/toastStore'
 import type { FormStatus, FormularioAvaliacao } from '../lib/types'
-import { PROJETOS_PADRAO } from '../lib/types'
+import { PROJETOS_PADRAO, temPermissao } from '../lib/types'
 import { STATUS_COLOR } from '../lib/chartTheme'
 import { formatarDataHora } from '../lib/format'
 
@@ -71,7 +71,9 @@ export function Historico() {
   const [pagina, setPagina] = useState(1)
   const [exportando, setExportando] = useState(false)
 
-  const ehAdministrador = usuario?.papel === 'administrador'
+  // Ver ficha de outra pessoa é permissão, não papel. O recorte por projeto
+  // acontece no banco: aqui a lista já chega filtrada.
+  const ehAdministrador = temPermissao(usuario, 'historico.ver.de.todos')
 
   useEffect(() => {
     void carregar()

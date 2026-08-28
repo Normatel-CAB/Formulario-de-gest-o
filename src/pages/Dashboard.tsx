@@ -15,7 +15,7 @@ import { RowBar } from '../components/ui/RowBar'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/Table'
 import { DonutChart } from '../components/dashboard/DonutChart'
 import { BarsChart } from '../components/dashboard/BarsChart'
-import { PROJETOS_PADRAO, STATUS_LABELS, LOTACOES, EQUIPAMENTO_CHAVES, EQUIPAMENTO_LABELS } from '../lib/types'
+import { PROJETOS_PADRAO, STATUS_LABELS, LOTACOES, EQUIPAMENTO_CHAVES, EQUIPAMENTO_LABELS, temPermissao } from '../lib/types'
 import type { FormStatus } from '../lib/types'
 import { STATUS_COLOR, VIZ, serieAt } from '../lib/chartTheme'
 import { formatarDataHora } from '../lib/format'
@@ -27,7 +27,7 @@ export function Dashboard() {
   const usuario = useAuthStore((s) => s.usuario)
   const [filtroProjeto, setFiltroProjeto] = useState('')
 
-  const ehAdministrador = usuario?.papel === 'administrador'
+  const ehAdministrador = temPermissao(usuario, 'historico.ver.de.todos')
 
   useEffect(() => {
     void carregar()

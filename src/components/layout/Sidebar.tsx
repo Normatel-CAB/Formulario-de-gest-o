@@ -268,7 +268,11 @@ export function Sidebar() {
           {!compacta && (
             <span className="min-w-0 flex-1">
               <span className="block truncate text-sm font-medium leading-tight text-ink">{usuario.nome}</span>
-              <span className="block truncate text-xs leading-tight text-ink-subtle">{PAPEL_LABELS[usuario.papel]}</span>
+              {/* Mostra o cargo, que é o que a pessoa reconhece e o que o
+                  administrador escolheu. O papel antigo é detalhe interno. */}
+              <span className="block truncate text-xs leading-tight text-ink-subtle">
+                {usuario.cargoNome || PAPEL_LABELS[usuario.papel]}
+              </span>
             </span>
           )}
         </div>

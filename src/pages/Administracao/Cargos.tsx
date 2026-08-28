@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useCargosStore } from '../../store/cargosStore'
 import { useFuncoesStore } from '../../store/funcoesStore'
-import { useUsersStore } from '../../store/usersStore'
+import { useSolicitacoesStore } from '../../store/solicitacoesStore'
 import { Card, CardContent } from '../../components/ui/Card'
 import { Input, Select, Textarea } from '../../components/ui/Field'
 import { Button } from '../../components/ui/Button'
@@ -38,7 +38,10 @@ const CARGO_INICIAL: CargoFormState = {
 export function Cargos() {
   const { cargos, loading, carregar, criar, atualizar, duplicar, alternarStatus, remover } = useCargosStore()
   const { funcoes, carregar: carregarFuncoes } = useFuncoesStore()
-  const { usuarios, carregar: carregarUsuarios } = useUsersStore()
+  // A contagem vem das solicitações de acesso, no Supabase, e não mais da
+  // lista local de usuários. Era essa a causa do "0 usuário(s)" em todos os
+  // cargos: a lista local só tem a conta do próprio aparelho.
+  const { solicitacoes, carregar: carregarAcessos } = useSolicitacoesStore()
 
   const [busca, setBusca] = useState('')
   const [filtroStatus, setFiltroStatus] = useState<StatusRegistro | 'todos'>('todos')
@@ -53,8 +56,8 @@ export function Cargos() {
   useEffect(() => {
     void carregar()
     void carregarFuncoes()
-    void carregarUsuarios()
-  }, [carregar, carregarFuncoes, carregarUsuarios])
+    void carregarAcessos()
+  }, [carregar, carregarFuncoes, carregarAcessos])
 
   const categorias = useMemo(() => Array.from(new Set(funcoes.map((f) => f.categoria))), [funcoes])
 
@@ -70,11 +73,15 @@ export function Cargos() {
     return mapa
   }, [categorias, funcoes])
 
+  // Chaveado pelo identificador do cargo, que é o vínculo real. Antes a chave
+  // era o nome, e renomear um cargo zerava a contagem sem avisar.
   const usuariosPorCargo = useMemo(() => {
     const mapa = new Map<string, number>()
-    usuarios.forEach((u) => mapa.set(u.cargo, (mapa.get(u.cargo) ?? 0) + 1))
+    solicitacoes
+      .filter((s) => s.status === 'aprovado')
+      .forEach((s) => mapa.set(s.cargo, (mapa.get(s.cargo) ?? 0) + 1))
     return mapa
-  }, [usuarios])
+  }, [solicitacoes])
 
   const cargosFiltrados = useMemo(() => {
     const termo = busca.trim().toLowerCase()
@@ -135,8 +142,8 @@ export function Cargos() {
 
   async function confirmarExclusaoCargo() {
     if (!excluindoCargo) return
-    const emUso = (usuariosPorCargo.get(excluindoCargo.nome) ?? 0) > 0
-    const resultado = await remover(excluindoCargo.id, emUso)
+    const emUso = (usuariosPorCargo.get(excluindoCargo.identificador) ?? 0) > 0
+    const resultado = await remover(excluindoCargo.identificador, emUso)
     if (resultado.ok) {
       toast({ variant: 'success', title: 'Cargo excluído' })
     } else {
@@ -203,7 +210,7 @@ export function Cargos() {
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {cargosFiltrados.map((c) => {
-            const qtdUsuarios = usuariosPorCargo.get(c.nome) ?? 0
+            const qtdUsuarios = usuariosPorCargo.get(c.identificador) ?? 0
             return (
               <Card key={c.id} className="flex flex-col transition-colors hover:border-brand-600/40">
                 <CardContent className="flex flex-1 flex-col gap-3 p-4">

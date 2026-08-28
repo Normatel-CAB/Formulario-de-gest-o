@@ -1,5 +1,4 @@
 import { create } from 'zustand'
-import type { Papel } from '../lib/types'
 import {
   cadastrarAcessoAprovado,
   decidirSolicitacao,
@@ -13,10 +12,11 @@ interface SolicitacoesState {
   loading: boolean
   erro: string | null
   carregar: () => Promise<void>
-  aprovar: (id: string, papel: Papel, projeto: string, decididoPor: string) => Promise<void>
+  /** `cargo` é o identificador da tabela cargos, por exemplo `planejador`. */
+  aprovar: (id: string, cargo: string, projeto: string, decididoPor: string) => Promise<void>
   rejeitar: (id: string, observacao: string, decididoPor: string) => Promise<void>
   reabrir: (id: string) => Promise<void>
-  cadastrar: (email: string, papel: Papel, projeto: string, decididoPor: string) => Promise<void>
+  cadastrar: (email: string, cargo: string, projeto: string, decididoPor: string) => Promise<void>
 }
 
 export const useSolicitacoesStore = create<SolicitacoesState>((set, get) => ({
@@ -33,8 +33,8 @@ export const useSolicitacoesStore = create<SolicitacoesState>((set, get) => ({
       set({ loading: false, erro: err instanceof Error ? err.message : 'Falha ao carregar solicitações.' })
     }
   },
-  aprovar: async (id, papel, projeto, decididoPor) => {
-    await decidirSolicitacao(id, { status: 'aprovado', papel, projeto }, decididoPor)
+  aprovar: async (id, cargo, projeto, decididoPor) => {
+    await decidirSolicitacao(id, { status: 'aprovado', cargo, projeto }, decididoPor)
     await get().carregar()
   },
   rejeitar: async (id, observacao, decididoPor) => {
@@ -45,8 +45,8 @@ export const useSolicitacoesStore = create<SolicitacoesState>((set, get) => ({
     await reabrirSolicitacao(id)
     await get().carregar()
   },
-  cadastrar: async (email, papel, projeto, decididoPor) => {
-    await cadastrarAcessoAprovado(email, papel, projeto, decididoPor)
+  cadastrar: async (email, cargo, projeto, decididoPor) => {
+    await cadastrarAcessoAprovado(email, cargo, projeto, decididoPor)
     await get().carregar()
   },
 }))

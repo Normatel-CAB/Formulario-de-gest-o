@@ -9,7 +9,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { useSolicitacoesStore } from '../../store/solicitacoesStore'
 import { useAuthStore } from '../../store/authStore'
 import { toast } from '../../store/toastStore'
-import { PAPEL_LABELS, PROJETOS_PADRAO, type Papel } from '../../lib/types'
+import { PROJETOS_PADRAO, type Cargo } from '../../lib/types'
+import { useCargosStore } from '../../store/cargosStore'
 import { emailDaSessaoSupabase, type SolicitacaoAcesso } from '../../lib/acesso'
 import { formatarDataHora } from '../../lib/format'
 
@@ -27,11 +28,14 @@ import { formatarDataHora } from '../../lib/format'
 function useAcessos() {
   const store = useSolicitacoesStore()
   const usuario = useAuthStore((s) => s.usuario)
+  const cargos = useCargosStore((s) => s.cargos)
+  const carregarCargos = useCargosStore((s) => s.carregar)
   const [emailSessao, setEmailSessao] = useState<string | null>(null)
   const [sessaoVerificada, setSessaoVerificada] = useState(false)
 
   useEffect(() => {
     void store.carregar()
+    void carregarCargos()
     void emailDaSessaoSupabase().then((email) => {
       setEmailSessao(email)
       setSessaoVerificada(true)
@@ -39,12 +43,36 @@ function useAcessos() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Cargo inativo continua aparecendo em quem já o tem, para a linha não mentir
+  // sobre a situação da pessoa, mas não é oferecido para novas atribuições.
+  const cargosAtivos = useMemo(() => cargos.filter((c) => c.status === 'ativo'), [cargos])
+  const nomeCargo = (identificador: string) =>
+    cargos.find((c) => c.identificador === identificador)?.nome ?? identificador
+
   return {
     ...store,
+    cargos,
+    cargosAtivos,
+    nomeCargo,
     decididoPor: usuario?.email ?? 'administrador',
     emailSessao,
     semSessaoSupabase: sessaoVerificada && !emailSessao,
   }
+}
+
+/** Opções do seletor de cargo, com o cargo atual garantido na lista. */
+function OpcoesCargo({ cargosAtivos, atual }: { cargosAtivos: Cargo[]; atual?: string }) {
+  const faltaOAtual = Boolean(atual) && !cargosAtivos.some((c) => c.identificador === atual)
+  return (
+    <>
+      {faltaOAtual && <option value={atual}>{atual} (inativo)</option>}
+      {cargosAtivos.map((c) => (
+        <option key={c.identificador} value={c.identificador}>
+          {c.nome}
+        </option>
+      ))}
+    </>
+  )
 }
 
 function mensagem(err: unknown) {
@@ -84,10 +112,10 @@ function AvisoErro({ erro }: { erro: string }) {
    1) Fila de aprovação — só o que exige decisão
    ========================================================================== */
 export function FilaAprovacao() {
-  const { solicitacoes, loading, erro, carregar, aprovar, rejeitar, reabrir, semSessaoSupabase, decididoPor } =
+  const { solicitacoes, loading, erro, carregar, aprovar, rejeitar, reabrir, semSessaoSupabase, decididoPor, cargosAtivos } =
     useAcessos()
 
-  const [papeis, setPapeis] = useState<Record<string, Papel>>({})
+  const [cargosEscolhidos, setCargosEscolhidos] = useState<Record<string, string>>({})
   const [projetos, setProjetos] = useState<Record<string, string>>({})
   const [processando, setProcessando] = useState<string | null>(null)
   const [recusando, setRecusando] = useState<SolicitacaoAcesso | null>(null)
@@ -138,7 +166,7 @@ export function FilaAprovacao() {
           )}
 
           {pendentes.map((s) => {
-            const papel = papeis[s.id] ?? 'visualizador'
+            const cargo = cargosEscolhidos[s.id] ?? 'visualizador'
             const projeto = projetos[s.id] ?? ''
             return (
               <div
@@ -154,16 +182,12 @@ export function FilaAprovacao() {
                 </div>
 
                 <Select
-                  label="Papel"
-                  value={papel}
-                  onChange={(e) => setPapeis((v) => ({ ...v, [s.id]: e.target.value as Papel }))}
+                  label="Cargo"
+                  value={cargo}
+                  onChange={(e) => setCargosEscolhidos((v) => ({ ...v, [s.id]: e.target.value }))}
                   disabled={processando === s.id}
                 >
-                  {(Object.keys(PAPEL_LABELS) as Papel[]).map((p) => (
-                    <option key={p} value={p}>
-                      {PAPEL_LABELS[p]}
-                    </option>
-                  ))}
+                  <OpcoesCargo cargosAtivos={cargosAtivos} atual={cargo} />
                 </Select>
 
                 <Select
@@ -198,7 +222,7 @@ export function FilaAprovacao() {
                     onClick={() =>
                       void executar(
                         s.id,
-                        () => aprovar(s.id, papel, projeto, decididoPor),
+                        () => aprovar(s.id, cargo, projeto, decididoPor),
                         `${s.nome || s.email} aprovado`,
                       )
                     }
@@ -284,16 +308,17 @@ export function FilaAprovacao() {
    2) Usuários com acesso — a lista de verdade, compartilhada
    ========================================================================== */
 export function UsuariosComAcesso() {
-  const { solicitacoes, loading, erro, aprovar, rejeitar, cadastrar, decididoPor, emailSessao } = useAcessos()
+  const { solicitacoes, loading, erro, aprovar, rejeitar, cadastrar, decididoPor, emailSessao, cargosAtivos } =
+    useAcessos()
 
-  const [papeis, setPapeis] = useState<Record<string, Papel>>({})
+  const [cargosEscolhidos, setCargosEscolhidos] = useState<Record<string, string>>({})
   const [projetos, setProjetos] = useState<Record<string, string>>({})
   const [processando, setProcessando] = useState<string | null>(null)
   const [revogando, setRevogando] = useState<SolicitacaoAcesso | null>(null)
 
   const [cadastroAberto, setCadastroAberto] = useState(false)
   const [novoEmail, setNovoEmail] = useState('')
-  const [novoPapel, setNovoPapel] = useState<Papel>('visualizador')
+  const [novoCargo, setNovoCargo] = useState('visualizador')
   const [novoProjeto, setNovoProjeto] = useState('')
 
   const aprovados = useMemo(
@@ -304,7 +329,7 @@ export function UsuariosComAcesso() {
     [solicitacoes],
   )
 
-  const papelDe = (s: SolicitacaoAcesso) => papeis[s.id] ?? s.papel
+  const cargoDe = (s: SolicitacaoAcesso) => cargosEscolhidos[s.id] ?? s.cargo
   const projetoDe = (s: SolicitacaoAcesso) => projetos[s.id] ?? s.projeto
 
   /**
@@ -331,7 +356,7 @@ export function UsuariosComAcesso() {
   async function onCadastrar() {
     setProcessando('novo')
     try {
-      await cadastrar(novoEmail, novoPapel, novoProjeto, decididoPor)
+      await cadastrar(novoEmail, novoCargo, novoProjeto, decididoPor)
       toast({
         variant: 'success',
         title: 'Acesso liberado',
@@ -339,7 +364,7 @@ export function UsuariosComAcesso() {
       })
       setCadastroAberto(false)
       setNovoEmail('')
-      setNovoPapel('visualizador')
+      setNovoCargo('visualizador')
       setNovoProjeto('')
     } catch (err) {
       toast({ variant: 'error', title: 'Não foi possível liberar', description: mensagem(err) })
@@ -378,7 +403,7 @@ export function UsuariosComAcesso() {
                 <TableRow className="[&>th]:bg-transparent">
                   <TableHead>Nome</TableHead>
                   <TableHead className="hidden lg:table-cell">E-mail</TableHead>
-                  <TableHead>Papel</TableHead>
+                  <TableHead>Cargo</TableHead>
                   <TableHead className="hidden xl:table-cell">Projeto</TableHead>
                   <TableHead className="hidden lg:table-cell">Liberado em</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
@@ -387,7 +412,7 @@ export function UsuariosComAcesso() {
               <TableBody>
                 {aprovados.map((s) => {
                   const sou = ehVoce(s)
-                  const alterado = papelDe(s) !== s.papel || projetoDe(s) !== s.projeto
+                  const alterado = cargoDe(s) !== s.cargo || projetoDe(s) !== s.projeto
                   return (
                     <TableRow key={s.id}>
                       <TableCell className="min-w-[9rem] font-semibold">
@@ -402,17 +427,13 @@ export function UsuariosComAcesso() {
                       <TableCell className="hidden text-txt-dim lg:table-cell">{s.email}</TableCell>
                       <TableCell>
                         <Select
-                          value={papelDe(s)}
-                          onChange={(e) => setPapeis((v) => ({ ...v, [s.id]: e.target.value as Papel }))}
+                          value={cargoDe(s)}
+                          onChange={(e) => setCargosEscolhidos((v) => ({ ...v, [s.id]: e.target.value }))}
                           disabled={sou || processando === s.id}
-                          aria-label={`Papel de ${s.email}`}
+                          aria-label={`Cargo de ${s.email}`}
                           className="min-w-[8.5rem]"
                         >
-                          {(Object.keys(PAPEL_LABELS) as Papel[]).map((p) => (
-                            <option key={p} value={p}>
-                              {PAPEL_LABELS[p]}
-                            </option>
-                          ))}
+                          <OpcoesCargo cargosAtivos={cargosAtivos} atual={cargoDe(s)} />
                         </Select>
                       </TableCell>
                       <TableCell className="hidden xl:table-cell">
@@ -444,7 +465,7 @@ export function UsuariosComAcesso() {
                             onClick={() =>
                               void executar(
                                 s.id,
-                                () => aprovar(s.id, papelDe(s), projetoDe(s), decididoPor),
+                                () => aprovar(s.id, cargoDe(s), projetoDe(s), decididoPor),
                                 'Permissão atualizada',
                               )
                             }
@@ -531,12 +552,8 @@ export function UsuariosComAcesso() {
               hint="Precisa ser o mesmo e-mail da conta Microsoft da pessoa."
             />
             <div className="grid gap-4 sm:grid-cols-2">
-              <Select label="Papel" value={novoPapel} onChange={(e) => setNovoPapel(e.target.value as Papel)}>
-                {(Object.keys(PAPEL_LABELS) as Papel[]).map((p) => (
-                  <option key={p} value={p}>
-                    {PAPEL_LABELS[p]}
-                  </option>
-                ))}
+              <Select label="Cargo" value={novoCargo} onChange={(e) => setNovoCargo(e.target.value)}>
+                <OpcoesCargo cargosAtivos={cargosAtivos} atual={novoCargo} />
               </Select>
               <Select label="Projeto" value={novoProjeto} onChange={(e) => setNovoProjeto(e.target.value)}>
                 <option value="">Todos os projetos</option>
