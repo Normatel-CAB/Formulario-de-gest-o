@@ -39,8 +39,17 @@ export function nomeArquivoFotos(formulario: FormularioAvaliacao) {
 }
 
 /** Quantas fotos a ficha tem. É o que habilita ou não o botão de exportar. */
+/**
+ * Quantas fotos a ficha tem.
+ *
+ * Prefere o array carregado, quando existe. Na listagem ele vem vazio de
+ * propósito, e aí vale `qtdImagens`, o número que o banco calcula (migração
+ * 009). Sem esse recurso o botão de exportar ficaria sempre desligado na lista,
+ * porque `imagens.length` daria zero mesmo em ficha cheia de foto.
+ */
 export function totalFotos(formulario: FormularioAvaliacao) {
-  return formulario.imagens?.length ?? 0
+  if (formulario.imagens?.length) return formulario.imagens.length
+  return formulario.qtdImagens ?? 0
 }
 
 export class SemFotosError extends Error {

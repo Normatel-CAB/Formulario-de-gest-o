@@ -218,6 +218,13 @@ export interface FormularioAvaliacao {
   descricaoApoio: string
   observacoes: string
   imagens: AnexoImagem[]
+  /**
+   * Quantas fotos a ficha tem, calculado pelo banco (migração 009).
+   *
+   * A listagem não baixa `imagens`, então `imagens.length` vale 0 ali mesmo
+   * quando existem fotos. Este número chega junto da lista e custa nada.
+   */
+  qtdImagens?: number
   localizacao?: LocalizacaoGPS
   assinaturaDataUrl?: string
   syncPending?: boolean

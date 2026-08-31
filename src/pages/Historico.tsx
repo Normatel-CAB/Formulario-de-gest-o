@@ -20,6 +20,7 @@ import {
   resumoLote,
   totalFotos,
 } from '../lib/exportarFotos'
+import { baixarFormularioCompleto, baixarImagensDoLote } from '../lib/sync'
 import { toast } from '../store/toastStore'
 import type { FormStatus, FormularioAvaliacao } from '../lib/types'
 import { PROJETOS_PADRAO, temPermissao } from '../lib/types'
@@ -41,14 +42,21 @@ function IconeFotos() {
   )
 }
 
-/** Gera o .zip das fotos e avisa o resultado; erro aqui não pode passar batido. */
-function exportarFotos(formulario: FormularioAvaliacao) {
+/**
+ * Gera o .zip das fotos de uma ficha e avisa o resultado.
+ *
+ * Busca a ficha completa antes: a listagem não traz as fotos, então a cópia em
+ * memória tem só o número delas. É aqui que o download realmente acontece, e
+ * pagar o peso neste clique é o ponto de toda a mudança.
+ */
+async function exportarFotos(formulario: FormularioAvaliacao) {
   try {
-    baixarZipFotos(formulario)
+    const completa = (await baixarFormularioCompleto(formulario.id)) ?? formulario
+    baixarZipFotos(completa)
     toast({
       variant: 'success',
       title: 'Fotos exportadas',
-      description: `Arquivo ${nomeArquivoFotos(formulario)} salvo nos downloads.`,
+      description: `Arquivo ${nomeArquivoFotos(completa)} salvo nos downloads.`,
     })
   } catch (err) {
     toast({
@@ -181,26 +189,34 @@ export function Historico() {
    * botão entra em estado de carregando antes: sem isso a interface parece
    * congelada e a pessoa clica de novo.
    */
-  function exportarLote() {
+  async function exportarLote() {
     setExportando(true)
-    window.setTimeout(() => {
-      try {
-        baixarZipFotosLote(filtrados, de || undefined, ate || undefined)
-        toast({
-          variant: 'success',
-          title: `${lote.fotos} foto(s) exportada(s)`,
-          description: `Arquivo ${nomeArquivoLote(de || undefined, ate || undefined)} salvo nos downloads.`,
-        })
-      } catch (err) {
-        toast({
-          variant: 'warning',
-          title: 'Nada para exportar',
-          description: err instanceof Error ? err.message : undefined,
-        })
-      } finally {
-        setExportando(false)
-      }
-    }, 30)
+    try {
+      // As fotos vêm agora, e não no carregamento da tela. Só as fichas do
+      // filtro que realmente têm foto entram na busca.
+      const comFotos = filtrados.filter((f) => totalFotos(f) > 0)
+      const completas = await baixarImagensDoLote(comFotos.map((f) => f.id))
+      const paraZipar = comFotos.map((f) => completas.get(f.id) ?? f)
+
+      // Cede um quadro antes de montar o zip: com muitas fotos isso trava a
+      // thread, e sem a pausa o botão nem chega a aparecer carregando.
+      await new Promise((r) => window.setTimeout(r, 30))
+
+      baixarZipFotosLote(paraZipar, de || undefined, ate || undefined)
+      toast({
+        variant: 'success',
+        title: `${lote.fotos} foto(s) exportada(s)`,
+        description: `Arquivo ${nomeArquivoLote(de || undefined, ate || undefined)} salvo nos downloads.`,
+      })
+    } catch (err) {
+      toast({
+        variant: 'warning',
+        title: 'Nada para exportar',
+        description: err instanceof Error ? err.message : undefined,
+      })
+    } finally {
+      setExportando(false)
+    }
   }
 
   function limparPeriodo() {
@@ -277,7 +293,7 @@ export function Historico() {
               <br className="hidden sm:block" />{' '}
               {lote.fichas > 0 ? `${lote.fotos} foto(s) em ${lote.fichas} ficha(s)` : 'nenhuma com foto'}
             </p>
-            <Button onClick={exportarLote} loading={exportando} disabled={lote.fichas === 0}>
+            <Button onClick={() => void exportarLote()} loading={exportando} disabled={lote.fichas === 0}>
               <IconeFotos />
               Exportar fotos do período
             </Button>
@@ -362,7 +378,7 @@ export function Historico() {
                         variant="outline"
                         size="sm"
                         disabled={fotos === 0}
-                        onClick={() => exportarFotos(f)}
+                        onClick={() => void exportarFotos(f)}
                         title={
                           fotos === 0
                             ? 'Esta ficha não tem fotos anexadas'

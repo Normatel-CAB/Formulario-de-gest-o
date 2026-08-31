@@ -7,7 +7,12 @@ import {
   salvarFormularioLocal,
   enfileirarSincronizacao,
 } from '../lib/db'
-import { enviarFormularioParaNuvem, sincronizarPendentes, baixarFormulariosDaNuvem } from '../lib/sync'
+import {
+  enviarFormularioParaNuvem,
+  sincronizarPendentes,
+  baixarFormulariosDaNuvem,
+  baixarFormularioCompleto,
+} from '../lib/sync'
 import { isSupabaseConfigured } from '../lib/supabase'
 import { normalizarFormulario } from '../lib/factory'
 
@@ -22,7 +27,7 @@ interface FormsState {
   remover: (id: string) => Promise<void>
 }
 
-export const useFormsStore = create<FormsState>((set, get) => ({
+export const useFormsStore = create<FormsState>((set) => ({
   formularios: [],
   loading: false,
   carregar: async () => {
@@ -34,11 +39,24 @@ export const useFormsStore = create<FormsState>((set, get) => ({
       set({ formularios: remotos.map(normalizarFormulario) })
     }
   },
+  /**
+   * Ficha completa, com as fotos.
+   *
+   * A listagem não traz `imagens` de propósito (ver COLUNAS_LISTA em sync.ts),
+   * então a cópia em memória quase sempre vem sem foto. Aqui a ficha é buscada
+   * inteira, e só aqui: é a tela que realmente mostra as imagens.
+   */
   obter: async (id) => {
-    const emMemoria = get().formularios.find((f) => f.id === id)
-    if (emMemoria) return normalizarFormulario(emMemoria)
     const local = await obterFormularioLocal(id)
-    return local ? normalizarFormulario(local) : undefined
+    const temFotoLocal = Boolean(local?.imagens?.length) || Boolean(local?.assinaturaDataUrl)
+
+    // Rascunho ainda não sincronizado só existe no aparelho: buscar na nuvem
+    // devolveria uma versão antiga ou nada.
+    if (local?.syncPending) return normalizarFormulario(local)
+    if (temFotoLocal && local) return normalizarFormulario(local)
+
+    const completo = await baixarFormularioCompleto(id)
+    return completo ? normalizarFormulario(completo) : local ? normalizarFormulario(local) : undefined
   },
   salvarRascunho: async (formulario) => {
     const atualizado: FormularioAvaliacao = {
