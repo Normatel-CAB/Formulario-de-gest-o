@@ -212,7 +212,11 @@ export function Cargos() {
           {cargosFiltrados.map((c) => {
             const qtdUsuarios = usuariosPorCargo.get(c.identificador) ?? 0
             return (
-              <Card key={c.id} className="flex flex-col transition-colors hover:border-brand-600/40">
+              <Card
+                key={c.id}
+                className="flex flex-col transition-colors hover:border-brand-600/40"
+                contentClassName="flex flex-1 flex-col"
+              >
                 <CardContent className="flex flex-1 flex-col gap-3 p-4">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2.5">

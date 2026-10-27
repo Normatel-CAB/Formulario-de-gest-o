@@ -25,7 +25,10 @@ export function SignaturePad({
     ctx.scale(ratio, ratio)
     ctx.lineCap = 'round'
     ctx.lineJoin = 'round'
-    ctx.strokeStyle = '#f5f5f5'
+    // Tinta do token, não cor literal. Ver --signature-ink em index.css: a
+    // assinatura vira imagem no PDF, então ela não pode seguir o tema.
+    ctx.strokeStyle =
+      getComputedStyle(document.documentElement).getPropertyValue('--signature-ink').trim() || '#10210f'
     ctx.lineWidth = 2.2
     if (value) {
       const img = new Image()
@@ -76,7 +79,10 @@ export function SignaturePad({
 
   return (
     <div>
-      <div className="rounded-xl border border-dashed border-border-light bg-surface-2">
+      <div
+        className="rounded-xl border border-dashed border-border-light"
+        style={{ background: 'var(--signature-paper)' }}
+      >
         <canvas
           ref={canvasRef}
           className="signature-canvas h-40 w-full cursor-crosshair rounded-xl"

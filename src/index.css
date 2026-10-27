@@ -34,9 +34,13 @@
   --surface: rgba(255, 255, 255, 0.85);
   --surface-2: rgba(26, 58, 26, 0.05);
   --surface-solid: #ffffff;
-  /* Fundo dos cards. Um pouco mais encorpado que --surface porque não há
-     backdrop-filter para dar densidade (ver .glass). */
-  --surface-card: rgba(255, 255, 255, 0.9);
+  /* Fundo dos cards: OPACO, nunca translúcido.
+     Com alfa aqui, a grade e os halos do fundo atravessavam a superfície e
+     caíam por cima do conteúdo: linhas cruzando a tabela e um lavado verde
+     sobre o texto no topo do card. A sensação de vidro vem da borda hairline,
+     da sombra e do filete de luz no topo, não da transparência. O fundo
+     decorativo aparece nas frestas entre os cards, que é onde ele deve viver. */
+  --surface-card: #ffffff;
   --hairline: rgba(26, 58, 26, 0.1);
   --hairline-hi: rgba(76, 175, 80, 0.38);
   --txt: #10210f;
@@ -46,7 +50,18 @@
   /* linhas acesas pelo holofote do cursor */
   --grid-lit: rgba(76, 175, 80, 0.42);
   --sidebar-bg: rgba(247, 251, 247, 0.92);
+  /* A mesma cor da sidebar já composta. O anel de luz (.beam) precisa tampar o
+     miolo com cor OPACA, e --sidebar-bg é translúcido. */
+  --sidebar-solid: #f6faf6;
   --shadow-card: 0 16px 40px -22px rgba(20, 50, 25, 0.45);
+  /* Assinatura: tinta escura sobre papel claro, IGUAL nos dois temas.
+     É a única superfície que não acompanha o tema, e de propósito. A assinatura
+     é exportada com `toDataURL` e colada no PDF, que tem página branca. Uma
+     caneta clara, boa no tema escuro, sairia invisível no documento — e era o
+     que acontecia: o traço era #f5f5f5 fixo, sumia no tema claro na tela e
+     quase sumia no PDF. Tratar o pad como papel resolve os dois de uma vez. */
+  --signature-paper: #fbfdfb;
+  --signature-ink: #10210f;
   --halo-1: rgba(76, 175, 80, 0.2);
   --halo-2: rgba(35, 196, 160, 0.12);
   --halo-3: rgba(139, 195, 74, 0.14);
@@ -61,8 +76,11 @@
   --bg: #0a150b;
   --surface: rgba(255, 255, 255, 0.042);
   --surface-2: rgba(255, 255, 255, 0.075);
-  --surface-solid: #101c12;
-  --surface-card: rgba(255, 255, 255, 0.055);
+  /* Um degrau ACIMA do card: é o fundo de quem flutua sobre ele (tooltip,
+     popover, lista aberta do select). Antes era mais escuro que o card, o que
+     invertia a hierarquia e fazia o tooltip parecer um buraco. */
+  --surface-solid: #1b271d;
+  --surface-card: #18241b;
   --hairline: rgba(255, 255, 255, 0.085);
   --hairline-hi: rgba(139, 195, 74, 0.3);
   --txt: #e8f2ea;
@@ -71,7 +89,11 @@
   --grid: rgba(255, 255, 255, 0.045);
   --grid-lit: rgba(139, 195, 74, 0.5);
   --sidebar-bg: rgba(9, 22, 11, 0.88);
+  --sidebar-solid: #081409;
   --shadow-card: 0 20px 50px -20px rgba(0, 0, 0, 0.85);
+  /* Assinatura: NÃO acompanha o tema, ver o comentário no bloco claro. */
+  --signature-paper: #fbfdfb;
+  --signature-ink: #10210f;
   --halo-1: rgba(76, 175, 80, 0.22);
   --halo-2: rgba(35, 196, 160, 0.14);
   --halo-3: rgba(139, 195, 74, 0.1);
@@ -161,6 +183,9 @@
   }
   @keyframes slow-spin {
     to { transform: rotate(360deg); }
+  }
+  @keyframes beam-spin {
+    to { rotate: 360deg; }
   }
   @keyframes sheen {
     0%, 72% { transform: translateX(-120%); }
@@ -272,6 +297,68 @@
     border-color: var(--hairline-hi);
     transform: translateY(-3px);
     box-shadow: 0 26px 55px -24px rgba(0, 0, 0, 0.55), 0 0 0 1px var(--hairline-hi);
+  }
+
+  /* ---------- Anel de luz girando na borda (só no hover) ----------
+     É o mesmo filete do topo do card, agora dando a volta nele.
+
+     COMO: um quadrado maior que o elemento, com um conic-gradient, girando por
+     `rotate`; o ::after tampa o miolo e sobra só 1px de borda. Girar por
+     transform é trabalho de compositor. A alternativa aparentemente óbvia,
+     animar o ângulo do próprio conic-gradient com @property, custa cerca de 3x
+     mais, porque obriga o navegador a repintar o degradê inteiro a cada frame,
+     em cada elemento.
+
+     E POR QUE SÓ NO HOVER: `animation-play-state: paused` é o que torna isso
+     viável. Parada, a animação não produz frame nenhum e custa o mesmo que não
+     existir. Ligada em todo card o tempo todo, seria repetir o padrão que já
+     travou a rolagem neste app. E se tudo brilha, nada está em destaque. */
+  .beam {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    border-radius: inherit;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .beam::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 200%;
+    aspect-ratio: 1;
+    translate: -50% -50%;
+    background: conic-gradient(
+      from 0deg,
+      transparent 0 60%,
+      rgba(139, 195, 74, 0.85) 79%,
+      var(--brand-glow) 85%,
+      transparent 93%
+    );
+    animation: beam-spin 4s linear infinite;
+    animation-play-state: paused;
+  }
+  .beam::after {
+    content: '';
+    position: absolute;
+    inset: 1px;
+    border-radius: inherit;
+    /* OPACA e igual ao fundo de quem hospeda o anel, senão o degradê vaza no
+       miolo. O card usa o padrão; a sidebar passa --beam-fill. */
+    background: var(--beam-fill, var(--surface-card));
+  }
+  .beam-host:hover > .beam {
+    opacity: 1;
+  }
+  .beam-host:hover > .beam::before {
+    animation-play-state: running;
+  }
+  .beam-host > .beam-content {
+    position: relative;
+    z-index: 1;
   }
 
   /* ---------- Holofote da grade (segue o cursor) ----------
@@ -497,5 +584,65 @@ input[type="time"]::-webkit-calendar-picker-indicator {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/* ============================================================================
+   IMPRESSÃO
+   Sai igual à tela, inclusive no tema escuro. Forçar tema claro produziria uma
+   versão que ninguém viu antes de mandar imprimir.
+
+   Isto vale para o Ctrl+P do navegador. O botão "Exportar PDF" das fichas é
+   outro caminho: ele desenha o documento no jsPDF (lib/pdf.ts) e não passa por
+   aqui.
+   ========================================================================= */
+@media print {
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body {
+    background: var(--bg-deep) !important;
+    overflow-x: visible !important;
+  }
+
+  /* Navegação e enfeites não vão para o papel. */
+  aside,
+  header,
+  .grid-spotlight,
+  .no-print {
+    display: none !important;
+  }
+
+  /* O app rola dentro de contêineres. Na impressão isso cortaria tudo o que
+     está fora da primeira tela, então o conteúdo volta a fluir. */
+  main,
+  .overflow-y-auto,
+  .overflow-x-auto,
+  .overflow-hidden,
+  .h-screen {
+    overflow: visible !important;
+    height: auto !important;
+    max-height: none !important;
+  }
+
+  .glass {
+    box-shadow: none !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* O anel de luz é hover puro e não teria sentido no papel. */
+  .beam {
+    display: none !important;
+  }
+
+  svg {
+    overflow: visible !important;
+  }
+
+  @page {
+    margin: 10mm;
   }
 }

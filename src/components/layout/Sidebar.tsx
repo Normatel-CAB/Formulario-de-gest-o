@@ -95,6 +95,37 @@ export function Sidebar() {
   const [expandidos, setExpandidos] = useState<Set<string>>(new Set())
   const [mobileOpen, setMobileOpen] = useState(false)
 
+  /**
+   * Grupo em pré-visualização pelo mouse.
+   *
+   * O hover ADIANTA a abertura; o clique é quem fixa, e volta a valer quando o
+   * cursor sai. No celular não existe hover, então a guarda de ponteiro fino
+   * desliga tudo e o clique continua sendo o único caminho — é onde o app é
+   * usado em obra.
+   */
+  const [emHover, setEmHover] = useState<string | null>(null)
+  const [ponteiroFino, setPonteiroFino] = useState(false)
+  const timerHover = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+
+  useEffect(() => {
+    setPonteiroFino(window.matchMedia('(hover: hover) and (pointer: fine)').matches)
+    return () => clearTimeout(timerHover.current)
+  }, [])
+
+  // 120ms para abrir ignora a passagem de raspão. 260ms para fechar evita o
+  // menu sumir quando o cursor corta o canto descendo para um subitem.
+  function aoEntrarNoGrupo(key: string) {
+    if (!ponteiroFino || recolhida) return
+    clearTimeout(timerHover.current)
+    timerHover.current = setTimeout(() => setEmHover(key), 120)
+  }
+
+  function aoSairDoGrupo() {
+    if (!ponteiroFino) return
+    clearTimeout(timerHover.current)
+    timerHover.current = setTimeout(() => setEmHover(null), 260)
+  }
+
   const visiveis = NAV.filter((l) => !l.roles || (usuario && l.roles.includes(usuario.papel)))
   const podeEditarLogo = usuario?.papel === 'administrador'
 
@@ -148,13 +179,26 @@ export function Sidebar() {
         {visiveis.map((item) => {
           const Icon = item.icon
           const temFilhos = Boolean(item.children?.length)
-          const expandido = expandidos.has(item.key)
+          const expandido = emHover === item.key || expandidos.has(item.key)
           const filhosVisiveis = item.children?.filter((c) => !c.roles || (usuario && c.roles.includes(usuario.papel))) ?? []
           const ativo =
             (item.to && location.pathname === item.to) || filhosVisiveis.some((c) => location.pathname === c.to)
 
+          // O grupo hospeda o anel de luz. `--beam-fill` precisa ser a cor
+          // OPACA da sidebar: `--sidebar-bg` é translúcida e deixaria o
+          // degradê vazar por dentro do miolo.
+          const hospedaAnel = temFilhos && !compacta && ponteiroFino
+
           return (
-            <li key={item.key}>
+            <li
+              key={item.key}
+              className={cn('relative rounded-md', hospedaAnel && 'beam-host')}
+              style={hospedaAnel ? ({ '--beam-fill': 'var(--sidebar-solid)' } as React.CSSProperties) : undefined}
+              onMouseEnter={temFilhos ? () => aoEntrarNoGrupo(item.key) : undefined}
+              onMouseLeave={temFilhos ? aoSairDoGrupo : undefined}
+            >
+              {hospedaAnel && <span className="beam" aria-hidden />}
+              <div className={cn(hospedaAnel && 'beam-content')}>
               {item.to && !temFilhos ? (
                 <NavLink
                   to={item.to}
@@ -235,6 +279,7 @@ export function Sidebar() {
                   </ul>
                 </div>
               )}
+              </div>
             </li>
           )
         })}
