@@ -6,7 +6,7 @@ import {
   salvarFormularioLocal,
   listarFormulariosLocais,
 } from './db'
-import type { FormularioAvaliacao } from './types'
+import type { FormularioAvaliacao, FormStatus } from './types'
 
 type Listener = (state: SyncState) => void
 
@@ -52,6 +52,26 @@ export async function enviarFormularioParaNuvem(formulario: FormularioAvaliacao)
   const { syncPending: _syncPending, qtdImagens: _qtdImagens, ...payload } = formulario
   const { error } = await supabase.from(FORMS_TABLE).upsert(payload, { onConflict: 'id' })
   if (error) throw error
+}
+
+/**
+ * Troca de status vai por update, nunca pelo upsert de `enviarFormularioParaNuvem`.
+ *
+ * Upsert é INSERT ... ON CONFLICT, e o Postgres confere a policy de insert
+ * mesmo quando a linha já existe. A da migração 008 só aceita rascunho ou
+ * enviado, assinado por quem envia, então toda aprovação era recusada. E só
+ * status e data sobem: a cópia local pode ter vindo da listagem, sem fotos, e
+ * mandar a ficha inteira apagaria as imagens no banco.
+ */
+export async function atualizarStatusNaNuvem(id: string, status: FormStatus, updatedAt: string) {
+  if (!supabase || !isSupabaseConfigured) throw new Error('Supabase não configurado')
+  const { data, error } = await supabase
+    .from(FORMS_TABLE)
+    .update({ status, updatedAt })
+    .eq('id', id)
+    .select('id')
+  if (error) throw new Error(error.message)
+  if (!data || data.length === 0) throw new Error('Você não tem permissão para alterar esta ficha.')
 }
 
 export async function sincronizarPendentes() {

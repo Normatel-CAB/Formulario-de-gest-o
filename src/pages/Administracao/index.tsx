@@ -11,7 +11,8 @@ import { EmptyState } from '../../components/ui/EmptyState'
 import { KpiCard } from '../../components/ui/KpiCard'
 import { Reveal } from '../../components/ui/Reveal'
 import { formatarDataHora } from '../../lib/format'
-import { PROJETOS_PADRAO } from '../../lib/types'
+import { PROJETOS_PADRAO, type FormStatus } from '../../lib/types'
+import { toast } from '../../store/toastStore'
 import { VIZ } from '../../lib/chartTheme'
 import { FilaAprovacao } from './AcessosCompartilhados'
 
@@ -20,6 +21,19 @@ export function Administracao() {
   const { solicitacoes, carregar: carregarAcessos } = useSolicitacoesStore()
   const { cargos, carregar: carregarCargos } = useCargosStore()
   const [filtroProjeto, setFiltroProjeto] = useState('')
+
+  async function mudarStatus(id: string, status: FormStatus) {
+    try {
+      await atualizarStatus(id, status)
+      toast({ variant: 'success', title: 'Status atualizado' })
+    } catch (err) {
+      toast({
+        variant: 'error',
+        title: 'Status não foi salvo',
+        description: err instanceof Error ? err.message : undefined,
+      })
+    }
+  }
 
   useEffect(() => {
     void carregar()
@@ -130,13 +144,13 @@ export function Administracao() {
                   {/* No celular os três botões viram uma grade de largura total:
                       lado a lado eles ficariam menores que a área de toque. */}
                   <div className="grid shrink-0 grid-cols-3 gap-2 sm:flex">
-                    <Button size="sm" variant="outline" onClick={() => atualizarStatus(f.id, 'em_analise')}>
+                    <Button size="sm" variant="outline" onClick={() => mudarStatus(f.id, 'em_analise')}>
                       Análise
                     </Button>
-                    <Button size="sm" onClick={() => atualizarStatus(f.id, 'aprovado')}>
+                    <Button size="sm" onClick={() => mudarStatus(f.id, 'aprovado')}>
                       Aprovar
                     </Button>
-                    <Button size="sm" variant="danger" onClick={() => atualizarStatus(f.id, 'reprovado')}>
+                    <Button size="sm" variant="danger" onClick={() => mudarStatus(f.id, 'reprovado')}>
                       Reprovar
                     </Button>
                   </div>

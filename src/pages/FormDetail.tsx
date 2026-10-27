@@ -66,9 +66,17 @@ export function FormDetail() {
 
   async function mudarStatus(status: FormStatus) {
     if (!formulario) return
-    await atualizarStatus(formulario.id, status)
-    setFormulario({ ...formulario, status })
-    toast({ variant: 'success', title: 'Status atualizado' })
+    try {
+      await atualizarStatus(formulario.id, status)
+      setFormulario({ ...formulario, status })
+      toast({ variant: 'success', title: 'Status atualizado' })
+    } catch (err) {
+      toast({
+        variant: 'error',
+        title: 'Status não foi salvo',
+        description: err instanceof Error ? err.message : undefined,
+      })
+    }
   }
 
   async function excluir() {

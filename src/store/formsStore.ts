@@ -9,6 +9,7 @@ import {
 } from '../lib/db'
 import {
   enviarFormularioParaNuvem,
+  atualizarStatusNaNuvem,
   sincronizarPendentes,
   baixarFormulariosDaNuvem,
   baixarFormularioCompleto,
@@ -99,17 +100,15 @@ export const useFormsStore = create<FormsState>((set) => ({
   },
   atualizarStatus: async (id, status) => {
     const formulario = await obterFormularioLocal(id)
-    if (!formulario) return
-    const atualizado = { ...formulario, status, updatedAt: new Date().toISOString() }
+    if (!formulario) throw new Error('Ficha não encontrada neste aparelho.')
+    const updatedAt = new Date().toISOString()
+    if (isSupabaseConfigured) {
+      if (!navigator.onLine) throw new Error('Sem conexão. Conecte-se para alterar o status.')
+      await atualizarStatusNaNuvem(id, status, updatedAt)
+    }
+    const atualizado = { ...formulario, status, updatedAt }
     await salvarFormularioLocal(atualizado)
     set((s) => ({ formularios: s.formularios.map((f) => (f.id === id ? atualizado : f)) }))
-    if (isSupabaseConfigured && navigator.onLine) {
-      try {
-        await enviarFormularioParaNuvem(atualizado)
-      } catch {
-        await enfileirarSincronizacao(id)
-      }
-    }
   },
   remover: async (id) => {
     await removerFormularioLocal(id)
