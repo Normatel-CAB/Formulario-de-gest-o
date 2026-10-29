@@ -1,39 +1,19 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useFormsStore } from '../../store/formsStore'
 import { useSolicitacoesStore } from '../../store/solicitacoesStore'
 import { useCargosStore } from '../../store/cargosStore'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/Card'
+import { Card, CardContent } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
-import { Select } from '../../components/ui/Field'
-import { StatusBadge } from '../../components/ui/StatusBadge'
-import { EmptyState } from '../../components/ui/EmptyState'
 import { KpiCard } from '../../components/ui/KpiCard'
 import { Reveal } from '../../components/ui/Reveal'
-import { formatarDataHora } from '../../lib/format'
-import { PROJETOS_PADRAO, type FormStatus } from '../../lib/types'
-import { toast } from '../../store/toastStore'
 import { VIZ } from '../../lib/chartTheme'
 import { FilaAprovacao } from './AcessosCompartilhados'
 
 export function Administracao() {
-  const { formularios, loading, carregar, atualizarStatus } = useFormsStore()
+  const { formularios, carregar } = useFormsStore()
   const { solicitacoes, carregar: carregarAcessos } = useSolicitacoesStore()
   const { cargos, carregar: carregarCargos } = useCargosStore()
-  const [filtroProjeto, setFiltroProjeto] = useState('')
-
-  async function mudarStatus(id: string, status: FormStatus) {
-    try {
-      await atualizarStatus(id, status)
-      toast({ variant: 'success', title: 'Status atualizado' })
-    } catch (err) {
-      toast({
-        variant: 'error',
-        title: 'Status não foi salvo',
-        description: err instanceof Error ? err.message : undefined,
-      })
-    }
-  }
 
   useEffect(() => {
     void carregar()
@@ -42,11 +22,8 @@ export function Administracao() {
   }, [carregar, carregarAcessos, carregarCargos])
 
   const pendentes = useMemo(
-    () =>
-      formularios.filter(
-        (f) => (f.status === 'enviado' || f.status === 'em_analise') && (!filtroProjeto || f.projeto === filtroProjeto),
-      ),
-    [formularios, filtroProjeto],
+    () => formularios.filter((f) => f.status === 'enviado' || f.status === 'em_analise').length,
+    [formularios],
   )
 
   return (
@@ -63,7 +40,9 @@ export function Administracao() {
         <Link to="/usuarios" className="min-w-0">
           <KpiCard index={1} label="Total de usuários" value={solicitacoes.filter((s) => s.status === 'aprovado').length} hint="com acesso liberado" icon="stack" color={VIZ.teal} />
         </Link>
-        <KpiCard index={2} label="Fichas em análise" value={pendentes.length} hint="enviadas ou em análise" icon="clock" color={VIZ.amber} />
+        <Link to="/aprovacoes" className="min-w-0">
+          <KpiCard index={2} label="Fichas em análise" value={pendentes} hint="enviadas ou em análise" icon="clock" color={VIZ.amber} />
+        </Link>
         <Link to="/administracao/cargos" className="min-w-0">
           <KpiCard index={3} label="Cargos e permissões" value={cargos.length} hint="perfis configurados" icon="check" color={VIZ.green} />
         </Link>
@@ -73,6 +52,11 @@ export function Administracao() {
 
       <Card>
         <CardContent className="flex flex-wrap gap-2 p-4">
+          <Link to="/aprovacoes">
+            <Button variant="outline" size="sm">
+              Aprovações
+            </Button>
+          </Link>
           <Link to="/usuarios">
             <Button variant="outline" size="sm">
               Usuários
@@ -96,70 +80,6 @@ export function Administracao() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <div>
-            <CardTitle>Aprovações pendentes</CardTitle>
-            <CardDescription>Formulários enviados ou em análise aguardando decisão.</CardDescription>
-          </div>
-          <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
-            <Select value={filtroProjeto} onChange={(e) => setFiltroProjeto(e.target.value)} aria-label="Filtrar por projeto" className="min-w-0 flex-1 sm:w-48 sm:flex-none">
-              <option value="">Todos os projetos</option>
-              {PROJETOS_PADRAO.map((p) => (
-                <option key={p} value={p}>
-                  {p}
-                </option>
-              ))}
-            </Select>
-            <Link to="/historico">
-              <Button variant="ghost" size="sm">
-                Ver histórico completo
-              </Button>
-            </Link>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <p className="text-[13px] text-txt-dim">Carregando…</p>
-          ) : pendentes.length === 0 ? (
-            <EmptyState title="Nenhuma aprovação pendente" description="Todos os formulários enviados já foram avaliados." />
-          ) : (
-            <div className="space-y-2">
-              {pendentes.slice(0, 8).map((f) => (
-                <div
-                  key={f.id}
-                  className="flex flex-col gap-3 rounded-md border border-hairline bg-surface-2 p-3 transition-colors hover:bg-surface sm:flex-row sm:items-center sm:justify-between"
-                >
-                  <div className="min-w-0">
-                    <div className="flex min-w-0 items-center gap-2">
-                      <p className="truncate text-[12.5px] font-semibold">{f.infoGerais.localAtividade || 'Atividade sem nome'}</p>
-                      <StatusBadge status={f.status} />
-                    </div>
-                    <p className="mt-0.5 text-[11px] text-txt-faint">
-                      {f.infoGerais.numeroSolicitacao ? `Nº ${f.infoGerais.numeroSolicitacao}` : 'Sem número'} ·{' '}
-                      {f.infoGerais.lotacao || f.projeto || 'Sem lotação'} ·{' '}
-                      {formatarDataHora(f.updatedAt)}
-                    </p>
-                  </div>
-                  {/* No celular os três botões viram uma grade de largura total:
-                      lado a lado eles ficariam menores que a área de toque. */}
-                  <div className="grid shrink-0 grid-cols-3 gap-2 sm:flex">
-                    <Button size="sm" variant="outline" onClick={() => mudarStatus(f.id, 'em_analise')}>
-                      Análise
-                    </Button>
-                    <Button size="sm" onClick={() => mudarStatus(f.id, 'aprovado')}>
-                      Aprovar
-                    </Button>
-                    <Button size="sm" variant="danger" onClick={() => mudarStatus(f.id, 'reprovado')}>
-                      Reprovar
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
     </div>
   )
 }

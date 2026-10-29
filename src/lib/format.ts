@@ -19,3 +19,11 @@ export function formatarData(iso: string) {
     return iso
   }
 }
+
+export function formatarTempoEstimado(dias?: number, horas?: number) {
+  const partes = [
+    dias ? `${dias} ${dias === 1 ? 'dia' : 'dias'}` : '',
+    horas ? `${horas} ${horas === 1 ? 'hora' : 'horas'}` : '',
+  ].filter(Boolean)
+  return partes.join(' e ')
+}

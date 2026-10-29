@@ -3,6 +3,13 @@ import { LOTACOES } from '../../lib/types'
 import { Input, Select } from '../../components/ui/Field'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/Card'
 import { Reveal } from '../../components/ui/Reveal'
+import { formatarTempoEstimado } from '../../lib/format'
+
+function lerNumero(valor: string) {
+  if (valor === '') return undefined
+  const n = Math.max(0, Math.floor(Number(valor)))
+  return Number.isFinite(n) ? n : undefined
+}
 
 export function StepInfoGerais({
   formulario,
@@ -12,6 +19,16 @@ export function StepInfoGerais({
   onChange: (patch: Partial<FormularioAvaliacao['infoGerais']>) => void
 }) {
   const info = formulario.infoGerais
+
+  function mudarTempo(patch: Pick<Partial<FormularioAvaliacao['infoGerais']>, 'tempoEstimadoDias' | 'tempoEstimadoHoras'>) {
+    const dias = 'tempoEstimadoDias' in patch ? patch.tempoEstimadoDias : info.tempoEstimadoDias
+    const horas = 'tempoEstimadoHoras' in patch ? patch.tempoEstimadoHoras : info.tempoEstimadoHoras
+    onChange({
+      tempoEstimadoDias: dias,
+      tempoEstimadoHoras: horas,
+      tempoEstimadoExecucao: formatarTempoEstimado(dias, horas),
+    })
+  }
 
   return (
     <Reveal index={0}>
@@ -37,13 +54,35 @@ export function StepInfoGerais({
             value={info.dataAvaliacao}
             onChange={(e) => onChange({ dataAvaliacao: e.target.value })}
           />
-          <Input
-            label="Tempo Estimado de Execução"
-            required
-            value={info.tempoEstimadoExecucao}
-            onChange={(e) => onChange({ tempoEstimadoExecucao: e.target.value })}
-            placeholder="Ex.: 3 dias úteis"
-          />
+          <fieldset className="flex flex-col gap-1.5">
+            <legend className="mb-1.5 text-[10px] font-bold uppercase tracking-[0.1em] text-txt-faint">
+              Tempo Estimado de Execução <span className="text-viz-red">*</span>
+            </legend>
+            <div className="grid grid-cols-2 gap-2">
+              <Input
+                type="number"
+                inputMode="numeric"
+                min={0}
+                value={info.tempoEstimadoDias ?? ''}
+                onChange={(e) => mudarTempo({ tempoEstimadoDias: lerNumero(e.target.value) })}
+                placeholder="Dias"
+                aria-label="Dias"
+              />
+              <Input
+                type="number"
+                inputMode="numeric"
+                min={0}
+                value={info.tempoEstimadoHoras ?? ''}
+                onChange={(e) => mudarTempo({ tempoEstimadoHoras: lerNumero(e.target.value) })}
+                placeholder="Horas"
+                aria-label="Horas"
+              />
+            </div>
+            {/* ficha antiga tem texto livre aqui, mostra pra pessoa nao achar que sumiu */}
+            {info.tempoEstimadoExecucao && info.tempoEstimadoDias === undefined && info.tempoEstimadoHoras === undefined && (
+              <p className="text-[11px] text-txt-faint">Informado antes: {info.tempoEstimadoExecucao}</p>
+            )}
+          </fieldset>
           <Input
             label="Nº da Solicitação"
             required

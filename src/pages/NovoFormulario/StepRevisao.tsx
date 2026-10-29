@@ -63,6 +63,8 @@ export function StepRevisao({ formulario }: { formulario: FormularioAvaliacao })
             <InfoRow label="Equipe Necessária" value={info.equipeNecessaria} />
             <InfoRow label="Lotação" value={info.lotacao} />
             <InfoRow label="Local da Atividade" value={info.localAtividade} />
+            <TextoLongo label="Apoio necessário" value={formulario.descricaoApoio} />
+            <TextoLongo label="Observações" value={formulario.observacoes} />
           </CardContent>
         </Card>
       </Reveal>
@@ -128,7 +130,6 @@ export function StepRevisao({ formulario }: { formulario: FormularioAvaliacao })
           <CardContent className="flex flex-wrap gap-3 text-[12.5px] text-txt-dim">
             <span>{formulario.imagens.length} imagem(ns)</span>
             <span>{formulario.localizacao ? 'Localização capturada' : 'Sem localização'}</span>
-            <span>{formulario.assinaturaDataUrl ? 'Assinatura registrada' : 'Sem assinatura'}</span>
           </CardContent>
         </Card>
       </Reveal>
@@ -141,6 +142,15 @@ function InfoRow({ label, value }: { label: string; value: string }) {
     <div>
       <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-txt-faint">{label}</p>
       <p className="mt-0.5 text-[12.5px] font-medium text-txt">{value || 'Não informado'}</p>
+    </div>
+  )
+}
+
+function TextoLongo({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="border-t border-hairline pt-3 sm:col-span-2">
+      <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-txt-faint">{label}</p>
+      <p className="mt-0.5 whitespace-pre-wrap text-[12.5px] text-txt">{value?.trim() || 'Não informado'}</p>
     </div>
   )
 }

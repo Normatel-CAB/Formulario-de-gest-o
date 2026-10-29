@@ -15,7 +15,7 @@ import { RowBar } from '../components/ui/RowBar'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/Table'
 import { DonutChart } from '../components/dashboard/DonutChart'
 import { BarsChart } from '../components/dashboard/BarsChart'
-import { PROJETOS_PADRAO, STATUS_LABELS, LOTACOES, EQUIPAMENTO_CHAVES, EQUIPAMENTO_LABELS, temPermissao } from '../lib/types'
+import { STATUS_LABELS, LOTACOES, EQUIPAMENTO_CHAVES, EQUIPAMENTO_LABELS, temPermissao } from '../lib/types'
 import type { FormStatus } from '../lib/types'
 import { STATUS_COLOR, VIZ, serieAt } from '../lib/chartTheme'
 import { formatarDataHora } from '../lib/format'
@@ -25,7 +25,7 @@ const ORDEM_STATUS: FormStatus[] = ['rascunho', 'enviado', 'em_analise', 'aprova
 export function Dashboard() {
   const { formularios, loading, carregar } = useFormsStore()
   const usuario = useAuthStore((s) => s.usuario)
-  const [filtroProjeto, setFiltroProjeto] = useState('')
+  const [filtroLotacao, setFiltroLotacao] = useState('')
 
   const ehAdministrador = temPermissao(usuario, 'historico.ver.de.todos')
 
@@ -37,11 +37,10 @@ export function Dashboard() {
     let lista = formularios
     if (!ehAdministrador && usuario) {
       lista = lista.filter((f) => !f.projeto || !usuario.projeto || f.projeto === usuario.projeto)
-    } else if (ehAdministrador && filtroProjeto) {
-      lista = lista.filter((f) => f.projeto === filtroProjeto)
     }
+    if (filtroLotacao) lista = lista.filter((f) => f.infoGerais.lotacao === filtroLotacao)
     return lista
-  }, [formularios, usuario, ehAdministrador, filtroProjeto])
+  }, [formularios, usuario, ehAdministrador, filtroLotacao])
 
   const stats = useMemo(
     () => ({
@@ -138,7 +137,7 @@ export function Dashboard() {
           <div className="min-w-0">
             <span className="chip">
               <span className="h-1.5 w-1.5 animate-brand-pulse rounded-full bg-brand-glow shadow-[0_0_8px_var(--brand-glow)]" />
-              Fichas técnicas · {filtroProjeto || 'todos os projetos'}
+              Fichas técnicas · {filtroLotacao || 'todas as lotações'}
             </span>
             <h1 className="mt-2 text-[22px] font-bold tracking-[-0.025em] sm:text-[27px]">Visão geral</h1>
             <p className="mt-1 text-[13px] text-txt-dim">
@@ -146,21 +145,19 @@ export function Dashboard() {
             </p>
           </div>
           <div className="flex w-full items-center gap-2 sm:w-auto">
-            {ehAdministrador && (
-              <Select
-                value={filtroProjeto}
-                onChange={(e) => setFiltroProjeto(e.target.value)}
-                aria-label="Filtrar por projeto"
-                className="min-w-0 flex-1 sm:w-48 sm:flex-none"
-              >
-                <option value="">Todos os projetos</option>
-                {PROJETOS_PADRAO.map((p) => (
-                  <option key={p} value={p}>
-                    {p}
-                  </option>
-                ))}
-              </Select>
-            )}
+            <Select
+              value={filtroLotacao}
+              onChange={(e) => setFiltroLotacao(e.target.value)}
+              aria-label="Filtrar por lotação"
+              className="min-w-0 flex-1 sm:w-48 sm:flex-none"
+            >
+              <option value="">Todas as lotações</option>
+              {LOTACOES.map((l) => (
+                <option key={l} value={l}>
+                  {l}
+                </option>
+              ))}
+            </Select>
             <Link to="/novo" className="shrink-0">
               <Button size="lg" className="w-full">
                 <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

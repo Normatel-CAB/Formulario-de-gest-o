@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useFormsStore } from '../store/formsStore'
 import { useAuthStore } from '../store/authStore'
-import { temPermissao, type FormularioAvaliacao, type FormStatus } from '../lib/types'
+import { podeDecidirFicha, temPermissao, type FormularioAvaliacao, type FormStatus } from '../lib/types'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card'
 import { StatusBadge } from '../components/ui/StatusBadge'
 import { Button } from '../components/ui/Button'
@@ -55,10 +55,7 @@ export function FormDetail() {
 
   // Espelham as policies da migração 008. Aqui só escondem botão: quem editar
   // o JavaScript ganha o botão de volta e recebe a recusa da API.
-  const podeAlterarStatus =
-    temPermissao(usuario, 'formularios.aprovar') ||
-    temPermissao(usuario, 'formularios.reprovar') ||
-    temPermissao(usuario, 'formularios.reabrir')
+  const podeAlterarStatus = podeDecidirFicha(usuario)
   const podeEditar =
     formulario.status === 'rascunho' && (podeAlterarStatus || (ehDono && temPermissao(usuario, 'formularios.editar')))
   const podeExcluir = temPermissao(usuario, 'formularios.excluir') && (podeAlterarStatus || ehDono)

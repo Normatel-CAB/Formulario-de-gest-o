@@ -5,7 +5,7 @@ import { useAuthStore } from '../../store/authStore'
 import { useSettingsStore } from '../../store/settingsStore'
 import { useSyncState } from '../../hooks/useSyncState'
 import { toast } from '../../store/toastStore'
-import { PAPEL_LABELS, type Papel } from '../../lib/types'
+import { PAPEL_LABELS, podeDecidirFicha, type Papel, type Usuario } from '../../lib/types'
 import { ThemeToggle } from '../theme/ThemeToggle'
 import { Logo } from '../ui/Logo'
 import { BotaoInstalar } from '../pwa/InstalarApp'
@@ -30,6 +30,7 @@ interface NavChild {
   label: string
   icon: (props: { className?: string }) => ReactElement
   roles?: Papel[]
+  mostrar?: (usuario: Usuario) => boolean
 }
 
 interface NavGroup {
@@ -50,6 +51,7 @@ const NAV: NavGroup[] = [
     children: [
       { to: '/novo', label: 'Nova Ficha', icon: PlusIcon, roles: ['administrador', 'operador'] },
       { to: '/historico', label: 'Histórico', icon: HistoryIcon },
+      { to: '/aprovacoes', label: 'Aprovações', icon: ShieldIcon, mostrar: podeDecidirFicha },
     ],
   },
   {
@@ -180,7 +182,7 @@ export function Sidebar() {
           const Icon = item.icon
           const temFilhos = Boolean(item.children?.length)
           const expandido = emHover === item.key || expandidos.has(item.key)
-          const filhosVisiveis = item.children?.filter((c) => !c.roles || (usuario && c.roles.includes(usuario.papel))) ?? []
+          const filhosVisiveis = item.children?.filter((c) => usuario && (!c.roles || c.roles.includes(usuario.papel)) && (!c.mostrar || c.mostrar(usuario))) ?? []
           const ativo =
             (item.to && location.pathname === item.to) || filhosVisiveis.some((c) => location.pathname === c.to)
 

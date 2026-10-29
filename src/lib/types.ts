@@ -44,6 +44,15 @@ export function temPermissao(usuario: Usuario | null, permissao: string): boolea
   return usuario.permissoes.includes(permissao)
 }
 
+/** Espelha pode_decidir_ficha() da migração 008. */
+export function podeDecidirFicha(usuario: Usuario | null): boolean {
+  return (
+    temPermissao(usuario, 'formularios.aprovar') ||
+    temPermissao(usuario, 'formularios.reprovar') ||
+    temPermissao(usuario, 'formularios.reabrir')
+  )
+}
+
 export type StatusRegistro = 'ativo' | 'inativo'
 
 export interface Funcao {
@@ -185,6 +194,8 @@ export interface InfoGerais {
   responsavel: string
   dataAvaliacao: string
   tempoEstimadoExecucao: string
+  tempoEstimadoDias?: number
+  tempoEstimadoHoras?: number
   numeroSolicitacao: string
   equipeNecessaria: string
   /** Base/unidade a que a atividade pertence (ver LOTACOES). */

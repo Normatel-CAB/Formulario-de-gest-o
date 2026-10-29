@@ -316,8 +316,6 @@ export async function gerarPdfFormulario(formulario: FormularioAvaliacao): Promi
       // continue without image
     }
     y = assinaturaY + assinaturaHeight + 18
-  } else {
-    drawMetricRow('Assinatura digital', 'Não registrada')
   }
 
   if (formulario.imagens.length > 0) {

@@ -16,7 +16,7 @@ import { StepRevisao } from './StepRevisao'
 const STEPS = [
   { label: 'Informações Gerais', description: 'Dados da solicitação' },
   { label: 'Necessidades', description: 'Recursos e agendamentos' },
-  { label: 'Apoio e Anexos', description: 'Fotos, GPS e assinatura' },
+  { label: 'Apoio e Anexos', description: 'Fotos e GPS' },
   { label: 'Revisão', description: 'Confirmar e enviar' },
 ]
 

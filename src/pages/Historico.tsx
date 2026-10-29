@@ -23,7 +23,7 @@ import {
 import { baixarFormularioCompleto, baixarImagensDoLote } from '../lib/sync'
 import { toast } from '../store/toastStore'
 import type { FormStatus, FormularioAvaliacao } from '../lib/types'
-import { PROJETOS_PADRAO, temPermissao } from '../lib/types'
+import { LOTACOES, temPermissao } from '../lib/types'
 import { STATUS_COLOR } from '../lib/chartTheme'
 import { formatarDataHora } from '../lib/format'
 
@@ -73,7 +73,7 @@ export function Historico() {
   const [busca, setBusca] = useState('')
   const [aba, setAba] = useState<Aba>('enviado')
   const abaEscolhidaPeloUsuario = useRef(false)
-  const [filtroProjeto, setFiltroProjeto] = useState('')
+  const [filtroLotacao, setFiltroLotacao] = useState('')
   const [de, setDe] = useState('')
   const [ate, setAte] = useState('')
   const [pagina, setPagina] = useState(1)
@@ -107,7 +107,7 @@ export function Historico() {
     const termo = busca.trim().toLowerCase()
     return visiveis.filter((f) => {
       const matchAba = aba === 'todas' || f.status === aba
-      const matchProjeto = !ehAdministrador || !filtroProjeto || f.projeto === filtroProjeto
+      const matchLotacao = !filtroLotacao || f.infoGerais.lotacao === filtroLotacao
       const matchBusca =
         !termo ||
         f.infoGerais.responsavel.toLowerCase().includes(termo) ||
@@ -119,9 +119,9 @@ export function Historico() {
       const dataFicha = f.infoGerais.dataAvaliacao || (f.createdAt ?? '').slice(0, 10)
       const matchDe = !de || (dataFicha !== '' && dataFicha >= de)
       const matchAte = !ate || (dataFicha !== '' && dataFicha <= ate)
-      return matchAba && matchProjeto && matchBusca && matchDe && matchAte
+      return matchAba && matchLotacao && matchBusca && matchDe && matchAte
     })
-  }, [visiveis, busca, aba, filtroProjeto, ehAdministrador, de, ate])
+  }, [visiveis, busca, aba, filtroLotacao, de, ate])
 
   /**
    * Contagem por situação, sempre sobre a lista completa do usuário.
@@ -180,7 +180,7 @@ export function Historico() {
 
   useEffect(() => {
     setPagina(1)
-  }, [busca, aba, filtroProjeto, de, ate])
+  }, [busca, aba, filtroLotacao, de, ate])
 
   /**
    * Exporta as fotos de todas as fichas filtradas num único zip.
@@ -244,23 +244,21 @@ export function Historico() {
       <Tabs itens={abas} valor={aba} onChange={trocarAba} />
 
       <Card>
-        <CardContent className={`grid gap-3 p-4 ${ehAdministrador ? 'md:grid-cols-[1fr_220px]' : ''}`}>
+        <CardContent className="grid gap-3 p-4 md:grid-cols-[1fr_220px]">
           <Input
             placeholder="Pesquisar por responsável, local ou nº da solicitação"
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
             aria-label="Pesquisar formulários"
           />
-          {ehAdministrador && (
-            <Select value={filtroProjeto} onChange={(e) => setFiltroProjeto(e.target.value)} aria-label="Filtrar por projeto">
-              <option value="">Todos os projetos</option>
-              {PROJETOS_PADRAO.map((p) => (
-                <option key={p} value={p}>
-                  {p}
-                </option>
-              ))}
-            </Select>
-          )}
+          <Select value={filtroLotacao} onChange={(e) => setFiltroLotacao(e.target.value)} aria-label="Filtrar por lotação">
+            <option value="">Todas as lotações</option>
+            {LOTACOES.map((l) => (
+              <option key={l} value={l}>
+                {l}
+              </option>
+            ))}
+          </Select>
         </CardContent>
       </Card>
 

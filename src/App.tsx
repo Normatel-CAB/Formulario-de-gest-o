@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, type ReactNode } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { AppShell } from './components/layout/AppShell'
 import { SkeletonCard } from './components/ui/Skeleton'
@@ -6,7 +6,7 @@ import { Toaster } from './components/ui/Toaster'
 import { ErrorBoundary } from './components/ui/ErrorBoundary'
 import { RequireAuth, RequireRole } from './components/auth/RequireAuth'
 import { useAuthStore } from './store/authStore'
-import { temPermissao } from './lib/types'
+import { podeDecidirFicha, temPermissao } from './lib/types'
 
 const Login = lazy(() => import('./pages/Auth/Login').then((m) => ({ default: m.Login })))
 const AcessoPendente = lazy(() => import('./pages/Auth/AcessoPendente').then((m) => ({ default: m.AcessoPendente })))
@@ -15,6 +15,7 @@ const NovoFormulario = lazy(() => import('./pages/NovoFormulario').then((m) => (
 const Historico = lazy(() => import('./pages/Historico').then((m) => ({ default: m.Historico })))
 const FormDetail = lazy(() => import('./pages/FormDetail').then((m) => ({ default: m.FormDetail })))
 const MeuPerfil = lazy(() => import('./pages/MeuPerfil').then((m) => ({ default: m.MeuPerfil })))
+const Aprovacoes = lazy(() => import('./pages/Aprovacoes').then((m) => ({ default: m.Aprovacoes })))
 const Administracao = lazy(() => import('./pages/Administracao').then((m) => ({ default: m.Administracao })))
 const Usuarios = lazy(() => import('./pages/Administracao/Usuarios').then((m) => ({ default: m.Usuarios })))
 const Cargos = lazy(() => import('./pages/Administracao/Cargos').then((m) => ({ default: m.Cargos })))
@@ -27,6 +28,14 @@ function Inicio() {
   const usuario = useAuthStore((s) => s.usuario)
   if (!temPermissao(usuario ?? null, 'formularios.criar')) return <Navigate to="/historico" replace />
   return <NovoFormulario />
+}
+
+/** Cargo com direito de decidir ficha, como o Planejador, não é administrador:
+    por isso a fila não pode ficar presa ao papel. */
+function SoQuemDecide({ children }: { children: ReactNode }) {
+  const usuario = useAuthStore((s) => s.usuario)
+  if (!podeDecidirFicha(usuario ?? null)) return <Navigate to="/dashboard" replace />
+  return <>{children}</>
 }
 
 export default function App() {
@@ -75,6 +84,14 @@ export default function App() {
                       <Route path="/historico" element={<Historico />} />
                       <Route path="/formulario/:id" element={<FormDetail />} />
                       <Route path="/perfil" element={<MeuPerfil />} />
+                      <Route
+                        path="/aprovacoes"
+                        element={
+                          <SoQuemDecide>
+                            <Aprovacoes />
+                          </SoQuemDecide>
+                        }
+                      />
                       <Route
                         path="/administracao"
                         element={

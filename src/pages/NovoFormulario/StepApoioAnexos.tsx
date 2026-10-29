@@ -3,7 +3,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../..
 import { Textarea } from '../../components/ui/Field'
 import { ImageUploader } from '../../components/ui/ImageUploader'
 import { LocationPicker } from '../../components/ui/LocationPicker'
-import { SignaturePad } from '../../components/ui/SignaturePad'
 
 export function StepApoioAnexos({
   formulario,
@@ -46,15 +45,6 @@ export function StepApoioAnexos({
         </CardHeader>
         <CardContent>
           <LocationPicker value={formulario.localizacao} onChange={(localizacao) => onPatch({ localizacao: localizacao ?? undefined })} />
-        </CardContent>
-      </Card>
-
-      <Card className="animate-slide-up">
-        <CardHeader>
-          <CardTitle>Assinatura digital</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <SignaturePad value={formulario.assinaturaDataUrl} onChange={(assinaturaDataUrl) => onPatch({ assinaturaDataUrl: assinaturaDataUrl ?? undefined })} />
         </CardContent>
       </Card>
 
