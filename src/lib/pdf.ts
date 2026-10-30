@@ -33,6 +33,8 @@ const STATUS_PDF_STYLES: Record<FormStatus, { bg: [number, number, number]; text
   em_analise: { bg: [254, 243, 199], text: [120, 53, 15] },
   aprovado: { bg: [220, 252, 231], text: [4, 120, 87] },
   reprovado: { bg: [254, 226, 226], text: [153, 27, 27] },
+  em_compras: { bg: [255, 237, 213], text: [154, 52, 18] },
+  programado: { bg: [219, 234, 254], text: [29, 78, 216] },
 }
 
 export function nomeArquivoPdf(formulario: FormularioAvaliacao) {
@@ -224,6 +226,7 @@ export async function gerarPdfFormulario(formulario: FormularioAvaliacao): Promi
   sectionHeader('Informações Gerais')
   drawStatusBadge(formulario.status)
   y += 14
+  drawTwoColumns('Texto breve', formulario.infoGerais.textoBreve || 'Não informado', 'Carteira', formulario.infoGerais.carteira || 'Não informada')
   drawTwoColumns('Responsável', formulario.infoGerais.responsavel || 'Não informado', 'Nº da Solicitação', formulario.infoGerais.numeroSolicitacao || 'Sem número')
   drawTwoColumns('Data da Avaliação', formulario.infoGerais.dataAvaliacao ? formatarData(formulario.infoGerais.dataAvaliacao) : 'Não informada', 'Tempo Estimado', formulario.infoGerais.tempoEstimadoExecucao || 'Não informado')
   drawTwoColumns('Equipe Necessária', formulario.infoGerais.equipeNecessaria || 'Não informada', 'Lotação', formulario.infoGerais.lotacao || 'Não informada')
@@ -293,6 +296,19 @@ export async function gerarPdfFormulario(formulario: FormularioAvaliacao): Promi
   doc.setTextColor(26, 32, 39)
   doc.text(doc.splitTextToSize(observacoes, contentWidth), margin, y)
   y += doc.splitTextToSize(observacoes, contentWidth).length * 12 + 16
+  const justificativa = formulario.justificativaCompras?.trim()
+  if (justificativa) {
+    ensurePageSpace(60)
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(10)
+    doc.setTextColor(55, 65, 81)
+    doc.text('Justificativa de compras', margin, y)
+    y += 16
+    doc.setFont('helvetica', 'normal')
+    doc.setTextColor(26, 32, 39)
+    doc.text(doc.splitTextToSize(justificativa, contentWidth), margin, y)
+    y += doc.splitTextToSize(justificativa, contentWidth).length * 12 + 16
+  }
 
   sectionHeader('Anexos')
   drawMetricRow('Localização GPS', formulario.localizacao ? `${formulario.localizacao.latitude.toFixed(6)}, ${formulario.localizacao.longitude.toFixed(6)}` : 'Não capturada')

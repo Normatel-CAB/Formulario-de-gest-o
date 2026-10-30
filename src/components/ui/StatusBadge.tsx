@@ -8,6 +8,8 @@ const toneClasses: Record<FormStatus, string> = {
   em_analise: 'border border-viz-amber/25 bg-viz-amber/13 text-viz-amber',
   aprovado: 'border border-brand/25 bg-brand/13 text-brand-lite',
   reprovado: 'border border-viz-red/25 bg-viz-red/13 text-viz-red',
+  em_compras: 'border border-viz-orange/25 bg-viz-orange/13 text-viz-orange',
+  programado: 'border border-viz-blue/25 bg-viz-blue/13 text-viz-blue',
 }
 
 const dotClasses: Record<FormStatus, string> = {
@@ -16,6 +18,8 @@ const dotClasses: Record<FormStatus, string> = {
   em_analise: 'bg-viz-amber',
   aprovado: 'bg-brand',
   reprovado: 'bg-viz-red',
+  em_compras: 'bg-viz-orange',
+  programado: 'bg-viz-blue',
 }
 
 export function StatusBadge({ status, className }: { status: FormStatus; className?: string }) {

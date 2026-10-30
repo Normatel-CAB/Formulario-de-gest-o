@@ -4,6 +4,7 @@ import { Input, Select } from '../../components/ui/Field'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/Card'
 import { Reveal } from '../../components/ui/Reveal'
 import { formatarTempoEstimado } from '../../lib/format'
+import type { Carteira } from '../../store/carteirasStore'
 
 function lerNumero(valor: string) {
   if (valor === '') return undefined
@@ -13,12 +14,15 @@ function lerNumero(valor: string) {
 
 export function StepInfoGerais({
   formulario,
+  carteiras,
   onChange,
 }: {
   formulario: FormularioAvaliacao
+  carteiras: Carteira[]
   onChange: (patch: Partial<FormularioAvaliacao['infoGerais']>) => void
 }) {
   const info = formulario.infoGerais
+  const carteirasAtivas = carteiras.filter((c) => c.ativo)
 
   function mudarTempo(patch: Pick<Partial<FormularioAvaliacao['infoGerais']>, 'tempoEstimadoDias' | 'tempoEstimadoHoras'>) {
     const dias = 'tempoEstimadoDias' in patch ? patch.tempoEstimadoDias : info.tempoEstimadoDias
@@ -40,6 +44,17 @@ export function StepInfoGerais({
           </div>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
+          <div className="sm:col-span-2">
+            <Input
+              label="Texto breve da solicitação"
+              required
+              maxLength={120}
+              value={info.textoBreve}
+              onChange={(e) => onChange({ textoBreve: e.target.value })}
+              placeholder="Ex.: Troca de luminárias do corredor"
+              hint="Aparece como título da ficha nas listas."
+            />
+          </div>
           <Input
             label="Responsável"
             required
@@ -113,6 +128,22 @@ export function StepInfoGerais({
             ))}
             {info.lotacao && !(LOTACOES as readonly string[]).includes(info.lotacao) && (
               <option value={info.lotacao}>{info.lotacao} (antiga, escolha 04, 06 ou 09)</option>
+            )}
+          </Select>
+          <Select
+            label="Carteira"
+            required={carteirasAtivas.length > 0}
+            value={info.carteira}
+            onChange={(e) => onChange({ carteira: e.target.value })}
+          >
+            <option value="">{carteirasAtivas.length > 0 ? 'Selecione a carteira' : 'Nenhuma carteira cadastrada'}</option>
+            {carteirasAtivas.map((c) => (
+              <option key={c.id} value={c.nome}>
+                {c.nome}
+              </option>
+            ))}
+            {info.carteira && !carteirasAtivas.some((c) => c.nome === info.carteira) && (
+              <option value={info.carteira}>{info.carteira}</option>
             )}
           </Select>
           <Input

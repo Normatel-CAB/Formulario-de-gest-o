@@ -26,8 +26,8 @@ interface FormsState {
   carregar: () => Promise<void>
   obter: (id: string) => Promise<FormularioAvaliacao | undefined>
   salvarRascunho: (formulario: FormularioAvaliacao) => Promise<void>
-  enviar: (formulario: FormularioAvaliacao) => Promise<void>
-  atualizarStatus: (id: string, status: FormStatus) => Promise<void>
+  enviar: (formulario: FormularioAvaliacao, manterStatus?: boolean) => Promise<void>
+  atualizarStatus: (id: string, status: FormStatus, justificativaCompras?: string) => Promise<void>
   remover: (id: string) => Promise<void>
 }
 
@@ -73,10 +73,10 @@ export const useFormsStore = create<FormsState>((set) => ({
       formularios: [atualizado, ...s.formularios.filter((f) => f.id !== atualizado.id)],
     }))
   },
-  enviar: async (formulario) => {
+  enviar: async (formulario, manterStatus = false) => {
     const atualizado: FormularioAvaliacao = {
       ...formulario,
-      status: 'enviado',
+      status: manterStatus ? formulario.status : 'enviado',
       updatedAt: new Date().toISOString(),
       syncPending: true,
     }
@@ -107,15 +107,20 @@ export const useFormsStore = create<FormsState>((set) => ({
       await enfileirarSincronizacao(atualizado.id)
     }
   },
-  atualizarStatus: async (id, status) => {
+  atualizarStatus: async (id, status, justificativaCompras) => {
     const formulario = await obterFormularioLocal(id)
     if (!formulario) throw new Error('Ficha não encontrada neste aparelho.')
     const updatedAt = new Date().toISOString()
     if (isSupabaseConfigured) {
       if (!navigator.onLine) throw new Error('Sem conexão. Conecte-se para alterar o status.')
-      await atualizarStatusNaNuvem(id, status, updatedAt)
+      await atualizarStatusNaNuvem(id, status, updatedAt, justificativaCompras)
     }
-    const atualizado = { ...formulario, status, updatedAt }
+    const atualizado = {
+      ...formulario,
+      status,
+      updatedAt,
+      ...(justificativaCompras === undefined ? {} : { justificativaCompras }),
+    }
     await salvarFormularioLocal(atualizado)
     set((s) => ({ formularios: s.formularios.map((f) => (f.id === id ? atualizado : f)) }))
   },

@@ -6,7 +6,7 @@ import { Toaster } from './components/ui/Toaster'
 import { ErrorBoundary } from './components/ui/ErrorBoundary'
 import { RequireAuth, RequireRole } from './components/auth/RequireAuth'
 import { useAuthStore } from './store/authStore'
-import { podeDecidirFicha, temPermissao } from './lib/types'
+import { podeDecidirFicha, podeProgramar, temPermissao } from './lib/types'
 
 const Login = lazy(() => import('./pages/Auth/Login').then((m) => ({ default: m.Login })))
 const AcessoPendente = lazy(() => import('./pages/Auth/AcessoPendente').then((m) => ({ default: m.AcessoPendente })))
@@ -20,6 +20,7 @@ const Administracao = lazy(() => import('./pages/Administracao').then((m) => ({ 
 const Usuarios = lazy(() => import('./pages/Administracao/Usuarios').then((m) => ({ default: m.Usuarios })))
 const Cargos = lazy(() => import('./pages/Administracao/Cargos').then((m) => ({ default: m.Cargos })))
 const Permissoes = lazy(() => import('./pages/Administracao/Permissoes').then((m) => ({ default: m.Permissoes })))
+const Carteiras = lazy(() => import('./pages/Administracao/Carteiras').then((m) => ({ default: m.Carteiras })))
 const Configuracoes = lazy(() => import('./pages/Configuracoes').then((m) => ({ default: m.Configuracoes })))
 
 /** Destino da raiz conforme a permissão: preencher para quem preenche,
@@ -30,17 +31,21 @@ function Inicio() {
   return <NovoFormulario />
 }
 
-/** Cargo com direito de decidir ficha, como o Planejador, não é administrador:
-    por isso a fila não pode ficar presa ao papel. */
+/** Supervisor e planejador não são administradores: por isso a fila não pode
+    ficar presa ao papel. */
 function SoQuemDecide({ children }: { children: ReactNode }) {
   const usuario = useAuthStore((s) => s.usuario)
-  if (!podeDecidirFicha(usuario ?? null)) return <Navigate to="/dashboard" replace />
+  if (!podeDecidirFicha(usuario ?? null) && !podeProgramar(usuario ?? null)) return <Navigate to="/dashboard" replace />
   return <>{children}</>
 }
 
 function PodeEditarFicha({ children }: { children: ReactNode }) {
   const usuario = useAuthStore((s) => s.usuario)
-  if (!podeDecidirFicha(usuario ?? null) && !temPermissao(usuario ?? null, 'formularios.editar')) {
+  if (
+    !podeDecidirFicha(usuario ?? null) &&
+    !podeProgramar(usuario ?? null) &&
+    !temPermissao(usuario ?? null, 'formularios.editar')
+  ) {
     return <Navigate to="/dashboard" replace />
   }
   return <>{children}</>
@@ -129,6 +134,14 @@ export default function App() {
                         element={
                           <RequireRole roles={['administrador']}>
                             <Permissoes />
+                          </RequireRole>
+                        }
+                      />
+                      <Route
+                        path="/administracao/carteiras"
+                        element={
+                          <RequireRole roles={['administrador']}>
+                            <Carteiras />
                           </RequireRole>
                         }
                       />

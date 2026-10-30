@@ -46,12 +46,14 @@ export function criarFormularioVazio(): FormularioAvaliacao {
     status: 'rascunho',
     projeto: '',
     infoGerais: {
+      textoBreve: '',
       responsavel: '',
       dataAvaliacao: new Date().toISOString().slice(0, 10),
       tempoEstimadoExecucao: '',
       numeroSolicitacao: '',
       equipeNecessaria: '',
       lotacao: '',
+      carteira: '',
       localAtividade: '',
     },
     necessidades: criarNecessidadesVazias(),
@@ -99,6 +101,7 @@ export function normalizarFormulario(f: FormularioAvaliacao): FormularioAvaliaca
 export function formularioTemConteudo(f: FormularioAvaliacao): boolean {
   const info = f.infoGerais
   if (
+    info.textoBreve ||
     info.responsavel ||
     info.tempoEstimadoExecucao ||
     info.numeroSolicitacao ||

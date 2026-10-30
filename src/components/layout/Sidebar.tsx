@@ -5,7 +5,7 @@ import { useAuthStore } from '../../store/authStore'
 import { useSettingsStore } from '../../store/settingsStore'
 import { useSyncState } from '../../hooks/useSyncState'
 import { toast } from '../../store/toastStore'
-import { PAPEL_LABELS, podeDecidirFicha, type Papel, type Usuario } from '../../lib/types'
+import { PAPEL_LABELS, podeDecidirFicha, podeProgramar, type Papel, type Usuario } from '../../lib/types'
 import { ThemeToggle } from '../theme/ThemeToggle'
 import { Logo } from '../ui/Logo'
 import { BotaoInstalar } from '../pwa/InstalarApp'
@@ -51,7 +51,7 @@ const NAV: NavGroup[] = [
     children: [
       { to: '/novo', label: 'Nova Ficha', icon: PlusIcon, roles: ['administrador', 'operador'] },
       { to: '/historico', label: 'Histórico', icon: HistoryIcon },
-      { to: '/aprovacoes', label: 'Aprovações', icon: ShieldIcon, mostrar: podeDecidirFicha },
+      { to: '/aprovacoes', label: 'Aprovações', icon: ShieldIcon, mostrar: (u) => podeDecidirFicha(u) || podeProgramar(u) },
     ],
   },
   {
@@ -62,6 +62,7 @@ const NAV: NavGroup[] = [
     children: [
       { to: '/usuarios', label: 'Usuários', icon: UsersIcon },
       { to: '/administracao/cargos', label: 'Cargos', icon: ShieldIcon },
+      { to: '/administracao/carteiras', label: 'Carteiras', icon: FormsIcon },
       { to: '/configuracoes', label: 'Configurações', icon: SettingsIcon },
     ],
   },

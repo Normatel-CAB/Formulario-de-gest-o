@@ -56,15 +56,22 @@ export function StepRevisao({ formulario }: { formulario: FormularioAvaliacao })
             </div>
           </CardHeader>
           <CardContent className="grid gap-3 sm:grid-cols-2">
+            <div className="sm:col-span-2">
+              <InfoRow label="Texto breve da solicitação" value={info.textoBreve} />
+            </div>
             <InfoRow label="Responsável" value={info.responsavel} />
             <InfoRow label="Data da Avaliação" value={info.dataAvaliacao ? formatarData(info.dataAvaliacao) : 'Não informada'} />
             <InfoRow label="Tempo Estimado" value={info.tempoEstimadoExecucao} />
             <InfoRow label="Nº da Solicitação" value={info.numeroSolicitacao} />
             <InfoRow label="Equipe Necessária" value={info.equipeNecessaria} />
             <InfoRow label="Lotação" value={info.lotacao} />
+            <InfoRow label="Carteira" value={info.carteira} />
             <InfoRow label="Local da Atividade" value={info.localAtividade} />
             <TextoLongo label="Apoio necessário" value={formulario.descricaoApoio} />
             <TextoLongo label="Observações" value={formulario.observacoes} />
+            {formulario.justificativaCompras?.trim() && (
+              <TextoLongo label="Justificativa de compras" value={formulario.justificativaCompras} />
+            )}
           </CardContent>
         </Card>
       </Reveal>

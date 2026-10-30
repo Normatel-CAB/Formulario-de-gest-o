@@ -17,6 +17,8 @@ export const VIZ = {
   red: '#F2645F',
   deep: '#2E7D32',
   slate: '#8AA08E',
+  orange: '#E8833A',
+  blue: '#4A90D9',
 } as const
 
 /** Sequência para séries sem significado semântico (lotações, meses…). */
@@ -40,4 +42,6 @@ export const STATUS_COLOR: Record<FormStatus, string> = {
   em_analise: VIZ.amber,
   aprovado: VIZ.green,
   reprovado: VIZ.red,
+  em_compras: VIZ.orange,
+  programado: VIZ.blue,
 }

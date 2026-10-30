@@ -5,6 +5,7 @@ import type { FormStatus, FormularioAvaliacao, NecessidadesExecucao } from '../.
 import { MINIMO_FOTOS } from '../../lib/types'
 import { useFormsStore } from '../../store/formsStore'
 import { useAuthStore } from '../../store/authStore'
+import { useCarteirasStore } from '../../store/carteirasStore'
 import { Stepper } from '../../components/ui/Stepper'
 import { Reveal } from '../../components/ui/Reveal'
 import { Button } from '../../components/ui/Button'
@@ -27,6 +28,7 @@ export function NovoFormulario() {
   const navigate = useNavigate()
   const { obter, salvarRascunho, enviar } = useFormsStore()
   const usuario = useAuthStore((s) => s.usuario)
+  const { carteiras, carregar: carregarCarteiras } = useCarteirasStore()
 
   const [formulario, setFormulario] = useState<FormularioAvaliacao>(() => {
     const vazio = criarFormularioVazio()
@@ -45,7 +47,14 @@ export function NovoFormulario() {
   const [enviando, setEnviando] = useState(false)
   const [statusOriginal, setStatusOriginal] = useState<FormStatus>('rascunho')
   const editandoEnviada = statusOriginal !== 'rascunho'
+  // supervisor ou planejador corrigindo ficha dos outros: salva sem devolver pro inicio da fila
+  const ehAutor = (formulario.criadoPorEmail ?? '').toLowerCase() === (usuario?.email ?? '').toLowerCase()
+  const manterStatus = editandoEnviada && !ehAutor
   const autosaveTimer = useRef<number | undefined>(undefined)
+
+  useEffect(() => {
+    void carregarCarteiras()
+  }, [carregarCarteiras])
 
   useEffect(() => {
     if (!id) return
@@ -84,7 +93,10 @@ export function NovoFormulario() {
   function proximaEtapa() {
     if (step === 0) {
       const info = formulario.infoGerais
+      const exigeCarteira = carteiras.some((c) => c.ativo)
       if (
+        !info.textoBreve.trim() ||
+        (exigeCarteira && !info.carteira) ||
         !info.responsavel ||
         !info.dataAvaliacao ||
         !info.tempoEstimadoExecucao ||
@@ -127,8 +139,11 @@ export function NovoFormulario() {
     if (!temFoto()) return
     setEnviando(true)
     try {
-      await enviar(formulario)
-      toast({ variant: 'success', title: editandoEnviada ? 'Ficha reenviada' : 'Formulário enviado com sucesso' })
+      await enviar(formulario, manterStatus)
+      toast({
+        variant: 'success',
+        title: manterStatus ? 'Ficha salva' : editandoEnviada ? 'Ficha reenviada' : 'Formulário enviado com sucesso',
+      })
       finalizarEnvio()
     } catch (err) {
       if (err instanceof RecusaDoServidor) {
@@ -163,7 +178,9 @@ export function NovoFormulario() {
             {editandoEnviada ? 'Editar Ficha Técnica de Avaliação' : 'Nova Ficha Técnica de Avaliação'}
           </h2>
           <p className="mt-1 text-[13px] text-txt-dim">
-            {editandoEnviada
+            {manterStatus
+              ? 'Você está editando a ficha de outra pessoa. O status continua o mesmo ao salvar.'
+              : editandoEnviada
               ? 'Corrija o que faltou e reenvie. A ficha volta para Enviado e passa por nova avaliação.'
               : 'Preencha as etapas abaixo. Seu progresso é salvo automaticamente, mesmo sem internet.'}
           </p>
@@ -176,7 +193,7 @@ export function NovoFormulario() {
         </div>
       </Reveal>
 
-      {step === 0 && <StepInfoGerais formulario={formulario} onChange={patchInfo} />}
+      {step === 0 && <StepInfoGerais formulario={formulario} carteiras={carteiras} onChange={patchInfo} />}
       {step === 1 && <StepNecessidades formulario={formulario} onChange={patchNecessidades} />}
       {step === 2 && <StepApoioAnexos formulario={formulario} onPatch={patch} />}
       {step === 3 && <StepRevisao formulario={formulario} />}
@@ -208,8 +225,10 @@ export function NovoFormulario() {
             </Button>
           ) : (
             <Button onClick={enviarFormulario} loading={enviando} className="shrink-0">
-              <span className="hidden sm:inline">{editandoEnviada ? 'Reenviar ficha' : 'Enviar formulário'}</span>
-              <span className="sm:hidden">{editandoEnviada ? 'Reenviar' : 'Enviar'}</span>
+              <span className="hidden sm:inline">
+                {manterStatus ? 'Salvar alterações' : editandoEnviada ? 'Reenviar ficha' : 'Enviar formulário'}
+              </span>
+              <span className="sm:hidden">{manterStatus ? 'Salvar' : editandoEnviada ? 'Reenviar' : 'Enviar'}</span>
             </Button>
           )}
         </div>

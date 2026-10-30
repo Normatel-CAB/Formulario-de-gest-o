@@ -91,11 +91,17 @@ export async function excluirFormularioDaNuvem(id: string) {
  * status e data sobem: a cópia local pode ter vindo da listagem, sem fotos, e
  * mandar a ficha inteira apagaria as imagens no banco.
  */
-export async function atualizarStatusNaNuvem(id: string, status: FormStatus, updatedAt: string) {
+export async function atualizarStatusNaNuvem(
+  id: string,
+  status: FormStatus,
+  updatedAt: string,
+  justificativaCompras?: string,
+) {
   if (!supabase || !isSupabaseConfigured) throw new Error('Supabase não configurado')
+  const campos = justificativaCompras === undefined ? { status, updatedAt } : { status, updatedAt, justificativaCompras }
   const { data, error } = await supabase
     .from(FORMS_TABLE)
-    .update({ status, updatedAt })
+    .update(campos)
     .eq('id', id)
     .select('id')
   if (error) throw new Error(error.message)

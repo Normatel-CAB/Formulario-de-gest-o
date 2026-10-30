@@ -49,9 +49,17 @@ export function podeDecidirFicha(usuario: Usuario | null): boolean {
   return (
     temPermissao(usuario, 'formularios.aprovar') ||
     temPermissao(usuario, 'formularios.reprovar') ||
-    temPermissao(usuario, 'formularios.reabrir')
+    temPermissao(usuario, 'formularios.reabrir') ||
+    temPermissao(usuario, 'formularios.em.compras')
   )
 }
+
+export function podeProgramar(usuario: Usuario | null): boolean {
+  return temPermissao(usuario, 'formularios.programar')
+}
+
+/** O que o planejador enxerga das fichas alheias: só depois do supervisor. */
+export const STATUS_AVALIADOS: FormStatus[] = ['aprovado', 'reprovado', 'em_compras', 'programado']
 
 export type StatusRegistro = 'ativo' | 'inativo'
 
@@ -81,7 +89,7 @@ export interface Cargo {
   atualizadoEm: string
 }
 
-export type FormStatus = 'rascunho' | 'enviado' | 'em_analise' | 'aprovado' | 'reprovado'
+export type FormStatus = 'rascunho' | 'enviado' | 'em_analise' | 'aprovado' | 'reprovado' | 'em_compras' | 'programado'
 
 export const STATUS_LABELS: Record<FormStatus, string> = {
   rascunho: 'Rascunho',
@@ -89,6 +97,8 @@ export const STATUS_LABELS: Record<FormStatus, string> = {
   em_analise: 'Em Análise',
   aprovado: 'Aprovado',
   reprovado: 'Reprovado',
+  em_compras: 'Em Compras',
+  programado: 'Programado',
 }
 
 export const STATUS_COLORS: Record<FormStatus, { bg: string; text: string; dot: string }> = {
@@ -97,6 +107,8 @@ export const STATUS_COLORS: Record<FormStatus, { bg: string; text: string; dot: 
   em_analise: { bg: 'bg-amber-100', text: 'text-amber-700', dot: 'bg-amber-500' },
   aprovado: { bg: 'bg-brand-100', text: 'text-brand-700', dot: 'bg-brand-500' },
   reprovado: { bg: 'bg-rose-100', text: 'text-rose-700', dot: 'bg-rose-500' },
+  em_compras: { bg: 'bg-orange-100', text: 'text-orange-700', dot: 'bg-orange-500' },
+  programado: { bg: 'bg-blue-100', text: 'text-blue-700', dot: 'bg-blue-500' },
 }
 
 export interface QtdDias {
@@ -199,6 +211,8 @@ export const LOTACOES_ANTIGAS = ['Áreas Externas'] as const
 export const LOTACOES_FILTRO: readonly string[] = [...LOTACOES, ...LOTACOES_ANTIGAS]
 
 export interface InfoGerais {
+  /** Resumo curto do pedido. É o título do card nas listas. */
+  textoBreve: string
   responsavel: string
   dataAvaliacao: string
   tempoEstimadoExecucao: string
@@ -208,6 +222,8 @@ export interface InfoGerais {
   equipeNecessaria: string
   /** Base/unidade a que a atividade pertence (ver LOTACOES). */
   lotacao: string
+  /** Nome da carteira, da lista mantida em Administração > Carteiras. */
+  carteira: string
   localAtividade: string
 }
 
@@ -219,6 +235,15 @@ export interface LocalizacaoGPS {
 }
 
 export const MINIMO_FOTOS = 2
+
+/** Ficha antiga não tem texto breve, então cai no local como era antes. */
+export function tituloFicha(f: Pick<FormularioAvaliacao, 'infoGerais'>): string {
+  return f.infoGerais.textoBreve?.trim() || f.infoGerais.localAtividade || 'Atividade sem nome'
+}
+
+export function localDaFicha(f: Pick<FormularioAvaliacao, 'infoGerais'>): string {
+  return f.infoGerais.textoBreve?.trim() ? f.infoGerais.localAtividade : ''
+}
 
 export interface AnexoImagem {
   id: string
@@ -238,6 +263,8 @@ export interface FormularioAvaliacao {
   necessidades: NecessidadesExecucao
   descricaoApoio: string
   observacoes: string
+  /** Escrita pelo supervisor ao mandar a ficha pra Em Compras. */
+  justificativaCompras?: string
   imagens: AnexoImagem[]
   /**
    * Quantas fotos a ficha tem, calculado pelo banco (migração 009).

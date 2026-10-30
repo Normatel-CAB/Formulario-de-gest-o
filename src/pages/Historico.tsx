@@ -24,7 +24,7 @@ import {
 import { baixarFormularioCompleto, baixarImagensDoLote } from '../lib/sync'
 import { toast } from '../store/toastStore'
 import type { FormStatus, FormularioAvaliacao } from '../lib/types'
-import { LOTACOES_FILTRO, podeDecidirFicha, temPermissao } from '../lib/types'
+import { LOTACOES_FILTRO, STATUS_AVALIADOS, localDaFicha, podeDecidirFicha, temPermissao, tituloFicha } from '../lib/types'
 import { STATUS_COLOR } from '../lib/chartTheme'
 import { formatarDataHora } from '../lib/format'
 
@@ -85,6 +85,7 @@ export function Historico() {
   // Ver ficha de outra pessoa é permissão, não papel. O recorte por projeto
   // acontece no banco: aqui a lista já chega filtrada.
   const ehAdministrador = temPermissao(usuario, 'historico.ver.de.todos')
+  const veAvaliadas = temPermissao(usuario, 'historico.ver.avaliadas')
 
   useEffect(() => {
     void carregar()
@@ -125,11 +126,12 @@ export function Historico() {
       lista = lista.filter(
         (f) =>
           (f.criadoPorEmail ?? '').toLowerCase() === meuEmail ||
-          (Boolean(f.criadoPorId) && f.criadoPorId === usuario.id),
+          (Boolean(f.criadoPorId) && f.criadoPorId === usuario.id) ||
+          (veAvaliadas && STATUS_AVALIADOS.includes(f.status)),
       )
     }
     return lista
-  }, [formularios, usuario, ehAdministrador])
+  }, [formularios, usuario, ehAdministrador, veAvaliadas])
 
   const filtrados = useMemo(() => {
     const termo = busca.trim().toLowerCase()
@@ -140,6 +142,7 @@ export function Historico() {
         !termo ||
         f.infoGerais.responsavel.toLowerCase().includes(termo) ||
         f.infoGerais.localAtividade.toLowerCase().includes(termo) ||
+        (f.infoGerais.textoBreve ?? '').toLowerCase().includes(termo) ||
         f.infoGerais.numeroSolicitacao.toLowerCase().includes(termo)
       // A data da avaliação e os limites do filtro são todos "YYYY-MM-DD", então
       // comparar como texto já dá a ordem certa: nada de fuso horário no meio.
@@ -165,6 +168,8 @@ export function Historico() {
       em_analise: 0,
       aprovado: 0,
       reprovado: 0,
+      em_compras: 0,
+      programado: 0,
     }
     for (const f of visiveis) base[f.status] += 1
     return base
@@ -174,7 +179,9 @@ export function Historico() {
     const lista: AbaItem<Aba>[] = [
       { valor: 'enviado', label: 'Aguardando análise', total: contagem.enviado, cor: STATUS_COLOR.enviado },
       { valor: 'em_analise', label: 'Em análise', total: contagem.em_analise, cor: STATUS_COLOR.em_analise },
+      { valor: 'em_compras', label: 'Em compras', total: contagem.em_compras, cor: STATUS_COLOR.em_compras },
       { valor: 'aprovado', label: 'Aprovadas', total: contagem.aprovado, cor: STATUS_COLOR.aprovado },
+      { valor: 'programado', label: 'Programadas', total: contagem.programado, cor: STATUS_COLOR.programado },
       { valor: 'reprovado', label: 'Reprovadas', total: contagem.reprovado, cor: STATUS_COLOR.reprovado },
     ]
     // Rascunho é assunto de quem escreveu, não do planejador: a aba só aparece
@@ -274,7 +281,7 @@ export function Historico() {
       <Card>
         <CardContent className="grid gap-3 p-4 md:grid-cols-[1fr_220px]">
           <Input
-            placeholder="Pesquisar por responsável, local ou nº da solicitação"
+            placeholder="Pesquisar por texto breve, responsável, local ou nº"
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
             aria-label="Pesquisar formulários"
@@ -374,7 +381,7 @@ export function Historico() {
                     <Link to={`/formulario/${f.id}`} className="block min-w-0">
                       <div className="flex items-start justify-between gap-2">
                         <p className="line-clamp-2 text-[12.5px] font-semibold">
-                          {f.infoGerais.localAtividade || 'Atividade sem nome'}
+                          {tituloFicha(f)}
                         </p>
                         <span className="flex shrink-0 flex-col items-end gap-1">
                           <StatusBadge status={f.status} />
@@ -384,6 +391,9 @@ export function Historico() {
                           {f.syncPending && <Badge tone="amber">Aguardando envio</Badge>}
                         </span>
                       </div>
+                      {localDaFicha(f) && (
+                        <p className="mt-1 truncate text-[11.5px] text-txt-dim">Local: {localDaFicha(f)}</p>
+                      )}
                       <p className="mt-2 truncate text-[11.5px] text-txt-dim">
                         {f.infoGerais.numeroSolicitacao ? `Nº ${f.infoGerais.numeroSolicitacao}` : 'Sem número'}
                       </p>
@@ -435,7 +445,7 @@ export function Historico() {
         open={Boolean(paraExcluir)}
         onClose={() => setParaExcluir(null)}
         title="Excluir ficha?"
-        description={`${paraExcluir?.infoGerais.localAtividade || 'Atividade sem nome'}${
+        description={`${paraExcluir ? tituloFicha(paraExcluir) : ''}${
           paraExcluir?.infoGerais.numeroSolicitacao ? `, Nº ${paraExcluir.infoGerais.numeroSolicitacao}` : ''
         }. A ficha sai do sistema para todo mundo e não dá para desfazer.`}
         footer={

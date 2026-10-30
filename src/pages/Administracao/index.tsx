@@ -22,7 +22,7 @@ export function Administracao() {
   }, [carregar, carregarAcessos, carregarCargos])
 
   const pendentes = useMemo(
-    () => formularios.filter((f) => f.status === 'enviado' || f.status === 'em_analise').length,
+    () => formularios.filter((f) => f.status === 'enviado' || f.status === 'em_analise' || f.status === 'em_compras').length,
     [formularios],
   )
 
@@ -65,6 +65,11 @@ export function Administracao() {
           <Link to="/administracao/cargos">
             <Button variant="outline" size="sm">
               Cargos
+            </Button>
+          </Link>
+          <Link to="/administracao/carteiras">
+            <Button variant="outline" size="sm">
+              Carteiras
             </Button>
           </Link>
           <Link to="/administracao/permissoes">

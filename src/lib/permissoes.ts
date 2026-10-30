@@ -7,14 +7,16 @@ export const MODULOS_PERMISSOES: ModuloPermissao[] = [
   { categoria: 'Dashboard', acoes: ['Visualizar'] },
   {
     categoria: 'Formulários',
-    acoes: ['Criar', 'Editar', 'Excluir', 'Aprovar', 'Reprovar', 'Reabrir', 'Exportar PDF', 'Baixar imagens', 'Enviar Outlook'],
+    acoes: ['Criar', 'Editar', 'Excluir', 'Aprovar', 'Reprovar', 'Reabrir', 'Em compras', 'Programar', 'Exportar PDF', 'Baixar imagens', 'Enviar Outlook'],
   },
   // "Ver de todos" é a permissão que separa quem acompanha o próprio trabalho
   // de quem coordena o dos outros. Sem ela, um cargo com direito de aprovar
   // aprovaria apenas as fichas que ele mesmo preencheu, o que não faz sentido.
   // O alcance ainda passa pelo projeto do acesso: projeto em branco vê todos,
   // projeto nomeado vê só aquele.
-  { categoria: 'Histórico', acoes: ['Visualizar', 'Ver de todos', 'Editar', 'Excluir', 'Exportar'] },
+  // "Ver avaliadas" é do planejador: vê a ficha dos outros só depois que o
+  // supervisor aprovou, reprovou ou mandou pra compras.
+  { categoria: 'Histórico', acoes: ['Visualizar', 'Ver de todos', 'Ver avaliadas', 'Editar', 'Excluir', 'Exportar'] },
   { categoria: 'Usuários', acoes: ['Criar', 'Editar', 'Excluir', 'Ativar', 'Desativar', 'Resetar senha'] },
   { categoria: 'Administração', acoes: ['Gerenciar cargos', 'Gerenciar permissões', 'Configurações', 'Auditoria', 'Logs'] },
 ]

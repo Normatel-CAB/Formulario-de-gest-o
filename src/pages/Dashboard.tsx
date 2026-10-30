@@ -17,10 +17,11 @@ import { DonutChart } from '../components/dashboard/DonutChart'
 import { BarsChart } from '../components/dashboard/BarsChart'
 import { STATUS_LABELS, LOTACOES, LOTACOES_FILTRO, EQUIPAMENTO_CHAVES, EQUIPAMENTO_LABELS, temPermissao } from '../lib/types'
 import type { FormStatus } from '../lib/types'
+import { localDaFicha, tituloFicha } from '../lib/types'
 import { STATUS_COLOR, VIZ, serieAt } from '../lib/chartTheme'
 import { formatarDataHora } from '../lib/format'
 
-const ORDEM_STATUS: FormStatus[] = ['rascunho', 'enviado', 'em_analise', 'aprovado', 'reprovado']
+const ORDEM_STATUS: FormStatus[] = ['rascunho', 'enviado', 'em_analise', 'em_compras', 'aprovado', 'programado', 'reprovado']
 
 export function Dashboard() {
   const { formularios, loading, carregar } = useFormsStore()
@@ -46,8 +47,8 @@ export function Dashboard() {
     () => ({
       total: escopo.length,
       pendentes: escopo.filter((f) => f.status === 'rascunho' || f.status === 'enviado').length,
-      emAnalise: escopo.filter((f) => f.status === 'em_analise').length,
-      aprovados: escopo.filter((f) => f.status === 'aprovado').length,
+      emAnalise: escopo.filter((f) => f.status === 'em_analise' || f.status === 'em_compras').length,
+      aprovados: escopo.filter((f) => f.status === 'aprovado' || f.status === 'programado').length,
       reprovados: escopo.filter((f) => f.status === 'reprovado').length,
     }),
     [escopo],
@@ -103,7 +104,7 @@ export function Dashboard() {
       if (!base.has(chave)) base.set(chave, { pendentes: 0, emAnalise: 0, concluidas: 0 })
       const linha = base.get(chave)!
       if (f.status === 'rascunho' || f.status === 'enviado') linha.pendentes += 1
-      else if (f.status === 'em_analise') linha.emAnalise += 1
+      else if (f.status === 'em_analise' || f.status === 'em_compras') linha.emAnalise += 1
       else linha.concluidas += 1
     }
     return [...base.entries()]
@@ -366,10 +367,11 @@ export function Dashboard() {
                       />
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-[12.5px] font-semibold">
-                          {f.infoGerais.localAtividade || 'Atividade sem nome'}
+                          {tituloFicha(f)}
                         </p>
                         <p className="truncate text-[11px] text-txt-faint">
                           {f.infoGerais.numeroSolicitacao ? `Nº ${f.infoGerais.numeroSolicitacao}` : 'Sem número'}
+                          {localDaFicha(f) ? ` · ${localDaFicha(f)}` : ''}
                           {f.infoGerais.lotacao ? ` · ${f.infoGerais.lotacao}` : ''}
                         </p>
                       </div>

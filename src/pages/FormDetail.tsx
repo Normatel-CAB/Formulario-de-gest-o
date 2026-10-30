@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useFormsStore } from '../store/formsStore'
 import { useAuthStore } from '../store/authStore'
-import { podeDecidirFicha, temPermissao, type FormularioAvaliacao, type FormStatus } from '../lib/types'
+import { localDaFicha, podeDecidirFicha, podeProgramar, temPermissao, tituloFicha, type FormularioAvaliacao, type FormStatus } from '../lib/types'
+import { transicoesPossiveis } from '../lib/fluxo'
+import { DialogoCompras } from '../components/ficha/DialogoCompras'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card'
 import { StatusBadge } from '../components/ui/StatusBadge'
 import { Button } from '../components/ui/Button'
@@ -14,7 +16,6 @@ import { gerarPdfFormulario, nomeArquivoPdf } from '../lib/pdf'
 import { baixarZipFotos, nomeArquivoFotos, totalFotos } from '../lib/exportarFotos'
 import { StepRevisao } from './NovoFormulario/StepRevisao'
 
-const STATUS_TRANSICOES: FormStatus[] = ['enviado', 'em_analise', 'aprovado', 'reprovado']
 
 export function FormDetail() {
   const { id } = useParams()
@@ -23,6 +24,7 @@ export function FormDetail() {
   const usuario = useAuthStore((s) => s.usuario)
   const [formulario, setFormulario] = useState<FormularioAvaliacao | null>(null)
   const [confirmarExclusao, setConfirmarExclusao] = useState(false)
+  const [pedindoCompras, setPedindoCompras] = useState(false)
 
   useEffect(() => {
     if (!id) return
@@ -56,16 +58,23 @@ export function FormDetail() {
   // Espelham as policies das migrações 008 e 010. Aqui só escondem botão: quem
   // editar o JavaScript ganha o botão de volta e recebe a recusa da API.
   const podeAlterarStatus = podeDecidirFicha(usuario)
+  const transicoes = transicoesPossiveis(usuario, formulario.status)
   const podeEditar =
     podeAlterarStatus ||
+    (podeProgramar(usuario) && (formulario.status === 'aprovado' || formulario.status === 'programado')) ||
     (ehDono && temPermissao(usuario, 'formularios.editar') && formulario.status !== 'aprovado')
   const podeExcluir = temPermissao(usuario, 'formularios.excluir') && (podeAlterarStatus || ehDono)
 
-  async function mudarStatus(status: FormStatus) {
+  async function mudarStatus(status: FormStatus, justificativaCompras?: string) {
     if (!formulario) return
+    if (status === 'em_compras' && justificativaCompras === undefined) {
+      setPedindoCompras(true)
+      return
+    }
     try {
-      await atualizarStatus(formulario.id, status)
-      setFormulario({ ...formulario, status })
+      await atualizarStatus(formulario.id, status, justificativaCompras)
+      setFormulario({ ...formulario, status, ...(justificativaCompras === undefined ? {} : { justificativaCompras }) })
+      setPedindoCompras(false)
       toast({ variant: 'success', title: 'Status atualizado' })
     } catch (err) {
       toast({
@@ -128,13 +137,14 @@ export function FormDetail() {
       <div className="flex flex-col justify-between gap-3 lg:flex-row lg:items-center">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-[19px] font-bold leading-tight tracking-[-0.025em] text-txt sm:text-[24px]">{formulario.infoGerais.localAtividade || 'Atividade sem nome'}</h2>
+            <h2 className="text-[19px] font-bold leading-tight tracking-[-0.025em] text-txt sm:text-[24px]">{tituloFicha(formulario)}</h2>
             <StatusBadge status={formulario.status} />
           </div>
           <p className="text-[13px] text-txt-dim">
             {formulario.infoGerais.numeroSolicitacao
               ? `Nº ${formulario.infoGerais.numeroSolicitacao}`
               : 'Sem número'}{' '}
+            {localDaFicha(formulario) && `· ${localDaFicha(formulario)} `}
             · Atualizado em {formatarDataHora(formulario.updatedAt)}
           </p>
         </div>
@@ -171,28 +181,27 @@ export function FormDetail() {
         </div>
       </div>
 
-      {podeAlterarStatus && (
+      {transicoes.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle>Atualizar status</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-wrap gap-2">
-            {STATUS_TRANSICOES.map((s) => (
-              <Button
-                key={s}
-                size="sm"
-                variant={formulario.status === s ? 'primary' : 'outline'}
-                onClick={() => mudarStatus(s)}
-              >
-                {s === 'enviado' && 'Marcar Enviado'}
-                {s === 'em_analise' && 'Em Análise'}
-                {s === 'aprovado' && 'Aprovar'}
-                {s === 'reprovado' && 'Reprovar'}
+            {transicoes.map((t) => (
+              <Button key={t.para} size="sm" variant={t.variante} onClick={() => void mudarStatus(t.para)}>
+                {t.rotulo}
               </Button>
             ))}
           </CardContent>
         </Card>
       )}
+
+      <DialogoCompras
+        aberto={pedindoCompras}
+        justificativaAtual={formulario.justificativaCompras}
+        onFechar={() => setPedindoCompras(false)}
+        onConfirmar={(texto) => mudarStatus('em_compras', texto)}
+      />
 
       <StepRevisao formulario={formulario} />
 

@@ -27,6 +27,8 @@
   --viz-teal: #23c4a0;
   --viz-amber: #f0b429;
   --viz-red: #f2645f;
+  --viz-orange: #e8833a;
+  --viz-blue: #4a90d9;
 
   /* --- Superfícies e texto (tema claro) --- */
   --bg-deep: #e9f0e9;
@@ -113,6 +115,8 @@
   --color-viz-teal: var(--viz-teal);
   --color-viz-amber: var(--viz-amber);
   --color-viz-red: var(--viz-red);
+  --color-viz-orange: var(--viz-orange);
+  --color-viz-blue: var(--viz-blue);
 
   --color-surface: var(--surface);
   --color-surface-2: var(--surface-2);
