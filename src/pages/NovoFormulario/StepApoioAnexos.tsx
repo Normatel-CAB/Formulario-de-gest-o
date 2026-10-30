@@ -1,4 +1,4 @@
-import type { FormularioAvaliacao } from '../../lib/types'
+import { MINIMO_FOTOS, type FormularioAvaliacao } from '../../lib/types'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/Card'
 import { Textarea } from '../../components/ui/Field'
 import { ImageUploader } from '../../components/ui/ImageUploader'
@@ -32,7 +32,14 @@ export function StepApoioAnexos({
 
       <Card className="animate-slide-up">
         <CardHeader>
-          <CardTitle>Registro fotográfico</CardTitle>
+          <div>
+            <CardTitle>
+              Registro fotográfico <span className="text-viz-red">*</span>
+            </CardTitle>
+            <CardDescription>
+              Obrigatório: anexe ao menos {MINIMO_FOTOS} fotos da atividade. {formulario.imagens.length} anexada(s).
+            </CardDescription>
+          </div>
         </CardHeader>
         <CardContent>
           <ImageUploader imagens={formulario.imagens} onChange={(imagens) => onPatch({ imagens })} />

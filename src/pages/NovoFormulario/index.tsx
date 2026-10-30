@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { criarFormularioVazio, formularioTemConteudo, normalizarFormulario } from '../../lib/factory'
 import type { FormStatus, FormularioAvaliacao, NecessidadesExecucao } from '../../lib/types'
+import { MINIMO_FOTOS } from '../../lib/types'
 import { useFormsStore } from '../../store/formsStore'
 import { useAuthStore } from '../../store/authStore'
 import { Stepper } from '../../components/ui/Stepper'
@@ -96,7 +97,20 @@ export function NovoFormulario() {
         return
       }
     }
+    if (step === 2 && !temFoto()) return
     setStep((s) => Math.min(s + 1, STEPS.length - 1))
+  }
+
+  function temFoto() {
+    if (formulario.imagens.length >= MINIMO_FOTOS) return true
+    const faltam = MINIMO_FOTOS - formulario.imagens.length
+    toast({
+      variant: 'warning',
+      title: `Anexe ao menos ${MINIMO_FOTOS} fotos`,
+      description: `Falta${faltam > 1 ? 'm' : ''} ${faltam} foto${faltam > 1 ? 's' : ''} para enviar a ficha.`,
+    })
+    setStep(2)
+    return false
   }
 
   async function salvarRascunhoManual() {
@@ -109,6 +123,8 @@ export function NovoFormulario() {
   }
 
   async function enviarFormulario() {
+    // o stepper deixa pular direto pra revisao, entao confere de novo aqui
+    if (!temFoto()) return
     setEnviando(true)
     try {
       await enviar(formulario)

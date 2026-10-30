@@ -218,6 +218,8 @@ export interface LocalizacaoGPS {
   capturadaEm: string
 }
 
+export const MINIMO_FOTOS = 2
+
 export interface AnexoImagem {
   id: string
   nome: string
