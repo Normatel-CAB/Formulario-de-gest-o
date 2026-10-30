@@ -8,7 +8,7 @@ import { StatusBadge } from '../components/ui/StatusBadge'
 import { EmptyState } from '../components/ui/EmptyState'
 import { Reveal } from '../components/ui/Reveal'
 import { formatarDataHora } from '../lib/format'
-import { LOTACOES, type FormStatus } from '../lib/types'
+import { LOTACOES_FILTRO, type FormStatus } from '../lib/types'
 import { toast } from '../store/toastStore'
 
 export function Aprovacoes() {
@@ -64,7 +64,7 @@ export function Aprovacoes() {
             className="min-w-0 w-full sm:w-48"
           >
             <option value="">Todas as lotações</option>
-            {LOTACOES.map((l) => (
+            {LOTACOES_FILTRO.map((l) => (
               <option key={l} value={l}>
                 {l}
               </option>

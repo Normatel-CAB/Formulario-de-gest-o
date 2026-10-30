@@ -15,7 +15,7 @@ import { RowBar } from '../components/ui/RowBar'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/Table'
 import { DonutChart } from '../components/dashboard/DonutChart'
 import { BarsChart } from '../components/dashboard/BarsChart'
-import { STATUS_LABELS, LOTACOES, EQUIPAMENTO_CHAVES, EQUIPAMENTO_LABELS, temPermissao } from '../lib/types'
+import { STATUS_LABELS, LOTACOES, LOTACOES_FILTRO, EQUIPAMENTO_CHAVES, EQUIPAMENTO_LABELS, temPermissao } from '../lib/types'
 import type { FormStatus } from '../lib/types'
 import { STATUS_COLOR, VIZ, serieAt } from '../lib/chartTheme'
 import { formatarDataHora } from '../lib/format'
@@ -152,7 +152,7 @@ export function Dashboard() {
               className="min-w-0 flex-1 sm:w-48 sm:flex-none"
             >
               <option value="">Todas as lotações</option>
-              {LOTACOES.map((l) => (
+              {LOTACOES_FILTRO.map((l) => (
                 <option key={l} value={l}>
                   {l}
                 </option>

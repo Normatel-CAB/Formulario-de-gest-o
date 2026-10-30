@@ -53,13 +53,13 @@ export function FormDetail() {
     (formulario.criadoPorEmail ?? '').toLowerCase() === (usuario?.email ?? '').toLowerCase() ||
     (Boolean(formulario.criadoPorId) && formulario.criadoPorId === usuario?.id)
 
-  // Espelham as policies da migração 008. Aqui só escondem botão: quem editar
-  // o JavaScript ganha o botão de volta e recebe a recusa da API.
+  // Espelham as policies das migrações 008 e 010. Aqui só escondem botão: quem
+  // editar o JavaScript ganha o botão de volta e recebe a recusa da API.
   const podeAlterarStatus = podeDecidirFicha(usuario)
   const podeEditar =
-    formulario.status === 'rascunho' && (podeAlterarStatus || (ehDono && temPermissao(usuario, 'formularios.editar')))
+    podeAlterarStatus ||
+    (ehDono && temPermissao(usuario, 'formularios.editar') && formulario.status !== 'aprovado')
   const podeExcluir = temPermissao(usuario, 'formularios.excluir') && (podeAlterarStatus || ehDono)
-  const somenteLeitura = !podeEditar && !podeAlterarStatus
 
   async function mudarStatus(status: FormStatus) {
     if (!formulario) return
@@ -78,9 +78,18 @@ export function FormDetail() {
 
   async function excluir() {
     if (!formulario) return
-    await remover(formulario.id)
-    toast({ variant: 'success', title: 'Formulário excluído' })
-    navigate('/historico')
+    try {
+      await remover(formulario.id)
+      toast({ variant: 'success', title: 'Formulário excluído' })
+      navigate('/historico')
+    } catch (err) {
+      setConfirmarExclusao(false)
+      toast({
+        variant: 'error',
+        title: 'Não foi possível excluir',
+        description: err instanceof Error ? err.message : undefined,
+      })
+    }
   }
 
   async function baixarPdf() {
@@ -147,14 +156,14 @@ export function FormDetail() {
           >
             Exportar fotos
           </Button>
-          {!somenteLeitura && podeEditar && (
+          {podeEditar && (
             <Link to={`/novo/${formulario.id}`} className="contents">
               <Button variant="outline" className="w-full sm:w-auto">
-                Continuar edição
+                {formulario.status === 'rascunho' ? 'Continuar edição' : 'Editar ficha'}
               </Button>
             </Link>
           )}
-          {!somenteLeitura && podeExcluir && (
+          {podeExcluir && (
             <Button variant="danger" onClick={() => setConfirmarExclusao(true)}>
               Excluir
             </Button>
@@ -207,17 +216,6 @@ export function FormDetail() {
           </CardHeader>
           <CardContent>
             <img src={formulario.assinaturaDataUrl} alt="Assinatura digital" className="h-32 rounded-xl border border-hairline bg-surface-2" />
-          </CardContent>
-        </Card>
-      )}
-
-      {formulario.observacoes && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Observações</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-[13px] text-txt-dim">{formulario.observacoes}</p>
           </CardContent>
         </Card>
       )}

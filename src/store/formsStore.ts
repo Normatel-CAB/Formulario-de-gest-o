@@ -6,10 +6,13 @@ import {
   removerFormularioLocal,
   salvarFormularioLocal,
   enfileirarSincronizacao,
+  removerDaFila,
 } from '../lib/db'
 import {
   enviarFormularioParaNuvem,
   atualizarStatusNaNuvem,
+  excluirFormularioDaNuvem,
+  RecusaDoServidor,
   sincronizarPendentes,
   baixarFormulariosDaNuvem,
   baixarFormularioCompleto,
@@ -91,7 +94,13 @@ export const useFormsStore = create<FormsState>((set) => ({
           formularios: s.formularios.map((f) => (f.id === atualizado.id ? atualizado : f)),
         }))
         return
-      } catch {
+      } catch (err) {
+        if (err instanceof RecusaDoServidor) {
+          const devolvido = { ...formulario, syncPending: false }
+          await salvarFormularioLocal(devolvido)
+          set((s) => ({ formularios: s.formularios.map((f) => (f.id === devolvido.id ? devolvido : f)) }))
+          throw err
+        }
         await enfileirarSincronizacao(atualizado.id)
       }
     } else {
@@ -111,6 +120,16 @@ export const useFormsStore = create<FormsState>((set) => ({
     set((s) => ({ formularios: s.formularios.map((f) => (f.id === id ? atualizado : f)) }))
   },
   remover: async (id) => {
+    const local = await obterFormularioLocal(id)
+    const soNoAparelho = local?.status === 'rascunho' || (local?.syncPending && local.status === 'enviado')
+    if (isSupabaseConfigured) {
+      if (!navigator.onLine && !soNoAparelho) throw new Error('Sem conexão. Conecte-se para excluir a ficha.')
+      if (navigator.onLine) {
+        const apagadas = await excluirFormularioDaNuvem(id)
+        if (apagadas === 0 && !soNoAparelho) throw new RecusaDoServidor('Você não tem permissão para excluir esta ficha.')
+      }
+    }
+    await removerDaFila(id)
     await removerFormularioLocal(id)
     set((s) => ({ formularios: s.formularios.filter((f) => f.id !== id) }))
   },

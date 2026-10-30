@@ -111,6 +111,9 @@ export function StepInfoGerais({
                 {lotacao}
               </option>
             ))}
+            {info.lotacao && !(LOTACOES as readonly string[]).includes(info.lotacao) && (
+              <option value={info.lotacao}>{info.lotacao} (antiga, escolha 04, 06 ou 09)</option>
+            )}
           </Select>
           <Input
             label="Local da Atividade"

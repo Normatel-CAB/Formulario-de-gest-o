@@ -180,7 +180,9 @@ export interface NecessidadesExecucao {
 }
 
 export const LOTACOES = [
-  'Áreas Externas',
+  'Áreas Externas 04',
+  'Áreas Externas 06',
+  'Áreas Externas 09',
   'UTE',
   'Tapera',
   'Cabiúnas',
@@ -189,6 +191,12 @@ export const LOTACOES = [
 ] as const
 
 export type Lotacao = (typeof LOTACOES)[number]
+
+/** Antes de separar em 04, 06 e 09. Sai do cadastro mas continua filtrável,
+    porque as fichas antigas não dizem qual das três era. */
+export const LOTACOES_ANTIGAS = ['Áreas Externas'] as const
+
+export const LOTACOES_FILTRO: readonly string[] = [...LOTACOES, ...LOTACOES_ANTIGAS]
 
 export interface InfoGerais {
   responsavel: string

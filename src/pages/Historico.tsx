@@ -12,6 +12,7 @@ import { Button } from '../components/ui/Button'
 import { Pagination } from '../components/ui/Pagination'
 import { Reveal } from '../components/ui/Reveal'
 import { Tabs, type AbaItem } from '../components/ui/Tabs'
+import { Dialog } from '../components/ui/Dialog'
 import {
   baixarZipFotos,
   baixarZipFotosLote,
@@ -23,7 +24,7 @@ import {
 import { baixarFormularioCompleto, baixarImagensDoLote } from '../lib/sync'
 import { toast } from '../store/toastStore'
 import type { FormStatus, FormularioAvaliacao } from '../lib/types'
-import { LOTACOES, temPermissao } from '../lib/types'
+import { LOTACOES_FILTRO, podeDecidirFicha, temPermissao } from '../lib/types'
 import { STATUS_COLOR } from '../lib/chartTheme'
 import { formatarDataHora } from '../lib/format'
 
@@ -68,7 +69,7 @@ async function exportarFotos(formulario: FormularioAvaliacao) {
 }
 
 export function Historico() {
-  const { formularios, loading, carregar } = useFormsStore()
+  const { formularios, loading, carregar, remover } = useFormsStore()
   const usuario = useAuthStore((s) => s.usuario)
   const [busca, setBusca] = useState('')
   const [aba, setAba] = useState<Aba>('enviado')
@@ -78,6 +79,8 @@ export function Historico() {
   const [ate, setAte] = useState('')
   const [pagina, setPagina] = useState(1)
   const [exportando, setExportando] = useState(false)
+  const [paraExcluir, setParaExcluir] = useState<FormularioAvaliacao | null>(null)
+  const [excluindo, setExcluindo] = useState(false)
 
   // Ver ficha de outra pessoa é permissão, não papel. O recorte por projeto
   // acontece no banco: aqui a lista já chega filtrada.
@@ -86,6 +89,31 @@ export function Historico() {
   useEffect(() => {
     void carregar()
   }, [carregar])
+
+  const podeExcluirQualquer = temPermissao(usuario, 'formularios.excluir') && podeDecidirFicha(usuario)
+  const podeExcluirPropria = temPermissao(usuario, 'formularios.excluir')
+  function podeExcluir(f: FormularioAvaliacao) {
+    if (podeExcluirQualquer) return true
+    return podeExcluirPropria && (f.criadoPorEmail ?? '').toLowerCase() === (usuario?.email ?? '').toLowerCase()
+  }
+
+  async function confirmarExclusao() {
+    if (!paraExcluir) return
+    setExcluindo(true)
+    try {
+      await remover(paraExcluir.id)
+      toast({ variant: 'success', title: 'Ficha excluída' })
+    } catch (err) {
+      toast({
+        variant: 'error',
+        title: 'Não foi possível excluir',
+        description: err instanceof Error ? err.message : undefined,
+      })
+    } finally {
+      setExcluindo(false)
+      setParaExcluir(null)
+    }
+  }
 
   const visiveis = useMemo(() => {
     let lista = formularios
@@ -253,7 +281,7 @@ export function Historico() {
           />
           <Select value={filtroLotacao} onChange={(e) => setFiltroLotacao(e.target.value)} aria-label="Filtrar por lotação">
             <option value="">Todas as lotações</option>
-            {LOTACOES.map((l) => (
+            {LOTACOES_FILTRO.map((l) => (
               <option key={l} value={l}>
                 {l}
               </option>
@@ -386,6 +414,13 @@ export function Historico() {
                         <IconeFotos />
                         Exportar fotos
                       </Button>
+                      {podeExcluir(f) && (
+                        <Button variant="ghost" size="sm" onClick={() => setParaExcluir(f)} title="Excluir ficha" aria-label="Excluir ficha">
+                          <svg className="h-3.5 w-3.5 text-viz-red" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                            <path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </Reveal>
@@ -395,6 +430,25 @@ export function Historico() {
           <Pagination page={pagina} totalPages={totalPaginas} onChange={setPagina} />
         </>
       )}
+
+      <Dialog
+        open={Boolean(paraExcluir)}
+        onClose={() => setParaExcluir(null)}
+        title="Excluir ficha?"
+        description={`${paraExcluir?.infoGerais.localAtividade || 'Atividade sem nome'}${
+          paraExcluir?.infoGerais.numeroSolicitacao ? `, Nº ${paraExcluir.infoGerais.numeroSolicitacao}` : ''
+        }. A ficha sai do sistema para todo mundo e não dá para desfazer.`}
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setParaExcluir(null)}>
+              Cancelar
+            </Button>
+            <Button variant="danger" loading={excluindo} onClick={() => void confirmarExclusao()}>
+              Excluir
+            </Button>
+          </>
+        }
+      />
     </div>
   )
 }

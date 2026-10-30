@@ -44,14 +44,42 @@ async function refreshPendingCount() {
   emit()
 }
 
+/** O banco respondeu e disse não. Tentar de novo depois não adianta. */
+export class RecusaDoServidor extends Error {}
+
+function falha(error: { code?: string; message: string }, semPermissao: string) {
+  // sem code e fetch que nem chegou no banco, ai vale guardar na fila
+  if (!error.code) return new Error(error.message)
+  if (error.code === '42501' || error.code === '23505') return new RecusaDoServidor(semPermissao)
+  return new RecusaDoServidor(error.message)
+}
+
+/**
+ * Update primeiro, insert só se a ficha ainda não existe no banco.
+ *
+ * Com upsert a policy de insert vale até pra ficha que já existe, e ela exige
+ * que quem grava seja o autor. Aí o planejador nunca conseguia salvar a edição
+ * da ficha de outra pessoa.
+ */
 export async function enviarFormularioParaNuvem(formulario: FormularioAvaliacao) {
   if (!supabase || !isSupabaseConfigured) throw new Error('Supabase não configurado')
   // `syncPending` só existe no aparelho. `qtdImagens` é coluna calculada pelo
   // banco (migração 009) e mandá-la de volta faz o Postgres recusar a gravação
   // inteira, com erro de valor não padrão em coluna gerada.
   const { syncPending: _syncPending, qtdImagens: _qtdImagens, ...payload } = formulario
-  const { error } = await supabase.from(FORMS_TABLE).upsert(payload, { onConflict: 'id' })
-  if (error) throw error
+  const semPermissao = 'Você não tem permissão para salvar esta ficha.'
+  const atualizada = await supabase.from(FORMS_TABLE).update(payload).eq('id', formulario.id).select('id')
+  if (atualizada.error) throw falha(atualizada.error, semPermissao)
+  if (atualizada.data.length > 0) return
+  const { error } = await supabase.from(FORMS_TABLE).insert(payload)
+  if (error) throw falha(error, semPermissao)
+}
+
+export async function excluirFormularioDaNuvem(id: string) {
+  if (!supabase || !isSupabaseConfigured) throw new Error('Supabase não configurado')
+  const { data, error } = await supabase.from(FORMS_TABLE).delete().eq('id', id).select('id')
+  if (error) throw falha(error, 'Você não tem permissão para excluir esta ficha.')
+  return data.length
 }
 
 /**

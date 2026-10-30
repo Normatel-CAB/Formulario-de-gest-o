@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { criarFormularioVazio, formularioTemConteudo, normalizarFormulario } from '../../lib/factory'
-import type { FormularioAvaliacao, NecessidadesExecucao } from '../../lib/types'
+import type { FormStatus, FormularioAvaliacao, NecessidadesExecucao } from '../../lib/types'
 import { useFormsStore } from '../../store/formsStore'
 import { useAuthStore } from '../../store/authStore'
 import { Stepper } from '../../components/ui/Stepper'
 import { Reveal } from '../../components/ui/Reveal'
 import { Button } from '../../components/ui/Button'
 import { toast } from '../../store/toastStore'
+import { RecusaDoServidor } from '../../lib/sync'
 import { StepInfoGerais } from './StepInfoGerais'
 import { StepNecessidades } from './StepNecessidades'
 import { StepApoioAnexos } from './StepApoioAnexos'
@@ -41,25 +42,31 @@ export function NovoFormulario() {
   const [step, setStep] = useState(0)
   const [loaded, setLoaded] = useState(!id)
   const [enviando, setEnviando] = useState(false)
+  const [statusOriginal, setStatusOriginal] = useState<FormStatus>('rascunho')
+  const editandoEnviada = statusOriginal !== 'rascunho'
   const autosaveTimer = useRef<number | undefined>(undefined)
 
   useEffect(() => {
     if (!id) return
     void obter(id).then((existente) => {
-      if (existente) setFormulario(normalizarFormulario(existente))
+      if (existente) {
+        setFormulario(normalizarFormulario(existente))
+        setStatusOriginal(existente.status)
+      }
       setLoaded(true)
     })
   }, [id, obter])
 
   useEffect(() => {
-    if (!loaded) return
+    // ficha ja enviada nao vira rascunho no meio da edicao, so muda quando reenviar
+    if (!loaded || editandoEnviada) return
     window.clearTimeout(autosaveTimer.current)
     if (!formularioTemConteudo(formulario)) return
     autosaveTimer.current = window.setTimeout(() => {
       void salvarRascunho(formulario)
     }, 1200)
     return () => window.clearTimeout(autosaveTimer.current)
-  }, [formulario, loaded, salvarRascunho])
+  }, [formulario, loaded, editandoEnviada, salvarRascunho])
 
   function patch(p: Partial<FormularioAvaliacao>) {
     setFormulario((f) => ({ ...f, ...p }))
@@ -105,9 +112,13 @@ export function NovoFormulario() {
     setEnviando(true)
     try {
       await enviar(formulario)
-      toast({ variant: 'success', title: 'Formulário enviado com sucesso' })
+      toast({ variant: 'success', title: editandoEnviada ? 'Ficha reenviada' : 'Formulário enviado com sucesso' })
       finalizarEnvio()
-    } catch {
+    } catch (err) {
+      if (err instanceof RecusaDoServidor) {
+        toast({ variant: 'error', title: 'Ficha não foi salva', description: err.message })
+        return
+      }
       toast({ variant: 'error', title: 'Falha ao enviar', description: 'O formulário foi salvo e será sincronizado automaticamente.' })
       finalizarEnvio()
     } finally {
@@ -133,10 +144,12 @@ export function NovoFormulario() {
         <div>
           <span className="chip">Ficha Técnica de Avaliação</span>
           <h2 className="mt-3 text-[21px] font-bold leading-tight tracking-[-0.025em] text-txt sm:text-[27px]">
-            Nova Ficha Técnica de Avaliação
+            {editandoEnviada ? 'Editar Ficha Técnica de Avaliação' : 'Nova Ficha Técnica de Avaliação'}
           </h2>
           <p className="mt-1 text-[13px] text-txt-dim">
-            Preencha as etapas abaixo. Seu progresso é salvo automaticamente, mesmo sem internet.
+            {editandoEnviada
+              ? 'Corrija o que faltou e reenvie. A ficha volta para Enviado e passa por nova avaliação.'
+              : 'Preencha as etapas abaixo. Seu progresso é salvo automaticamente, mesmo sem internet.'}
           </p>
         </div>
       </Reveal>
@@ -163,22 +176,24 @@ export function NovoFormulario() {
           Voltar
         </Button>
         <div className="ml-auto flex min-w-0 items-center gap-2">
-          <Button variant="outline" onClick={salvarRascunhoManual} className="shrink-0">
-            <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M5 4h11l3 3v13H5z" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M9 4v5h6" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            <span className="hidden sm:inline">Salvar rascunho</span>
-            <span className="sm:hidden">Rascunho</span>
-          </Button>
+          {!editandoEnviada && (
+            <Button variant="outline" onClick={salvarRascunhoManual} className="shrink-0">
+              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M5 4h11l3 3v13H5z" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M9 4v5h6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <span className="hidden sm:inline">Salvar rascunho</span>
+              <span className="sm:hidden">Rascunho</span>
+            </Button>
+          )}
           {step < STEPS.length - 1 ? (
             <Button onClick={proximaEtapa} className="shrink-0">
               Avançar
             </Button>
           ) : (
             <Button onClick={enviarFormulario} loading={enviando} className="shrink-0">
-              <span className="hidden sm:inline">Enviar formulário</span>
-              <span className="sm:hidden">Enviar</span>
+              <span className="hidden sm:inline">{editandoEnviada ? 'Reenviar ficha' : 'Enviar formulário'}</span>
+              <span className="sm:hidden">{editandoEnviada ? 'Reenviar' : 'Enviar'}</span>
             </Button>
           )}
         </div>

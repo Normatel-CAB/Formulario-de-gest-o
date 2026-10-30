@@ -38,6 +38,14 @@ function SoQuemDecide({ children }: { children: ReactNode }) {
   return <>{children}</>
 }
 
+function PodeEditarFicha({ children }: { children: ReactNode }) {
+  const usuario = useAuthStore((s) => s.usuario)
+  if (!podeDecidirFicha(usuario ?? null) && !temPermissao(usuario ?? null, 'formularios.editar')) {
+    return <Navigate to="/dashboard" replace />
+  }
+  return <>{children}</>
+}
+
 export default function App() {
   const inicializado = useAuthStore((s) => s.inicializado)
 
@@ -75,9 +83,9 @@ export default function App() {
                       <Route
                         path="/novo/:id"
                         element={
-                          <RequireRole roles={['administrador', 'operador']}>
+                          <PodeEditarFicha>
                             <NovoFormulario />
-                          </RequireRole>
+                          </PodeEditarFicha>
                         }
                       />
                       <Route path="/dashboard" element={<Dashboard />} />
