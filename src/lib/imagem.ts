@@ -7,18 +7,19 @@
  * baixada por completo toda vez que alguém abria o Dashboard ou o Histórico.
  *
  * Uma foto de registro de campo não precisa de resolução de impressão. Ela
- * precisa mostrar o local e o que estava lá. 1600px no lado maior com qualidade
- * 0.72 cobre isso com folga e derruba o arquivo para algo entre 150 e 400 KB.
+ * precisa mostrar o local e o que estava lá.
  */
 
-/** Lado maior da imagem depois da redução, em pixels. */
-const LADO_MAXIMO = 1600
+/**
+ * Mesmo padrão do Aplicativo RH (PR "Comprime fotos antes do upload"): lado
+ * maior em 1920px e JPEG 0.82. Ficou legível lá em atestado com letra miúda,
+ * então serve com folga pra foto de campo. O script
+ * scripts/comprimir-fotos-antigas.mjs usa os mesmos números.
+ */
+export const LADO_MAXIMO = 1920
+export const QUALIDADE = 0.82
 
-/** Qualidade do JPEG. Abaixo de 0.7 começa a borrar texto de placa e etiqueta. */
-const QUALIDADE = 0.72
-
-/** Abaixo disto não vale reprocessar: já está pequena. */
-const TAMANHO_MINIMO_PARA_COMPRIMIR = 300 * 1024
+const TIPOS_COMPRIMIVEIS = ['image/jpeg', 'image/png', 'image/webp', 'image/bmp']
 
 function lerComoDataUrl(file: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -29,55 +30,42 @@ function lerComoDataUrl(file: Blob): Promise<string> {
   })
 }
 
-function carregarImagem(src: string): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const img = new Image()
-    img.onload = () => resolve(img)
-    img.onerror = reject
-    img.src = src
-  })
-}
-
 /**
  * Devolve a foto reduzida em data URL.
  *
- * Nunca falha de um jeito que impeça o envio: se o navegador não der conta do
- * canvas, volta o arquivo original. Perder a foto do colaborador em campo seria
- * muito pior do que gravar uma foto grande.
+ * Nunca falha de um jeito que impeça o envio: se o navegador não der conta,
+ * volta o arquivo original. Perder a foto do colaborador em campo seria muito
+ * pior do que gravar uma foto grande.
  */
 export async function comprimirImagem(file: File): Promise<string> {
-  const original = await lerComoDataUrl(file)
-
-  if (!file.type.startsWith('image/')) return original
-  // PNG costuma ser captura de tela ou desenho, onde recomprimir para JPEG
-  // borra texto. Só passa pela redução se estiver realmente grande.
-  if (file.size <= TAMANHO_MINIMO_PARA_COMPRIMIR) return original
-
+  if (!TIPOS_COMPRIMIVEIS.includes(file.type) || typeof createImageBitmap !== 'function') {
+    return lerComoDataUrl(file)
+  }
   try {
-    const img = await carregarImagem(original)
-    const maior = Math.max(img.width, img.height)
-    const escala = maior > LADO_MAXIMO ? LADO_MAXIMO / maior : 1
-
-    const largura = Math.round(img.width * escala)
-    const altura = Math.round(img.height * escala)
+    // from-image respeita a orientacao que o celular grava na foto, senao foto em pe sai deitada
+    const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' })
+    const escala = Math.min(1, LADO_MAXIMO / Math.max(bitmap.width, bitmap.height))
+    const largura = Math.round(bitmap.width * escala)
+    const altura = Math.round(bitmap.height * escala)
 
     const canvas = document.createElement('canvas')
     canvas.width = largura
     canvas.height = altura
     const ctx = canvas.getContext('2d')
-    if (!ctx) return original
+    if (!ctx) return lerComoDataUrl(file)
 
     // Fundo branco: JPEG não tem transparência, e sem isto um PNG com fundo
     // transparente vira preto.
     ctx.fillStyle = '#FFFFFF'
     ctx.fillRect(0, 0, largura, altura)
-    ctx.drawImage(img, 0, 0, largura, altura)
+    ctx.drawImage(bitmap, 0, 0, largura, altura)
+    bitmap.close()
 
-    const reduzida = canvas.toDataURL('image/jpeg', QUALIDADE)
-    // Se por algum motivo a versão reduzida ficou maior, fica com a original.
-    return reduzida.length < original.length ? reduzida : original
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', QUALIDADE))
+    if (!blob || blob.size >= file.size) return lerComoDataUrl(file)
+    return lerComoDataUrl(blob)
   } catch {
-    return original
+    return lerComoDataUrl(file)
   }
 }
 

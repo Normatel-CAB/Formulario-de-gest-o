@@ -15,6 +15,9 @@ dev-dist
 .env
 .env.local
 
+# fotos originais de cliente, saem do script comprimir-fotos
+backup-fotos
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
